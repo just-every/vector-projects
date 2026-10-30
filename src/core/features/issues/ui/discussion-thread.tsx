@@ -79,9 +79,9 @@ export function CommentThread({ root, replies, ...shared }: Shared & { root: Com
     );
   return (
     <section className="comment-thread" aria-label={`Thread started by ${root.actor}`}>
-      {root.anchor && <blockquote className="comment-source-quote" aria-label="Quoted description text">
+      {root.anchor && <blockquote className="comment-source-quote" aria-label={root.anchor.documentId ? "Quoted document text" : "Quoted description text"}>
         {root.anchor.removed ? <del>{root.anchor.quote}</del> : <span>{root.anchor.quote}</span>}
-        <p>{root.anchor.removed ? "Quoted text removed" : "From the issue description"}</p>
+        <p>{root.anchor.removed ? "Quoted text removed" : root.anchor.documentId ? <a href={"/app/documents/"+root.anchor.documentId}>From the document</a> : "From the issue description"}</p>
         {!root.anchor.removed && shared.onLocateQuote && <button type="button" onClick={() => shared.onLocateQuote?.(root.anchor!)}>Show quoted text</button>}
       </blockquote>}
       <CommentEntry comment={root} {...shared} />

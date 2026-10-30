@@ -57,7 +57,7 @@ function DiscussionContents({
         </p>
       ) : null}
       {resource.data
-        ? commentThreads(resource.data.comments).filter(({ root }) => !root.anchor).map(({ root, replies }) => (
+        ? commentThreads(resource.data.comments).filter(({ root }) => !root.anchor || root.anchor.documentId).map(({ root, replies }) => (
             <CommentThread writable={writable}
               key={root.id}
               root={root}

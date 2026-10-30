@@ -13,7 +13,14 @@ export const descriptionAnchorSchema = z.object({
   expectedDescription: z.string().max(100000),
 }).strict();
 export type DescriptionAnchorInput = z.infer<typeof descriptionAnchorSchema>;
-export type DescriptionAnchor = { quote: string; start: number; end: number; removed: boolean };
+export const documentAnchorSchema = descriptionAnchorSchema.omit({ expectedDescription: true }).extend({
+  documentId: z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/),
+  expectedVersion: z.number().int().positive(),
+  expectedBody: z.string().max(100000),
+}).strict();
+export const threadAnchorSchema = z.union([descriptionAnchorSchema, documentAnchorSchema]);
+export type ThreadAnchorInput = z.infer<typeof threadAnchorSchema>;
+export type DescriptionAnchor = { quote: string; start: number; end: number; removed: boolean; documentId?: string };
 
 /** Source positions count Unicode code points, as SQLite substr does. */
 export function codePointOffset(source: string, offset: number) {

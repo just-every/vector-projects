@@ -1,4 +1,4 @@
-import { validDescriptionAnchor, type DescriptionAnchorInput } from "./anchors";
+import { validDescriptionAnchor, type ThreadAnchorInput } from "./anchors";
 import { DescriptionAnchorError } from "./anchor-error";
 import { issueReferenceStatements } from "../issue-references/repository";
 import { currentAgentActor, agentActivity } from '../agent-door/attribution';
@@ -42,7 +42,7 @@ export function discussionReadStatements(db: D1Database, issueId: string, actor?
     db
       .prepare(
         `SELECT c.id,c.parent_comment_id AS parentId,c.body,${commentVersionSql} AS version,c.edited_at AS editedAt,c.deleted_at AS deletedAt,c.created_at AS createdAt,COALESCE((SELECT a.actor_name FROM issue_activity a WHERE a.issue_id=c.issue_id AND json_extract(a.next_value_json,'$.id')=c.id ORDER BY a.created_at DESC,a.id DESC LIMIT 1),c.imported_author_name,o.name) AS actor,c.imported_author_name IS NOT NULL AS imported,
- c.resolved_at AS resolvedAt,r.name AS resolvedBy,c.description_anchor AS anchor,
+ c.resolved_at AS resolvedAt,r.name AS resolvedBy,COALESCE(c.document_anchor,c.description_anchor) AS anchor,
  (c.actor_operator_id=? AND o.role<>'viewer' AND c.imported_author_name IS NULL AND c.deleted_at IS NULL) AS canEdit,
  (c.deleted_at IS NULL AND ((c.actor_operator_id=? AND o.role<>'viewer' AND c.imported_author_name IS NULL) OR ${moderatorSql})) AS canDelete
  FROM issue_comments c JOIN operators o ON o.id=c.actor_operator_id LEFT JOIN operators r ON r.id=c.resolved_by_operator_id
@@ -99,7 +99,7 @@ export async function addComment(
   body: string,
   parentId?: string,
   onCommit?: (db: D1Database, commentId: string) => D1PreparedStatement[],
-  anchorInput?: DescriptionAnchorInput,
+  anchorInput?: ThreadAnchorInput,
 ) {
   db = mutationDatabase(db, actor);
   const id = createUlid(new Date()),
@@ -109,24 +109,39 @@ export async function addComment(
   const issue = await db.prepare('SELECT identifier FROM issues WHERE id=?').bind(issueId).first<{identifier:string}>();
   if (!issue) throw new Error('Issue is unavailable.');
   await requireDiscussionMutationAccess(db,issue.identifier,actor);
-  const anchor = anchorInput ? validDescriptionAnchor(anchorInput) : null;
-  if (anchorInput && (!anchor || parentId)) throw new DescriptionAnchorError(400, "Select text in the issue description to start a thread.");
-  if (anchorInput) {
-    const current = await db.prepare('SELECT description FROM issues WHERE id=?').bind(issueId).first<{description:string}>();
-    if (current?.description !== anchorInput.expectedDescription) throw new DescriptionAnchorError(409, "The description changed. Select its current text again.");
-  }
+  const documentInput = anchorInput && 'documentId' in anchorInput ? anchorInput : null;
+  const anchor = anchorInput ? validDescriptionAnchor(documentInput
+    ? { ...documentInput, expectedDescription: documentInput.expectedBody }
+    : anchorInput as import('./anchors').DescriptionAnchorInput) : null;
+  if (anchorInput && (!anchor || parentId)) throw new DescriptionAnchorError(400, "Select current source text to start a thread.");
+  if (documentInput && anchor) anchor.documentId = documentInput.documentId;
+  const checkSource = async () => {
+    if (documentInput) {
+      const current = await db.prepare("SELECT body,version FROM documents WHERE id=? AND parent_kind='issue' AND parent_id=?")
+        .bind(documentInput.documentId,issueId).first<{body:string;version:number}>();
+      if (!current) throw new DescriptionAnchorError(400, "The document must belong to this issue.", 'document');
+      if (current.body !== documentInput.expectedBody || current.version !== documentInput.expectedVersion)
+        throw new DescriptionAnchorError(409, "The document changed. Select its current text again.", 'document');
+    } else if (anchorInput && 'expectedDescription' in anchorInput) {
+      const current = await db.prepare('SELECT description FROM issues WHERE id=?').bind(issueId).first<{description:string}>();
+      if (current?.description !== anchorInput.expectedDescription) throw new DescriptionAnchorError(409, "The description changed. Select its current text again.");
+    }
+  };
+  await checkSource();
   const thread = parentId ? await threadRoot(db, issueId, parentId) : null;
   try {
   await db.batch([
-    ...(anchorInput ? [db.prepare("SELECT CASE WHEN EXISTS(SELECT 1 FROM issues WHERE id=? AND description=?) THEN 1 ELSE json('description anchor changed') END").bind(issueId, anchorInput.expectedDescription)] : []),
+    ...(documentInput ? [db.prepare("SELECT CASE WHEN EXISTS(SELECT 1 FROM documents WHERE id=? AND parent_kind='issue' AND parent_id=? AND version=? AND body=?) THEN 1 ELSE json('document anchor changed') END")
+      .bind(documentInput.documentId,issueId,documentInput.expectedVersion,documentInput.expectedBody)]
+      : anchorInput && 'expectedDescription' in anchorInput ? [db.prepare("SELECT CASE WHEN EXISTS(SELECT 1 FROM issues WHERE id=? AND description=?) THEN 1 ELSE json('description anchor changed') END").bind(issueId, anchorInput.expectedDescription)] : []),
     db.prepare(`SELECT CASE WHEN EXISTS(SELECT 1 FROM issues i JOIN teams t ON t.id=i.team_id JOIN operators o ON o.workspace_id=t.workspace_id WHERE i.id=? AND o.id=? AND o.removed_at IS NULL) THEN 1 ELSE json('discussion access denied') END`).bind(issueId,actor),
     // A new reply reopens a resolved thread, recorded before the reply itself.
     ...(thread ? reopenStatements(db, issueId, thread, actor, now) : []),
     db
       .prepare(
-        "INSERT INTO issue_comments(id,issue_id,actor_operator_id,body,parent_comment_id,created_at,updated_at,description_anchor) VALUES(?,?,?,?,?,?,?,?)",
+        "INSERT INTO issue_comments(id,issue_id,actor_operator_id,body,parent_comment_id,created_at,updated_at,description_anchor,document_anchor) VALUES(?,?,?,?,?,?,?,?,?)",
       )
-      .bind(id, issueId, actor, body, thread, now, now, anchor ? JSON.stringify(anchor) : null),
+      .bind(id, issueId, actor, body, thread, now, now, anchor && !documentInput ? JSON.stringify(anchor) : null, documentInput ? JSON.stringify(anchor) : null),
     activity(db, actor, "comment.created", issueId, id, now, activityId),
     ...commentStatements(db,event), ...mentionStatements(db,event,body,id), ...issueReferenceStatements(db,event,body,{kind:"comment",id}), ...finalizeEvent(db,event),
     ...(onCommit?.(db,id) ?? []),
@@ -134,8 +149,7 @@ export async function addComment(
   } catch (error) {
     if (!anchorInput || isMutationAccessError(error) || error instanceof RestoreReservationError) throw error;
     await requireDiscussionMutationAccess(db, issue.identifier, actor);
-    const current = await db.prepare('SELECT description FROM issues WHERE id=?').bind(issueId).first<{description:string}>();
-    if (current?.description !== anchorInput.expectedDescription) throw new DescriptionAnchorError(409, "The description changed. Select its current text again.");
+    await checkSource();
     throw error;
   }
   return id;

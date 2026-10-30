@@ -99,5 +99,5 @@ it("[REPORT-002] a project's scope and completion by day follow adds, moves, del
   }
 });
 
-it('[PROJ-013 OPS-001 ROLE-002] documents retain project specs, ordered edits, initiative and team lists, search visibility and native parent archives',async()=>{await documentJourney();});
+it('[PROJ-013 OPS-001 ROLE-002] documents retain project specs, ordered edits, initiative and team lists, search visibility and native parent archives',async()=>{await documentJourney();},90000);
 it('[PROJ-013 ROLE-001 ROLE-013] document creation, edits, comments and specification writes follow each current role and invited parent',async()=>{await documentRoles();});

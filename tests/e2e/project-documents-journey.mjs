@@ -139,6 +139,7 @@ export async function projectDocumentsJourney({page,base,api,output,runtime}){
    await proof('document-search',width);
    console.log('[PROJ-013] '+width+': UI project creation, two editor revisions, ordered history, issue specification, initiative/team lists, search, overflow, serious/critical axe and hydration PASS');
   }
+  await documentQuoteJourney({page,base,api,proof});
   await documentReferenceAccessJourney({page,base,api,output,runtime,proof});
  }finally{page.off('pageerror',pageError);page.off('console',consoleError);}
 }
@@ -200,4 +201,74 @@ async function documentReferenceAccessJourney({page,base,api,output,runtime}){
   assert.deepEqual(reader.errors,[]);
   console.log('ISSUE-027 document links, visible metadata, one retained backlink, removal and current Member and Viewer withdrawal PASS');
  }finally{await reader.context.close();}
+}
+
+/** ISSUE-008: select rendered document text and retain its native issue thread. */
+async function documentQuoteJourney({page,base,api,proof}){
+ await page.setViewportSize({width:1440,height:1000});
+ const team=(await api('/settings/administration')).teams.find(t=>!t.isPrivate&&!t.archivedAt);
+ const issue=await api('/issues','POST',{teamId:team.id,title:'synthetic-vector-document-quote-'+Date.now()});
+ const body='🧭 First **café 🧪**. Second **café 🧪**.',quote='café 🧪';
+ let doc=await api('/documents','POST',{parentKind:'issue',parentId:issue.id,title:'synthetic-vector-quoted-document',body});
+ const other=await api('/documents','POST',{parentKind:'issue',parentId:issue.id,title:'synthetic-vector-other-document',body});
+ const go=async path=>{await beforePrivateNavigation(page,base+path);await page.goto(base+path);};
+ await go('/app/issues/'+issue.identifier);
+ const documents=page.getByRole('region',{name:'Documents',exact:true});
+ await documents.locator('summary').first().click();await documents.getByRole('link',{name:doc.title,exact:true}).click();
+ await page.getByRole('heading',{name:doc.title,exact:true}).waitFor();
+ // The second occurrence is selected in rendered Markdown, after a Unicode prefix.
+ await page.locator('.description-source strong [data-description-start]').nth(1).evaluate(element=>{
+  const range=document.createRange();range.selectNodeContents(element);
+  const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);
+ });
+ const select=page.getByRole('button',{name:'Comment on selection',exact:true});
+ await select.focus();await select.press('Enter');
+ const margin=()=>page.getByRole('complementary',{name:'Document threads',exact:true});
+ await margin().getByRole('textbox',{name:'Comment on quoted text',exact:true}).fill('Please confirm the second occurrence.');
+ await margin().getByRole('button',{name:'Start thread',exact:true}).click();
+ await margin().getByText('Please confirm the second occurrence.',{exact:true}).waitFor();
+ const root=(await api('/issues/'+issue.identifier+'/discussion')).comments.find(c=>c.body==='Please confirm the second occurrence.');
+ const start=Array.from(body.slice(0,body.lastIndexOf(quote))).length;
+ assert.deepEqual(root.anchor,{documentId:doc.id,quote,start,end:start+Array.from(quote).length,removed:false});
+ await page.reload();await margin().getByRole('blockquote',{name:'Quoted document text',exact:true}).getByText(quote,{exact:true}).waitFor();
+ await margin().getByRole('button',{name:'Show quoted text',exact:true}).click();
+ assert.equal(await page.evaluate(()=>window.getSelection().toString()),quote);
+ const sourceBox=await page.locator('.description-source').boundingBox(),marginBox=await margin().boundingBox();
+ assert.ok(marginBox.x>=sourceBox.x+sourceBox.width,'Document thread occupies the desktop margin');
+ const reaction=margin().getByRole('button',{name:'Add 👍 reaction',exact:true});
+ await reaction.focus();await page.getByRole('tooltip',{name:'Add 👍 reaction',exact:true}).waitFor();await reaction.blur();
+ for(const text of ['First document reply.','Second document reply.']){
+  await margin().getByRole('button',{name:'Reply',exact:true}).click();
+  await margin().getByRole('textbox',{name:'Reply to thread',exact:true}).fill(text);
+  await margin().getByRole('button',{name:'Post reply',exact:true}).click();await margin().getByText(text,{exact:true}).waitFor();
+ }
+ assert.deepEqual(await margin().locator('.comment-replies .comment-body').allInnerTexts(),['First document reply.','Second document reply.']);
+ await margin().getByRole('button',{name:'Resolve thread',exact:true}).click();await margin().getByText('Resolved by Administration owner',{exact:true}).waitFor();
+ await margin().getByRole('button',{name:'Reopen',exact:true}).click();await margin().getByText('Please confirm the second occurrence.',{exact:true}).waitFor();
+ await margin().getByRole('button',{name:'Resolve thread',exact:true}).click();await margin().getByRole('button',{name:'Show thread',exact:true}).click();
+ await margin().getByRole('button',{name:'Reply',exact:true}).click();await margin().getByRole('textbox',{name:'Reply to thread',exact:true}).fill('Reply reopens the document thread.');
+ await margin().getByRole('button',{name:'Post reply',exact:true}).click();await margin().getByRole('button',{name:'Resolve thread',exact:true}).waitFor();
+ for(const width of [1440,390]){await page.setViewportSize({width,height:width===390?844:1000});await margin().scrollIntoViewIfNeeded();await proof('document-quoted-thread',width);}
+ await page.setViewportSize({width:1440,height:1000});
+ await go('/app/documents/'+other.id);await page.getByRole('heading',{name:other.title,exact:true}).waitFor();
+ assert.equal(await margin().count(),0,'An identical document never displays the other source thread');
+ const prefix='🪴 Earlier context. ';
+ doc=await api('/documents/'+doc.id,'PATCH',{expectedVersion:doc.version,body:prefix+body});
+ await go('/app/documents/'+doc.id);await margin().getByText('Please confirm the second occurrence.',{exact:true}).waitFor();
+ await margin().getByRole('button',{name:'Show quoted text',exact:true}).click();assert.equal(await page.evaluate(()=>window.getSelection().toString()),quote);
+ assert.equal((await api('/issues/'+issue.identifier+'/discussion')).comments.find(c=>c.id===root.id).anchor.start,start+Array.from(prefix).length);
+ const editor=page.locator('details').filter({has:page.locator('summary').filter({hasText:'Edit document'})});await editor.locator('summary').click();
+ await editor.getByLabel('Document body',{exact:true}).fill(prefix+'🧭 First **café 🧪**. Second occurrence removed.');
+ await editor.getByRole('button',{name:'Publish revision',exact:true}).click();await margin().getByText('Quoted text removed',{exact:true}).waitFor();
+ assert.equal(await margin().locator('del').innerText(),quote);
+ await page.reload();await margin().getByText('Reply reopens the document thread.',{exact:true}).waitFor();
+ await go('/app/issues/'+issue.identifier);
+ const retained=page.getByRole('region',{name:/^Thread started by/}).filter({hasText:'Please confirm the second occurrence.'});
+ await retained.getByText('Quoted text removed',{exact:true}).waitFor();await retained.getByText('Reply reopens the document thread.',{exact:true}).waitFor();
+ assert.equal(await retained.locator('del').innerText(),quote);
+ for(const width of [1440,390]){await page.setViewportSize({width,height:width===390?844:1000});await retained.scrollIntoViewIfNeeded();await proof('issue-document-quote-removed',width);}
+ doc=await api('/documents/'+doc.id);await api('/documents/'+doc.id,'PATCH',{expectedVersion:doc.version,body});
+ assert.equal((await api('/issues/'+issue.identifier+'/discussion')).comments.find(c=>c.id===root.id).anchor.removed,true);
+ await page.setViewportSize({width:1440,height:1000});
+ console.log('PROBE ISSUE-008 document selection: issue Documents → rendered second Unicode occurrence → persisted source and margin; replies, resolution, reload, source removal and issue retention PASS at 1440 and 390');
 }
