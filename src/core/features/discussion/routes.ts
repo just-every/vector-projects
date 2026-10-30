@@ -1,4 +1,4 @@
-import { descriptionAnchorSchema } from "./anchors";
+import { threadAnchorSchema } from "./anchors";
 import { DescriptionAnchorError } from "./anchor-error";
 import { addReactionRoutes } from "../reactions/routes";
 import { fileSettlementDatabase, MutationAccessError } from "../auth/mutation-database";
@@ -28,7 +28,7 @@ const commentSchema = z
   .object({ body: z.string().trim().min(1).max(100000) })
   .strict();
 const itemIdSchema = z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/);
-const newCommentSchema = commentSchema.extend({ parentId: itemIdSchema.optional(), anchor: descriptionAnchorSchema.optional() }).strict();
+const newCommentSchema = commentSchema.extend({ parentId: itemIdSchema.optional(), anchor: threadAnchorSchema.optional() }).strict();
 const resolutionSchema = z.object({ resolved: z.boolean() }).strict();
 /** Denials keep their public status; storage and programming errors propagate.
  * A permission answer is given only to the session that is still current. */

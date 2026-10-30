@@ -506,7 +506,8 @@
     "parent_comment_id",
     "resolved_at",
     "resolved_by_operator_id",
-    "description_anchor"
+    "description_anchor",
+    "document_anchor"
   ],
   "issue_deferral_origins": [
     "issue_id",

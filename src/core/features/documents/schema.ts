@@ -12,6 +12,6 @@ export const parentSummary=z.object({id:documentId,kind:parentKind,name:z.string
 export const documentList=z.object({parent:parentSummary.nullable(),documents:z.array(documentSummary),teams:z.array(z.object({id:documentId,name:z.string()}))});
 export const commentSummary=z.object({id:documentId,body:z.string(),authorName:z.string(),createdAt:z.string()});
 export const commentList=z.object({comments:z.array(commentSummary),nextBeforeComment:documentId.nullable()});
-export const documentDetail=documentSummary.extend({body:z.string(),authorName:z.string(),createdAt:z.string(),references:z.array(z.object({identifier:z.string(),title:z.string(),status:z.object({id:z.string(),name:z.string(),category:z.string()})})),comments:z.array(commentSummary),nextBeforeComment:documentId.nullable()});
+export const documentDetail=documentSummary.extend({issueIdentifier:z.string().nullable(),body:z.string(),authorName:z.string(),createdAt:z.string(),references:z.array(z.object({identifier:z.string(),title:z.string(),status:z.object({id:z.string(),name:z.string(),category:z.string()})})),comments:z.array(commentSummary),nextBeforeComment:documentId.nullable()});
 export const revisionList=z.object({revisions:z.array(z.object({id:documentId,version:z.number(),title:z.string(),body:z.string(),authorName:z.string(),createdAt:z.string()})),nextBeforeVersion:z.number().nullable()});
 export const specification=z.object({id:documentId,title:z.string()}).nullable();

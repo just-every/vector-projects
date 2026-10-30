@@ -1,3 +1,4 @@
+import {freshTarget,stageArchive,finalBody,targetCall,targetSignIn,type ArchiveRecords} from './http-archive-fixture';
 import {documentReferenceScenario} from './reference-scenario';
 import {env} from 'cloudflare:workers';
 import {expect} from 'vitest';
@@ -48,12 +49,25 @@ export async function documentJourney(){
  expect((await read(await request('/api/issues/'+issue.identifier+'/specification','GET',undefined,member))).specification).toEqual({id:teamDoc.id,title:teamDoc.title});
  await read(await f.call('/issues/'+issue.identifier+'/specification','PUT',{documentId:doc.id}));
  const reference=await documentReferenceScenario(f);
+ // Persist both live and removed document anchors in the native issue graph.
+ const quote=issueDoc.body,start=0;
+ const anchored=await read(await f.call('/issues/'+issue.identifier+'/comments','POST',{body:'synthetic-vector-portable-quote',anchor:{documentId:issueDoc.id,quote,start,end:Array.from(quote).length,expectedVersion:issueDoc.version,expectedBody:issueDoc.body}}),201);
+ const reply=await read(await f.call('/issues/'+issue.identifier+'/comments','POST',{body:'synthetic-vector-portable-reply',parentId:anchored.id}),201);
+ await read(await f.call('/documents/'+issueDoc.id,'PATCH',{expectedVersion:issueDoc.version,body:'synthetic-vector-source-removed'}));
+ const portable=await read(await f.call('/documents','POST',{parentKind:'issue',parentId:issue.id,title:'synthetic-vector-live-quote',body:'🧭 café 🧪'}),201);
+ const live=await read(await f.call('/issues/'+issue.identifier+'/comments','POST',{body:'synthetic-vector-live-thread',anchor:{documentId:portable.id,quote:'café 🧪',start:2,end:8,expectedVersion:portable.version,expectedBody:portable.body}}),201);
+ const beforeThreads=(await read(await f.call('/issues/'+issue.identifier+'/discussion'))).comments;
+ expect(beforeThreads.find((c:any)=>c.id===anchored.id).anchor).toEqual({documentId:issueDoc.id,quote,start,end:Array.from(quote).length,removed:true});
+ expect(beforeThreads.find((c:any)=>c.id===live.id).anchor).toMatchObject({documentId:portable.id,quote:'café 🧪',removed:false});
+ const native=await env.DB.prepare('SELECT '+(await import('../../src/core/features/data/import/native-snapshot')).snapshotExpression+' value FROM issues i WHERE id=?').bind(issue.id).first<string>('value');
+ expect(JSON.parse(native!).comments.find((c:any)=>c.id===anchored.id).document_anchor).toContain(issueDoc.id);
  // A native archive retains the document, parent identity, both edits and issue link.
  const exported=await read(await f.call('/portability/exports','POST',{}),201);
  let state={phase:'building'};while(state.phase==='building')state=await read(await f.call('/portability/exports/'+exported.id+'/advance','POST',{maxParts:16}));
  const download=await f.call('/portability/exports/'+exported.id+'/download');expect(download.status).toBe(200);
- const items:any[]=[];for await(const record of readArchive(download.body!))if(record.kind==='part')items.push(...record.items);
+ const items:any[]=[],records:ArchiveRecords=[];for await(const record of readArchive(download.body!)){records.push(record);if(record.kind==='part')items.push(...record.items);}
  const rows=(table:string)=>items.filter(item=>item.kind==='row'&&item.table===table).map(item=>item.row);
+ expect(rows('issue_comments')).toContainEqual(expect.objectContaining({id:anchored.id,document_anchor:JSON.stringify(beforeThreads.find((c:any)=>c.id===anchored.id).anchor)}));
  expect(rows('document_issue_references')).toContainEqual(expect.objectContaining({document_id:reference.doc.id,target_issue_id:reference.target.id,removed:0}));
  expect(rows('documents')).toContainEqual(expect.objectContaining({id:issueDoc.id,parent_kind:'issue',parent_id:issue.id}));
  expect(rows('issues')).toContainEqual(expect.objectContaining({id:issue.id}));
@@ -68,6 +82,17 @@ export async function documentJourney(){
  expect(rows('initiatives')).toContainEqual(expect.objectContaining({id:initiative.id}));
  await read(await f.call('/issues/'+issue.identifier+'/specification','DELETE'));
  expect((await read(await f.call('/issues/'+issue.identifier))).specification).toBeNull();
+ const destinationCookie=await freshTarget(),job=await stageArchive(records,destinationCookie);
+ await read(await targetCall('/api/portability/imports/'+job+'/finalize','POST',finalBody(records),destinationCookie));
+ const historical=await targetSignIn();
+ const restored=await read(await targetCall('/api/issues/'+issue.identifier+'/discussion','GET',undefined,historical));
+ expect(restored.comments).toEqual(beforeThreads);
+ expect(restored.comments.find((c:any)=>c.id===reply.id)).toMatchObject({parentId:anchored.id,body:'synthetic-vector-portable-reply'});
+ expect(await read(await targetCall('/api/documents/'+portable.id,'GET',undefined,historical))).toMatchObject({id:portable.id,body:portable.body,parentId:issue.id});
+ const restoredDoc=await read(await targetCall('/api/documents/'+issueDoc.id,'GET',undefined,historical));
+ await read(await targetCall('/api/documents/'+issueDoc.id,'PATCH',{expectedVersion:restoredDoc.version,body:issueDoc.body},historical));
+ expect((await read(await targetCall('/api/issues/'+issue.identifier+'/discussion','GET',undefined,historical))).comments.find((c:any)=>c.id===anchored.id).anchor.removed).toBe(true);
+ console.log('PROBE ISSUE-008 native archive: export → pristine HTTP restore → fresh historical sign-in retains live and removed source identities, quotes and replies; restored matching text never resurrects an anchor');
  expect((await env.DB.prepare('PRAGMA foreign_key_check').all()).results).toEqual([]);
 }
 export async function documentRoles(){
