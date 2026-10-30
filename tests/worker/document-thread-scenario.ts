@@ -1,7 +1,6 @@
 import {env} from 'cloudflare:workers';
 import {expect} from 'vitest';
 import {collaborationFixture} from './collaboration-fixture';
-import {beforeBatch} from './administration-fixture';
 import {request} from './base-auth-fixture';
 import {snapshot} from './role-fixture';
 
@@ -54,9 +53,18 @@ export async function documentThreadScenario(){
   expect(denied.status,await denied.clone().text()).toBe(status);expect(await snapshot(changedTables)).toEqual(before);
  }
  before=await snapshot(changedTables);
- const racing=beforeBatch(async()=>{doc=await read(await f.call('/documents/'+doc.id,'PATCH',{expectedVersion:doc.version,body:body+' Changed.'}));});
+ let raced=false;
+ const racing=new Proxy(env.DB,{get(target,key){
+  if(key==='batch')return async(statements:D1PreparedStatement[])=>{
+   if(!raced&&statements.some(statement=>(statement as unknown as {statement:string}).statement.includes('document anchor changed'))){
+    raced=true;doc=await read(await f.call('/documents/'+doc.id,'PATCH',{expectedVersion:doc.version,body:body+' Changed.'}));
+   }
+   return target.batch(statements);
+  };
+  const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value;
+ }});
  const stale=await request('/api'+path+'/comments','POST',{body:'synthetic-vector-racing-quote',anchor:current},f.cookie,{DB:racing});
- expect(stale.status,await stale.clone().text()).toBe(409);expect(await snapshot(changedTables)).toEqual(before);
+ expect(raced).toBe(true);expect(stale.status,await stale.clone().text()).toBe(409);expect(await snapshot(changedTables)).toEqual(before);
  // A document in a project is not admitted by linking it as a specification.
  const project=(await f.mutate('/settings/projects','POST',{name:'synthetic-vector-quote-project',leadOperatorId:f.owner})).projects.find(p=>p.name==='synthetic-vector-quote-project')!;
  const spec=await read(await f.call('/documents','POST',{parentKind:'project',parentId:project.id,title:'synthetic-vector-quote-spec',body}),201);
@@ -69,6 +77,9 @@ export async function documentThreadScenario(){
  expect((await comments()).find(c=>c.id===root)).toMatchObject({body:null,anchor:null,deletedAt:expect.any(String)});
  expect((await comments()).filter(c=>c.parentId===root).map(c=>c.id)).toEqual([first,second,third]);
  expect(await env.DB.prepare("SELECT actor_operator_id actor FROM audit_records WHERE action='comment.deleted' AND subject_id=?").bind(root).first()).toEqual({actor:f.cara});
+ const deletion=(await read(await f.call(path))).activity.find((entry:any)=>entry.kind==='comment.deleted'&&entry.nextValue.id===root);
+ expect(deletion).toMatchObject({actor:expect.any(String),nextValue:{id:root}});
+ expect(deletion.actor).toBe((await env.DB.prepare('SELECT name FROM operators WHERE id=?').bind(f.cara).first<string>('name')));
  expect(await env.DB.prepare('SELECT count(*) n FROM issue_followers WHERE issue_id=? AND operator_id=?').bind(issue.id,f.bob).first('n')).toBe(1);
  await read(await f.call('/settings/teams/'+team.id+'/members/'+f.cara,'PUT',{role:'member'}));before=await snapshot(changedTables);
  expect((await f.any(f.caraCookie,path+'/comments/'+unicodeRoot,'DELETE')).status).toBe(403);expect(await snapshot(changedTables)).toEqual(before);

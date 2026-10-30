@@ -1,9 +1,10 @@
+import {expect} from '@playwright/test';
 import {inviteReader,readerResponse} from './role-reader-support.mjs';
 import {roleScreens} from './role-ui-support.mjs';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {mkdir} from 'node:fs/promises';
-import {beforePrivateNavigation} from './collaboration-navigation.mjs';
+import {beforePrivateNavigation,settleReads} from './collaboration-navigation.mjs';
 const require=createRequire(import.meta.url);
 
 export async function projectDocumentsJourney({page,base,api,output,runtime}){
@@ -204,7 +205,7 @@ async function documentReferenceAccessJourney({page,base,api,output,runtime}){
 }
 
 /** ISSUE-008: select rendered document text and retain its native issue thread. */
-async function documentQuoteJourney({page,base,api,proof}){
+export async function documentQuoteJourney({page,base,api,proof}){
  await page.setViewportSize({width:1440,height:1000});
  const team=(await api('/settings/administration')).teams.find(t=>!t.isPrivate&&!t.archivedAt);
  const issue=await api('/issues','POST',{teamId:team.id,title:'synthetic-vector-document-quote-'+Date.now()});
@@ -216,13 +217,15 @@ async function documentQuoteJourney({page,base,api,proof}){
  const documents=page.getByRole('region',{name:'Documents',exact:true});
  await documents.locator('summary').first().click();await documents.getByRole('link',{name:doc.title,exact:true}).click();
  await page.getByRole('heading',{name:doc.title,exact:true}).waitFor();
+ await page.locator('form[aria-label="Edit document"] fieldset:enabled').waitFor({state:'attached'});
+ await settleReads(page);
  // The second occurrence is selected in rendered Markdown, after a Unicode prefix.
  await page.locator('.description-source strong [data-description-start]').nth(1).evaluate(element=>{
   const range=document.createRange();range.selectNodeContents(element);
   const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);
  });
  const select=page.getByRole('button',{name:'Comment on selection',exact:true});
- await select.focus();await select.press('Enter');
+ await expect(select).toBeEnabled();await select.focus();await select.press('Enter');
  const margin=()=>page.getByRole('complementary',{name:'Document threads',exact:true});
  await margin().getByRole('textbox',{name:'Comment on quoted text',exact:true}).fill('Please confirm the second occurrence.');
  await margin().getByRole('button',{name:'Start thread',exact:true}).click();
@@ -240,10 +243,10 @@ async function documentQuoteJourney({page,base,api,proof}){
  for(const text of ['First document reply.','Second document reply.']){
   await margin().getByRole('button',{name:'Reply',exact:true}).click();
   await margin().getByRole('textbox',{name:'Reply to thread',exact:true}).fill(text);
-  await margin().getByRole('button',{name:'Post reply',exact:true}).click();await margin().getByText(text,{exact:true}).waitFor();
+  await margin().getByRole('button',{name:'Post reply',exact:true}).click();await margin().getByRole('list',{name:'Replies',exact:true}).getByText(text,{exact:true}).waitFor();
  }
  assert.deepEqual(await margin().locator('.comment-replies .comment-body').allInnerTexts(),['First document reply.','Second document reply.']);
- await margin().getByRole('button',{name:'Resolve thread',exact:true}).click();await margin().getByText('Resolved by Administration owner',{exact:true}).waitFor();
+ await margin().getByRole('button',{name:'Resolve thread',exact:true}).click();await margin().getByText('Resolved by Administration owner').waitFor();assert.equal(await margin().locator('.comment-entry').count(),0,'Resolved document thread collapses to attributed summary');
  await margin().getByRole('button',{name:'Reopen',exact:true}).click();await margin().getByText('Please confirm the second occurrence.',{exact:true}).waitFor();
  await margin().getByRole('button',{name:'Resolve thread',exact:true}).click();await margin().getByRole('button',{name:'Show thread',exact:true}).click();
  await margin().getByRole('button',{name:'Reply',exact:true}).click();await margin().getByRole('textbox',{name:'Reply to thread',exact:true}).fill('Reply reopens the document thread.');
