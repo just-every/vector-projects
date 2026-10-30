@@ -34,9 +34,10 @@ export async function listDocuments(db:D1Database,actor:string,kind?:ParentKind,
 }
 export async function readDocument(db:D1Database,actor:string,id:string){
  const access=await settingsActor(db,actor);
- const row=await db.prepare(`SELECT d.id,d.title,d.body,d.parent_kind parentKind,d.parent_id parentId,d.version,d.created_at createdAt,d.updated_at updatedAt,o.name authorName,
+ const row=await db.prepare(`SELECT d.id,d.title,d.body,
+ (SELECT i.identifier FROM issues i WHERE d.parent_kind='issue' AND i.id=d.parent_id) issueIdentifier,d.parent_kind parentKind,d.parent_id parentId,d.version,d.created_at createdAt,d.updated_at updatedAt,o.name authorName,
  (SELECT json_group_array(json_object('id',c.id,'body',c.body,'authorName',a.name,'createdAt',c.created_at)) FROM (SELECT * FROM document_comments WHERE document_id=d.id ORDER BY id DESC LIMIT 11) c JOIN operators a ON a.id=c.author_operator_id) comments
- FROM documents d JOIN operators o ON o.id=d.author_operator_id WHERE d.id=? AND d.workspace_id=?`).bind(id,access.workspace_id).first<{id:string;title:string;body:string;parentKind:ParentKind;parentId:string;version:number;createdAt:string;updatedAt:string;authorName:string;comments:string}>();
+ FROM documents d JOIN operators o ON o.id=d.author_operator_id WHERE d.id=? AND d.workspace_id=?`).bind(id,access.workspace_id).first<{id:string;title:string;body:string;parentKind:ParentKind;parentId:string;issueIdentifier:string|null;version:number;createdAt:string;updatedAt:string;authorName:string;comments:string}>();
  if(!row)throw new IntegrationError(404,'document_not_found');
  const comments=JSON.parse(row.comments) as {id:string;body:string;authorName:string;createdAt:string}[];
  const references=await readIssueReferences(db,actor,extractIssueIdentifiers(row.body));

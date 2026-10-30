@@ -1,3 +1,4 @@
+import {documentThreadScenario} from './document-thread-scenario';
 import { env } from "cloudflare:workers";
 import { expect, it } from "vitest";
 import { contractWith } from "../contract-tags";
@@ -80,6 +81,8 @@ contractWith(
     expect((await comments()).filter(c=>c.parentId===root).map(c=>c.id)).toEqual([first,second,third]);
     expect((await f.call(`/issues/${issue.identifier}`, "PATCH", {expectedVersion:current.version,description:source})).status).toBe(200);
     expect((await comments())[0].anchor?.removed).toBe(true, "Restoring matching text never resurrects an old anchor");
+
+    await documentThreadScenario();
 
     // Two identical quotes still refer to different occurrences.
     const repeat = {quote:"repeat",start:source.lastIndexOf("repeat"),end:source.lastIndexOf("repeat")+6,expectedDescription:source};

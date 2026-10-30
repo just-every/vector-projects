@@ -19,7 +19,7 @@ export async function applyAuthRuntimeMigrations(db:D1Database) {
 /** `signIn: 'after'` proves the migrations sign-in itself needs: the store holds
  * sessions and a token written at the prior schema, and the owner signs in only
  * once the upgrade is applied. */
-export async function provePopulatedUpgrade(boundaryName:string,schema?:{added:string[];removed:string[];changed?:string[];until?:string;preserveAfter?:string;signIn?:'after'},populated:string[]=[],populate?:(cookie:string)=>Promise<void>) {
+export async function provePopulatedUpgrade(boundaryName:string,schema?:{added:string[];removed:string[];changed?:string[];until?:string;preserveAfter?:string;signIn?:'after'},populated:string[]=[],populate?:(cookie:string)=>Promise<void>,populateCheckpoint?:()=>Promise<void>) {
  const migrations=inject('migrations'),boundary=migrations.findIndex(row=>row.name===boundaryName);
  await applyD1Migrations(env.DB,migrations.slice(0,2));
  await insertHistoricalSample(env.DB,new Date('2026-10-01T00:00:00Z'));
@@ -71,6 +71,7 @@ export async function provePopulatedUpgrade(boundaryName:string,schema?:{added:s
  const checkpoint=schema?.preserveAfter?migrations.findIndex(row=>row.name===schema.preserveAfter)+1:until;
  expect(checkpoint).toBeGreaterThanOrEqual(until);
  await applyD1Migrations(env.DB,migrations.slice(until,checkpoint));
+ await populateCheckpoint?.();
  const retained=[] as Array<{name:string;columns:string;rows:unknown[]}>;
  if(schema?.preserveAfter) {
   const current=(await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name!='d1_migrations' ORDER BY name").all<{name:string}>()).results;

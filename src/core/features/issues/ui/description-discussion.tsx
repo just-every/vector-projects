@@ -73,8 +73,8 @@ function locateQuote(container: HTMLElement, source: string, anchor: Description
   a.element.scrollIntoView({block:'center'});
 }
 
-export function DescriptionDiscussion({ identifier, description, version, writable, onRefresh, children }: {
-  identifier: string; description: string; version: number; writable: boolean; onRefresh: () => void; children: ReactNode;
+export function DescriptionDiscussion({ identifier, description, version, writable, onRefresh, children, documentSource }: {
+  documentSource?: {id:string}; identifier: string; description: string; version: number; writable: boolean; onRefresh: () => void; children: ReactNode;
 }) {
   const container = useRef<HTMLDivElement>(null), previousVersion = useRef(version);
   const [selection, setSelection] = useState<DescriptionAnchorInput | null>(null),
@@ -98,22 +98,23 @@ export function DescriptionDiscussion({ identifier, description, version, writab
     document.addEventListener('selectionchange', select);
     return () => document.removeEventListener('selectionchange', select);
   }, [description, writable]);
-  const threads = commentThreads(resource.data?.comments ?? []).filter(({ root }) => root.anchor);
+  const threads = commentThreads(resource.data?.comments ?? []).filter(({ root }) => root.anchor && (documentSource ? root.anchor.documentId === documentSource.id : !root.anchor.documentId));
+  const sourceName = documentSource ? 'Document' : 'Description';
   return <div className="description-discussion">
     <div className="description-source" ref={container}>{children}
       {writable && description && <button type="button" disabled={!selection || busy || !hydrated} onClick={() => { setDraft(selection); setSelection(null); }}>
         Comment on selection
       </button>}
     </div>
-    {(threads.length > 0 || draft || error || resource.error) && <aside className="description-thread-margin" aria-label="Description threads">
-      <h2>Description threads</h2>
+    {(threads.length > 0 || draft || error || resource.error) && <aside className="description-thread-margin" aria-label={sourceName+" threads"}>
+      <h2>{sourceName} threads</h2>
       <ReactionProvider identifier={identifier}>{threads.map(({ root, replies }) => <CommentThread key={root.id} root={root} replies={replies}
         onLocateQuote={anchor => { if(container.current) locateQuote(container.current, description, anchor); }}
         writable={writable} identifier={identifier} data={resource.data!} busy={busy} mutate={mutate}
         onLinksChanged={() => { resource.refreshAfterMutation(); onRefresh(); }} />)}</ReactionProvider>
       {draft && <form className="issue-mutation-form comment-composer" onSubmit={event => {
         event.preventDefault();
-        void mutate('comments', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ body, anchor: draft }) }, () => { setDraft(null); setBody(''); });
+        void mutate('comments', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ body, anchor: documentSource && draft ? { documentId:documentSource.id, expectedVersion:version, expectedBody:draft.expectedDescription, quote:draft.quote, start:draft.start, end:draft.end } : draft }) }, () => { setDraft(null); setBody(''); });
       }}>
         <blockquote>{draft.quote}</blockquote>
         <label>Comment on quoted text<MentionTextarea aria-label="Comment on quoted text" required maxLength={100000} disabled={busy || !hydrated} value={body} onValueChange={setBody}/></label>
@@ -121,7 +122,7 @@ export function DescriptionDiscussion({ identifier, description, version, writab
         <button type="button" disabled={busy} onClick={() => { setDraft(null); setBody(''); }}>Cancel</button>
       </form>}
       {error && <p role="alert">{error}</p>}
-      {resource.error && <p role="alert">{resource.error.message} <button type="button" onClick={resource.reload}>Retry description threads</button></p>}
+      {resource.error && <p role="alert">{resource.error.message} <button type="button" onClick={resource.reload}>Retry {sourceName.toLowerCase()} threads</button></p>}
     </aside>}
   </div>;
 }
