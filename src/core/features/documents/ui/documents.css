@@ -31,3 +31,6 @@
 .document-inspector-pair>.document-inspector:has(>details[open]) { grid-column:1/-1; }
 
 .document-inspector-pair>.document-inspector>details { margin:0; padding:0; }
+
+.document-page .description-discussion button { min-height:44px; font:inherit; }
+.document-page .comment-timestamp { font-size:13px; }
