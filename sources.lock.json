@@ -4974,19 +4974,19 @@
       "executable": false
     },
     "src/core/features/drafts/repository.ts": {
-      "sha256": "bb6b92af842f106ddf8682222bdd341bb6e0d107e7351375b1f13f1dff1e5022",
+      "sha256": "4d8c5c86ab9a9aa469bea0a03a9f1b52cd91d76ca653de1b7def7781a0c5fd24",
       "executable": false
     },
     "src/core/features/drafts/routes.ts": {
-      "sha256": "888d1b3b0cfcea1743622ad2a510ce8f29bccb04c0b6bce435da1f20cf0424c9",
+      "sha256": "d599356978376b2fbbe596303465803c4dc8829b774911dd0ae77b83ba2a5ec1",
       "executable": false
     },
     "src/core/features/drafts/schema.ts": {
-      "sha256": "7348c618cdd5b85558ba9356dccf3c444e24cbe37124878cab1ccf2e4f6ffc48",
+      "sha256": "74f2ac916a2a974cf7bb2efa8300650aca88ebe809f71c79781179db9321902f",
       "executable": false
     },
     "src/core/features/drafts/use-drafts.ts": {
-      "sha256": "586060514491403645505ca0595715664665b37c543498f67d15dc6d625b2863",
+      "sha256": "a5d774ee3cf164548dfe80b608cdf5bd63a64319517fc5f7be59df50219526bb",
       "executable": false
     },
     "src/core/features/due-reminders/calendar.ts": {
@@ -8422,7 +8422,7 @@
       "executable": false
     },
     "tests/worker/account-drafts.test.ts": {
-      "sha256": "e25a59ca43d1aa7933346ecce73648702cc6ceb9517080d676fd2d2c03aecdbb",
+      "sha256": "7e050f1b80fae8bb9e40164296c8bcd936019a40303423887f7b4120cb8708c9",
       "executable": false
     },
     "tests/worker/administration-fixture.ts": {
@@ -8586,7 +8586,7 @@
       "executable": false
     },
     "tests/worker/data-http.test.ts": {
-      "sha256": "a975abbc326bebc7934b0207e0e1a671a898d770d87331956cb3aa0a67f99e16",
+      "sha256": "5cb8f79d613fde5888561426a226095691355b18dc92d485ed2d69d9dabd3562",
       "executable": false
     },
     "tests/worker/data-import-atomic.test.ts": {
@@ -9038,7 +9038,7 @@
       "executable": false
     },
     "tests/worker/role-viewer-census.ts": {
-      "sha256": "cc945fc366371c8853032104a7de030e13f6ba357a2370ac4ba20686ba2537c6",
+      "sha256": "42689669637d3297b64c6e6b696fcb49021b9ad180bf2678e3768c79bc1bad52",
       "executable": false
     },
     "tests/worker/role-viewer-journey.ts": {

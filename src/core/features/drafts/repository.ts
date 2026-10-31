@@ -1,4 +1,3 @@
-import { createUlid } from '../../shared/ids';
 import { visibleTeam } from '../roles/visibility-sql';
 import type { AccountDraft, DraftReference } from './schema';
 import type { NewIssueDraft } from '../issues/ui/new-issue-draft';
@@ -17,9 +16,9 @@ export async function readDraft(db: D1Database, actor: string, id: string) {
   const row = await db.prepare(select + ' AND d.id=?').bind(actor, id).first<Row>();
   return row ? project(row) : null;
 }
-export async function saveDraft(db: D1Database, actor: string, values: NewIssueDraft, reference?: DraftReference) {
-  const id = reference?.id ?? createUlid(new Date()), at = new Date().toISOString();
-  if (reference) {
+export async function saveDraft(db: D1Database, actor: string, values: NewIssueDraft, reference: DraftReference) {
+  const id = reference.id, at = new Date().toISOString();
+  if (reference.revision > 0) {
     const result = await db.prepare(`UPDATE issue_drafts SET body_json=?,team_id=?,revision=revision+1,updated_at=?
       WHERE id=? AND author_operator_id=? AND revision=? AND state='open'
       AND workspace_id=(SELECT workspace_id FROM operators WHERE id=?)
@@ -27,11 +26,13 @@ export async function saveDraft(db: D1Database, actor: string, values: NewIssueD
       .bind(JSON.stringify(values), values.teamId, at, id, actor, reference.revision, actor, values.teamId).all();
     return { written: result.results.length === 1, draft: await readDraft(db, actor, id) };
   }
-  await db.prepare(`INSERT INTO issue_drafts(id,workspace_id,author_operator_id,team_id,body_json,created_at,updated_at)
+  const created = await db.prepare(`INSERT INTO issue_drafts(id,workspace_id,author_operator_id,team_id,body_json,created_at,updated_at)
     SELECT ?,o.workspace_id,o.id,t.id,?,?,? FROM operators o JOIN teams t ON t.workspace_id=o.workspace_id
-    WHERE o.id=? AND o.removed_at IS NULL AND t.id=? AND t.archived_at IS NULL`)
-    .bind(id, JSON.stringify(values), at, at, actor, values.teamId).run();
-  return { written: true, draft: await readDraft(db, actor, id) };
+    WHERE o.id=? AND o.removed_at IS NULL AND t.id=? AND t.archived_at IS NULL
+    ON CONFLICT(id) DO NOTHING RETURNING id`)
+    .bind(id, JSON.stringify(values), at, at, actor, values.teamId).all();
+  const exists = Boolean(await db.prepare('SELECT 1 FROM issue_drafts WHERE id=?').bind(id).first());
+  return { written: created.results.length === 1, exists, draft: await readDraft(db, actor, id) };
 }
 export async function discardDraft(db: D1Database, actor: string, reference: DraftReference) {
   const result = await db.prepare(`UPDATE issue_drafts SET state='discarded',body_json=NULL,revision=revision+1,updated_at=?

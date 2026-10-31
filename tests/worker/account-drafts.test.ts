@@ -23,8 +23,11 @@ it('[ISSUE-028] private account drafts survive independent sessions, reconcile c
   const labelIds = (await f.state()).labels.filter(row => row.name.startsWith('synthetic-vector-280')).map(row => row.id);
   expect(labelIds).toHaveLength(2);
   const values = { ...emptyNewIssueDraft, teamId: team.id, title: 'synthetic-vector-2803', labelIds };
-  const first = (await json<{ draft: AccountDraft }>(await f.call('/drafts', 'POST', { values }), 201)).draft;
+  const first = (await json<{ draft: AccountDraft }>(await f.call('/drafts', 'POST', { id: createUlid(new Date()), values }), 201)).draft;
   expect(first).toMatchObject({ values, team: team.name, revision: 1 });
+  // A lost first-save response retries the same form identity, never a second row.
+  expect((await json<{draft:AccountDraft}>(await f.call('/drafts','POST',{id:first.id,values}),409)).draft).toEqual(first);
+  expect((await json<{drafts:AccountDraft[]}>(await f.call('/drafts'))).drafts).toEqual([first]);
   expect(Number.isFinite(Date.parse(first.updatedAt))).toBe(true);
   const secondSession = await signIn(); expect(secondSession).not.toBe(f.cookie);
   expect((await json<{ drafts: AccountDraft[] }>(await f.any(secondSession, '/drafts'))).drafts).toEqual([first]);
@@ -78,11 +81,13 @@ it('[ISSUE-028] private account drafts survive independent sessions, reconcile c
   expect(issue.title).toBe(later.title); expect(issue.labels.map(row => row.id).sort()).toEqual([...labelIds].sort());
   for (const cookie of [f.cookie, secondSession]) expect((await json<{ drafts: AccountDraft[] }>(await f.any(cookie, '/drafts'))).drafts).toEqual([]);
   expect((await submit(secondSession)).status).toBe(409);
+  expect((await json<{draft:AccountDraft|null}>(await f.call('/drafts','POST',{id:first.id,values}),409)).draft).toBeNull();
   expect((await f.call(path, 'PATCH', { revision: 2, values })).status).toBe(409);
   expect(await env.DB.prepare('SELECT body_json FROM issue_drafts WHERE id=?').bind(first.id).first('body_json')).toBeNull();
-  const discard = (await json<{ draft: AccountDraft }>(await f.call('/drafts', 'POST', { values }), 201)).draft;
+  const discard = (await json<{ draft: AccountDraft }>(await f.call('/drafts', 'POST', { id: createUlid(new Date()), values }), 201)).draft;
   expect((await f.any(secondSession, '/drafts/' + discard.id, 'DELETE', { revision: 1 })).status).toBe(200);
   expect((await f.call('/drafts/' + discard.id, 'PATCH', { revision: 1, values })).status).toBe(409);
+  expect((await json<{draft:AccountDraft|null}>(await f.call('/drafts','POST',{id:discard.id,values}),409)).draft).toBeNull();
   expect((await json<{ drafts: AccountDraft[] }>(await f.call('/drafts'))).drafts).toEqual([]);
   // Revoking a captured session while its body arrives cannot save anything.
   const revoked = await signIn(), held = heldBody();
@@ -91,30 +96,30 @@ it('[ISSUE-028] private account drafts survive independent sessions, reconcile c
   await Promise.race([held.reading, pending.then(r => { throw Error('Body not reached: ' + r.status); })]);
   expect((await request('/auth/signout', 'POST', {}, revoked)).status).toBe(204);
   const afterRevocation = (await rows()).results;
-  held.release(JSON.stringify({ values }));
+  held.release(JSON.stringify({ id:createUlid(new Date()), values }));
   expect((await pending).status).toBe(401); expect((await rows()).results).toEqual(afterRevocation);
   // Current creation authority also governs saving drafts, including invited Guests.
   await env.DB.prepare("UPDATE operators SET role='viewer' WHERE id=?").bind(f.bob).run();
-  expect((await f.any(f.bobCookie, '/drafts', 'POST', { values })).status).toBe(403);
+  expect((await f.any(f.bobCookie, '/drafts', 'POST', { id: createUlid(new Date()), values })).status).toBe(403);
   expect((await rows()).results).toEqual(afterRevocation);
   await env.DB.prepare("UPDATE operators SET role='guest' WHERE id=?").bind(f.bob).run();
   await env.DB.prepare('DELETE FROM team_members WHERE operator_id=?').bind(f.bob).run();
-  expect((await f.any(f.bobCookie, '/drafts', 'POST', { values })).status).toBe(404);
+  expect((await f.any(f.bobCookie, '/drafts', 'POST', { id: createUlid(new Date()), values })).status).toBe(404);
   await env.DB.prepare("INSERT INTO team_members(team_id,operator_id,role,created_at,updated_at) VALUES(?,?,'member',?,?)").bind(team.id, f.bob, new Date().toISOString(), new Date().toISOString()).run();
-  const guestSubmitted = (await json<{ draft: AccountDraft }>(await f.any(f.bobCookie, '/drafts', 'POST', { values }), 201)).draft;
+  const guestSubmitted = (await json<{ draft: AccountDraft }>(await f.any(f.bobCookie, '/drafts', 'POST', { id: createUlid(new Date()), values }), 201)).draft;
   const guestIssue=await createServerApp().request(origin+'/api/issues',{method:'POST',
     headers:{Host:new URL(origin).host,Cookie:f.bobCookie,Origin:origin,'content-type':'application/json',
       'x-vector-draft-id':guestSubmitted.id,'x-vector-draft-revision':'1'},body:JSON.stringify({teamId:team.id,title:values.title,labelIds})},bindings);
   expect((await json<{title:string}>(guestIssue,201)).title).toBe(values.title);
   expect((await json<{drafts:AccountDraft[]}>(await f.any(f.bobCookie,'/drafts'))).drafts).toEqual([]);
-  const guest = (await json<{ draft: AccountDraft }>(await f.any(f.bobCookie, '/drafts', 'POST', { values }), 201)).draft;
+  const guest = (await json<{ draft: AccountDraft }>(await f.any(f.bobCookie, '/drafts', 'POST', { id: createUlid(new Date()), values }), 201)).draft;
   await env.DB.prepare('DELETE FROM team_members WHERE operator_id=?').bind(f.bob).run();
   expect((await f.any(f.bobCookie, '/drafts/' + guest.id)).status).toBe(404);
   const guestState = (await rows()).results;
   expect([403,404]).toContain((await f.any(f.bobCookie, '/drafts/' + guest.id, 'PATCH', { values, revision: 1 })).status);
   expect((await rows()).results).toEqual(guestState);
   await env.DB.prepare("UPDATE operators SET role='member' WHERE id=?").bind(f.bob).run();
-  const own=(await json<{draft:AccountDraft}>(await f.any(f.bobCookie,'/drafts','POST',{values}),201)).draft;
+  const own=(await json<{draft:AccountDraft}>(await f.any(f.bobCookie,'/drafts','POST',{id:createUlid(new Date()),values}),201)).draft;
   const workspace=createUlid(new Date());
   await env.DB.prepare('INSERT INTO workspace_settings(id,name,timezone,created_at,updated_at) SELECT ?,name,timezone,created_at,updated_at FROM workspace_settings LIMIT 1').bind(workspace).run();
   await env.DB.prepare('UPDATE operators SET workspace_id=? WHERE id=?').bind(workspace,f.bob).run();

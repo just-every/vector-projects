@@ -19,7 +19,7 @@ export const draftSchema = z.object({
 });
 export const draftsSchema = z.object({ drafts: z.array(draftSchema) });
 export const draftReceiptSchema = z.object({ draft: draftSchema.nullable() });
-export const draftWriteSchema = z.object({ values: draftValuesSchema, revision: z.number().int().positive().optional() }).strict();
+export const draftWriteSchema = z.object({ id: z.string().regex(/^[0-9A-HJKMNP-TV-Z]{26}$/).optional(), values: draftValuesSchema, revision: z.number().int().positive().optional() }).strict();
 export const draftRevisionSchema = z.object({ revision: z.number().int().positive() }).strict();
 export type AccountDraft = z.output<typeof draftSchema>;
 export type DraftReference = { id: string; revision: number };
