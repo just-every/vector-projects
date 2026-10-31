@@ -23,7 +23,7 @@ export async function saveDraft(db: D1Database, actor: string, values: NewIssueD
     const result = await db.prepare(`UPDATE issue_drafts SET body_json=?,team_id=?,revision=revision+1,updated_at=?
       WHERE id=? AND author_operator_id=? AND revision=? AND state='open'
       AND workspace_id=(SELECT workspace_id FROM operators WHERE id=?)
-      AND EXISTS(SELECT 1 FROM teams WHERE id=? AND archived_at IS NULL) RETURNING id`)
+      AND EXISTS(SELECT 1 FROM teams WHERE id=? AND workspace_id=issue_drafts.workspace_id AND archived_at IS NULL) RETURNING id`)
       .bind(JSON.stringify(values), values.teamId, at, id, actor, reference.revision, actor, values.teamId).all();
     return { written: result.results.length === 1, draft: await readDraft(db, actor, id) };
   }

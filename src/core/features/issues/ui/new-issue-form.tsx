@@ -233,7 +233,7 @@ export function NewIssueForm() {
       >
         <fieldset
           className="new-issue-controls"
-          disabled={submitting || !draftReady || !account.initialized}
+          disabled={submitting || !draftReady || !account.initialized || account.busy}
           aria-label="Issue creation fields"
         >
           <header className="new-issue-header">

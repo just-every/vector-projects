@@ -1,3 +1,6 @@
+import { Hono } from 'hono';
+import { createApiApp } from '../../src/core/app/api';
+import type { AppEnvironment } from '../../src/core/app/bindings';
 import { createUlid } from '../../src/core/shared/ids';
 import { env } from 'cloudflare:workers';
 import { expect, it } from 'vitest';
@@ -39,7 +42,7 @@ it('[ISSUE-028] private account drafts survive independent sessions, reconcile c
   expect((await f.any(f.bobCookie, path)).status).toBe(404);
   expect((await f.any(f.bobCookie, path, 'PATCH', { revision: 2, values: later })).status).toBe(409);
   expect((await f.any(f.bobCookie, path, 'DELETE', { revision: 2 })).status).toBe(409);
-  for (const route of ['/search?q=' + values.title, '/issues?q=' + values.title])
+  for (const route of ['/search?q=' + values.title, '/issues?q=' + values.title, '/notifications?limit=50'])
     expect(JSON.stringify(await f.data(f.bobCookie, route))).not.toContain(values.title);
   const token = await json<{ token: string }>(await f.any(f.bobCookie, '/settings/integrations/tokens', 'POST', { name: 'synthetic-vector-2805', scopes: ['issues:read'] }), 201);
   for (const route of ['/drafts', '/issues?q=' + values.title]) {
@@ -58,7 +61,20 @@ it('[ISSUE-028] private account drafts survive independent sessions, reconcile c
   finally { await env.DB.prepare('DROP TRIGGER synthetic_draft_rollback').run(); }
   expect((await rows()).results).toEqual(before);
   expect(await env.DB.prepare('SELECT count(*) n FROM issues WHERE title=?').bind('synthetic-vector-2806').first<number>('n')).toBe(0);
+  const graph=async()=>Promise.all(['issues','issue_activity','issue_labels','issue_followers','notifications','notification_candidates'].map(async table=>({table,n:await env.DB.prepare('SELECT count(*) n FROM '+table).first<number>('n')})));
+  const beforeConsumeFailure=await graph();
+  await env.DB.prepare("CREATE TRIGGER synthetic_consume_rollback BEFORE UPDATE ON issue_drafts WHEN NEW.state='submitted' BEGIN SELECT RAISE(ABORT,'synthetic consume rollback'); END").run();
+  try { expect((await submit(secondSession)).status).toBe(500); }
+  finally { await env.DB.prepare('DROP TRIGGER synthetic_consume_rollback').run(); }
+  expect(await graph()).toEqual(beforeConsumeFailure);expect((await rows()).results).toEqual(before);
+  const delayed=heldBody();
+  const pendingSave=createServerApp().request(origin+'/api'+path,{method:'PATCH',
+    headers:{Host:new URL(origin).host,Cookie:f.cookie,Origin:origin,'content-type':'application/json'},body:delayed.body},bindings);
+  await Promise.race([delayed.reading,pendingSave.then(r=>{throw Error('Save body not reached: '+r.status);})]);
   const issue = await json<{ title: string; labels: { id: string }[] }>(await submit(secondSession), 201);
+  delayed.release(JSON.stringify({revision:2,values}));
+  expect((await pendingSave).status).toBe(409);
+
   expect(issue.title).toBe(later.title); expect(issue.labels.map(row => row.id).sort()).toEqual([...labelIds].sort());
   for (const cookie of [f.cookie, secondSession]) expect((await json<{ drafts: AccountDraft[] }>(await f.any(cookie, '/drafts'))).drafts).toEqual([]);
   expect((await submit(secondSession)).status).toBe(409);
@@ -85,6 +101,12 @@ it('[ISSUE-028] private account drafts survive independent sessions, reconcile c
   await env.DB.prepare('DELETE FROM team_members WHERE operator_id=?').bind(f.bob).run();
   expect((await f.any(f.bobCookie, '/drafts', 'POST', { values })).status).toBe(404);
   await env.DB.prepare("INSERT INTO team_members(team_id,operator_id,role,created_at,updated_at) VALUES(?,?,'member',?,?)").bind(team.id, f.bob, new Date().toISOString(), new Date().toISOString()).run();
+  const guestSubmitted = (await json<{ draft: AccountDraft }>(await f.any(f.bobCookie, '/drafts', 'POST', { values }), 201)).draft;
+  const guestIssue=await createServerApp().request(origin+'/api/issues',{method:'POST',
+    headers:{Host:new URL(origin).host,Cookie:f.bobCookie,Origin:origin,'content-type':'application/json',
+      'x-vector-draft-id':guestSubmitted.id,'x-vector-draft-revision':'1'},body:JSON.stringify({teamId:team.id,title:values.title,labelIds})},bindings);
+  expect((await json<{title:string}>(guestIssue,201)).title).toBe(values.title);
+  expect((await json<{drafts:AccountDraft[]}>(await f.any(f.bobCookie,'/drafts'))).drafts).toEqual([]);
   const guest = (await json<{ draft: AccountDraft }>(await f.any(f.bobCookie, '/drafts', 'POST', { values }), 201)).draft;
   await env.DB.prepare('DELETE FROM team_members WHERE operator_id=?').bind(f.bob).run();
   expect((await f.any(f.bobCookie, '/drafts/' + guest.id)).status).toBe(404);
@@ -97,9 +119,15 @@ it('[ISSUE-028] private account drafts survive independent sessions, reconcile c
   await env.DB.prepare('INSERT INTO workspace_settings(id,name,timezone,created_at,updated_at) SELECT ?,name,timezone,created_at,updated_at FROM workspace_settings LIMIT 1').bind(workspace).run();
   await env.DB.prepare('UPDATE operators SET workspace_id=? WHERE id=?').bind(workspace,f.bob).run();
   const moved=(await rows()).results;
-  expect((await json<{drafts:AccountDraft[]}>(await f.any(f.bobCookie,'/drafts'))).drafts).toEqual([]);
-  expect((await f.any(f.bobCookie,'/drafts/'+own.id)).status).toBe(404);
-  expect((await f.any(f.bobCookie,'/drafts/'+own.id,'PATCH',{values,revision:1})).status).toBe(409);
+  // Both workspaces are already initialized. Mount the actual native API,
+  // retaining its session, role and transaction fences without running install setup.
+  const native=new Hono<AppEnvironment>().route('/api',createApiApp());
+  const foreign=(path:string,method='GET',body?:unknown)=>native.request(origin+'/api'+path,{method,
+    headers:{Host:new URL(origin).host,Cookie:f.bobCookie,Origin:origin,'content-type':'application/json'},
+    body:body===undefined?undefined:JSON.stringify(body)},bindings);
+  expect((await json<{drafts:AccountDraft[]}>(await foreign('/drafts'))).drafts).toEqual([]);
+  expect((await foreign('/drafts/'+own.id)).status).toBe(404);
+  expect((await foreign('/drafts/'+own.id,'PATCH',{values,revision:1})).status).toBe(409);
   expect((await rows()).results).toEqual(moved);
 
 }, 120_000);
