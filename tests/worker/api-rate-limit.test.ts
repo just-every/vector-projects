@@ -1,3 +1,4 @@
+import {ApiError, VectorClient} from '../../sdk/client'
 import { env } from 'cloudflare:workers'
 import { applyD1Migrations } from 'cloudflare:test'
 import assert from 'node:assert/strict'
@@ -45,6 +46,12 @@ it('[BASE-ACCESS-004 API-003] session and token limits isolate people, tokens an
   const denied=await api(first);assert.equal(denied.status,429);
   assert.deepEqual(await denied.json(),{error:'rate_limited'});
   assert.equal(denied.headers.get('Retry-After'),'60');
+  const sdk = new VectorClient({baseUrl:origin, token:first, fetch:(url, init)=>app.request(String(url), init, bindings)});
+  const error = await sdk.request('metadata_get_1', {}).then(()=>null, error=>error);
+  assert.ok(error instanceof ApiError);
+  assert.equal(error.status, 429);
+  assert.deepEqual(error.body, {error:'rate_limited'});
+  assert.equal(error.headers.get('Retry-After'), '60');
   assert.equal((await api(second)).status,200);
   vi.setSystemTime(minute+120_000);
   assert.equal((await api(first)).status,200);

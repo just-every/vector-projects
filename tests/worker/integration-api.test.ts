@@ -1,6 +1,7 @@
 import { warehouseExportJourney } from './warehouse-export-journey';
 import { warehouseScheduleJourney } from './warehouse-schedule-journey';
 import { warehouseSheetsJourney } from './warehouse-sheets-journey';
+import {sdkIntakeJourney} from './sdk-intake-journey';
 import {jsonMediaType,formMediaType} from '../../src/core/features/oauth-apps/media-types';
 import {pkce} from '../../src/core/features/oauth-apps/repository';
 import { mentionToken } from '../../src/core/features/notifications/mention-token';
@@ -15,8 +16,8 @@ afterEach(()=>vi.useRealTimers());
 import {setupIntegrations} from './integration-fixture';
 import {invite,actor,request,origin,bindings} from './base-auth-fixture';
 import {createIntegrationApi} from '../../src/core/features/integrations/api';
-it('[API-001 API-002 API-004 ISSUE-022] Base scoped token authority drives native routes, usage, stale writes and revocation without HTML or file admission',async()=>{
- const f=await setupIntegrations();await oauthAuthorizationJourney(f);const read=await f.issueToken(['issues:read','metadata:read']),write=await f.issueToken(['issues:read','issues:write','comments:write']);
+it('[API-001 API-002 API-004 API-005 ISSUE-022] Base scoped token authority drives native routes, usage, stale writes and revocation without HTML or file admission',async()=>{
+ const f=await setupIntegrations();await sdkIntakeJourney(f);await oauthAuthorizationJourney(f);const read=await f.issueToken(['issues:read','metadata:read']),write=await f.issueToken(['issues:read','issues:write','comments:write']);
  expect((await f.api('', '/issues')).status).toBe(401);expect((await f.api('int_'+'a'.repeat(64),'/issues')).status).toBe(401);
  f.restart();
  expect((await f.api(read.token,'/metadata')).status).toBe(200);expect((await f.api(read.token,'/issues','POST',{teamId:f.initial.teams[0].id,title:'Denied'})).status).toBe(401);

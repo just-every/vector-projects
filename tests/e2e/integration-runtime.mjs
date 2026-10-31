@@ -1,4 +1,6 @@
 import {exerciseWarehouseExports} from './warehouse-export-client.mjs';
+import {buildSdk} from '../../sdk/build.mjs';
+import {exerciseSdkIntake} from './integrations/sdk-intake.mjs';
 import {exerciseVideoPlayers} from "./video-players-journey.mjs";
 import {exerciseErrorProviders} from './integrations/error-providers.mjs';
 import {exerciseWebhookComments} from './integrations/webhook-comments.mjs';
@@ -16,10 +18,12 @@ process.env.VECTOR_CHANNEL_EDGE=resolve('.artifacts/verification/channel-edge-'+
 const runtime=createUiRuntime(),evidence=resolve(process.env.VECTOR_EVIDENCE_DIR??'evidence/integrations');let browser;
 const proof={passed:false,widths:[],credentialsCaptured:false,liveProvider:false};
 try{
+ buildSdk();
  await mkdir(resolve('.artifacts/verification'),{recursive:true});
  await mkdir(evidence,{recursive:true});runtime.initialize();runtime.start();await runtime.ready();const {cookie}=await signIn(runtime);browser=await chromium.launch({headless:true,args:["--use-mock-keychain","--password-store=basic"]});const page=await openAuthenticatedPage(browser,cookie,runtime.base);
  const admin=await(await runtime.req('/api/settings/administration',{headers:{Cookie:cookie}})).json(),team=admin.teams.find(row=>!row.archivedAt);
  await exerciseWarehouseExports({runtime,cookie});
+ await exerciseSdkIntake({runtime,cookie,team});
  await exerciseVideoPlayers({page,runtime,cookie,team,evidence});
  await exerciseWebhookComments({page,runtime,cookie,team,evidence});
  await exerciseErrorProviders({page,runtime,cookie,team,evidence});

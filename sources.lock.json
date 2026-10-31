@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "parent": null,
   "edition": "just-every/vector-projects",
-  "manifest": "2d57e31af65663d8671af35a57682642d15f023ef4e2a1b5837b759579c04ea1",
+  "manifest": "89309beaf124fb7d8ffcfdc5f7d91ab7addf81b7abd4361d72e935a3d677e0a0",
   "toolchain": {
     "id": "runeditrun/edition-authoring",
     "version": "1.1.0",
@@ -15,6 +15,7 @@
         "kind": "local",
         "paths": [
           "src",
+          "sdk",
           "migrations",
           "tests",
           "sample-data",
@@ -521,7 +522,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "e98e6d4f2e97c7b7fd8d326db68af014bc94626b4392caf6c870964d69500c88",
+      "sha256": "6ad29bf4c6745fec3001131298da2bf60962b5358ef01f403667b0ef5cd4581c",
       "executable": false
     },
     "DEMO.md": {
@@ -553,7 +554,7 @@
       "executable": false
     },
     "docs/API.md": {
-      "sha256": "66d50092c819b061733fa482d3e26c1ebee01fad9396063368a0835e4344c81c",
+      "sha256": "92fd5a991be5e9579018bc467557b891d74e75a033d8f4a232ccf880d7f7561f",
       "executable": false
     },
     "docs/ARCHIVES.md": {
@@ -729,7 +730,7 @@
       "executable": false
     },
     "edition.json": {
-      "sha256": "2d57e31af65663d8671af35a57682642d15f023ef4e2a1b5837b759579c04ea1",
+      "sha256": "89309beaf124fb7d8ffcfdc5f7d91ab7addf81b7abd4361d72e935a3d677e0a0",
       "executable": false
     },
     "evidence/comment-threads/ISSUE-008/thread-reopened-1440.png": {
@@ -3514,6 +3515,34 @@
     },
     "scripts/verify.mjs": {
       "sha256": "5d0ba994551e2e5a1ac9de0a0994fe808181324fdbd976e74ca15cb9e8513a75",
+      "executable": false
+    },
+    "sdk/build.mjs": {
+      "sha256": "572049d5b7404c5247d08ce52f4ed6fabe91633df719ae9cca26159badda1716",
+      "executable": false
+    },
+    "sdk/client.ts": {
+      "sha256": "16064c74621998d4f3310c931e60c8dd5f55a0121bb1ec2f86f82eaf9bc664c2",
+      "executable": false
+    },
+    "sdk/examples/intake.ts": {
+      "sha256": "0f78fc4753b298ac73ee5c80f80ab95d440066629f70683e5cc8b87f9d92a811",
+      "executable": false
+    },
+    "sdk/examples/run-intake.mjs": {
+      "sha256": "78477f326c002630032575b961f0a6b8fe455e7871cdeee110654a25490f0c89",
+      "executable": false
+    },
+    "sdk/generate.mjs": {
+      "sha256": "c1afb5557abd133e69734961de8694144474bb2c5d3bf5485a1ea628188d4e4b",
+      "executable": false
+    },
+    "sdk/generated.ts": {
+      "sha256": "27c17f3a2ca7b9d4fa16b0a424b4cc905c89dbb8c5c808a60e1e3cae50c9a927",
+      "executable": false
+    },
+    "sdk/tsconfig.json": {
+      "sha256": "341fb122b07e7b43e9ef9717a7d93357eab34934df2a2b3571b7e916ee45bdf0",
       "executable": false
     },
     "SEED-COMMAND-CONTRACT.md": {
@@ -7977,7 +8006,7 @@
       "executable": false
     },
     "tests/e2e/integration-runtime.mjs": {
-      "sha256": "3adca5d37ed765dc63e22f76f1ca7ea097e4ee49f4af239d7a4e768e07bbba06",
+      "sha256": "fa5bb7e707b216d39bd3367b0d45ef27bdc5184778fe2fd4958a834dfd8f7928",
       "executable": false
     },
     "tests/e2e/integration-settings-journey.mjs": {
@@ -8042,6 +8071,10 @@
     },
     "tests/e2e/integrations/report-provider-edge.mjs": {
       "sha256": "7e7f34025d5df5f8e8444bc676a8da549598c607ac47941b587d34d82d5f7873",
+      "executable": false
+    },
+    "tests/e2e/integrations/sdk-intake.mjs": {
+      "sha256": "a81eccf624ec65222671fbda5cd3afa388424bf5b9e9af897c7dc8b35341dd19",
       "executable": false
     },
     "tests/e2e/integrations/slack-app-archive.mjs": {
@@ -8433,7 +8466,7 @@
       "executable": false
     },
     "tests/worker/api-rate-limit.test.ts": {
-      "sha256": "808c7c923229918a92d1ad78f62cce4332461a1c54c2da77ee444eff25969ef6",
+      "sha256": "2972e273b442f566d04904734a5c534dbfa79babf06469f5d4a7358f863e0385",
       "executable": false
     },
     "tests/worker/audit-archive.ts": {
@@ -8741,7 +8774,7 @@
       "executable": false
     },
     "tests/worker/integration-api.test.ts": {
-      "sha256": "f0a215340327cb1614ac81501683c05fa9ba30a2714b79ff00c498ba6470841c",
+      "sha256": "0baece5bae87f2b6069a2a31244f5e9b965bc4c4e0f2d10b8ff6845ffa21599b",
       "executable": false
     },
     "tests/worker/integration-authority.test.ts": {
@@ -9042,6 +9075,10 @@
     },
     "tests/worker/sample-auth-fixture.ts": {
       "sha256": "17690ddc8a4327fa89f9296b16a70b2568e2706f633d62a0726bbb06808a68e5",
+      "executable": false
+    },
+    "tests/worker/sdk-intake-journey.ts": {
+      "sha256": "ded41c54924fb8bb43a5aeec34596f2b534a075b5d369bcfb96fa5c0ac0a4a56",
       "executable": false
     },
     "tests/worker/search-access.test.ts": {
