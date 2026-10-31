@@ -28,7 +28,15 @@ export async function proveViewerRoleUpgrade(){
   const columns=(await db.prepare('PRAGMA table_info("'+name+'")').all<{name:string}>()).results.map(c=>'"'+c.name+'"').join(',');
   retained.push({name,columns,rows:(await db.prepare('SELECT '+columns+' FROM "'+name+'" ORDER BY '+columns).all()).results});
  }
- await applyD1Migrations(db,migrations.slice(boundary));
+ const reportBoundary=migrations.findIndex(m=>m.name==='0123_report_export_schedules.sql');
+ await applyD1Migrations(db,migrations.slice(boundary,reportBoundary));
+ const previousHead=[] as {name:string;columns:string;rows:unknown[]}[];
+ for(const {name} of (await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name<>'d1_migrations' ORDER BY name").all<{name:string}>()).results) {
+  const columns=(await db.prepare('PRAGMA table_info("'+name+'")').all<{name:string}>()).results.map(c=>'"'+c.name+'"').join(',');
+  previousHead.push({name,columns,rows:(await db.prepare('SELECT '+columns+' FROM "'+name+'" ORDER BY '+columns).all()).results});
+ }
+ await applyD1Migrations(db,migrations.slice(reportBoundary));
+ for(const row of previousHead)expect((await db.prepare('SELECT '+row.columns+' FROM "'+row.name+'" ORDER BY '+row.columns).all()).results,row.name+' retained across report schedules').toEqual(row.rows);
  for(const row of retained)expect((await db.prepare('SELECT '+row.columns+' FROM "'+row.name+'" ORDER BY '+row.columns).all()).results,row.name+' retained at 0095').toEqual(row.rows);
  expect((await db.prepare('PRAGMA foreign_key_check').all()).results).toEqual([]);
  await db.prepare("UPDATE operators SET role='viewer' WHERE id='synthetic-vector-1712'").run();

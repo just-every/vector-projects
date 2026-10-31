@@ -282,6 +282,34 @@
       "adapters": [
         "vector.youtube-oembed.v1"
       ]
+    },
+    {
+      "id": "scheduled-warehouse-buckets",
+      "required": false,
+      "why": "REPORT-005: an Owner or Admin explicitly consents to hourly incremental exports to their AWS S3 or Cloudflare R2 bucket. Credentials remain in the excluded installation vault.",
+      "data": [
+        "currently visible issue properties",
+        "visible issue activity",
+        "cycles",
+        "projects",
+        "stable identifiers and deletion markers"
+      ],
+      "adapters": [
+        "vector.s3-export.v1"
+      ]
+    },
+    {
+      "id": "scheduled-google-sheets",
+      "required": false,
+      "why": "REPORT-005: an Owner or Admin explicitly reserves a sheet for an hourly saved-list-view sync and supplies their Google refresh grant. Only current visible list properties leave the installation.",
+      "data": [
+        "OAuth client and refresh grant at Google token refresh",
+        "current visible issue list properties",
+        "spreadsheet and sheet identity"
+      ],
+      "adapters": [
+        "vector.google-sheets.v1"
+      ]
     }
   ],
   "env": [

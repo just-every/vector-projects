@@ -3,6 +3,10 @@
 export interface Components {
   "Comment": { "id": string; "issueIdentifier": string; "body": string; "author": { "id": string; "displayName": string; [key: string]: unknown }; "createdAt": string; "editedAt": string | null; "url": string; "maxBodyLength": 100000; "truncated": false; "version": number; [key: string]: unknown };
   "Label": { "id": string; "name": string; "color": string; "projectsEnabled": boolean; "textColor": "#000000" | "#ffffff" };
+  "WarehouseIssues": { "id": string; "identifier": string; "teamId": string; "title": string; "description": string; "statusId": string; "status": string; "statusCategory": string; "priority": string; "assigneeOperatorId": string | null; "projectId": string | null; "cycleId": string | null; "startDate": string | null; "dueDate": string | null; "estimate": number | null; "version": number; "completedAt": string | null; "canceledAt": string | null; "archivedAt": string | null; "createdAt": string; "updatedAt": string };
+  "WarehouseHistoryRow": { "id": string; "issueId": string; "issueIdentifier": string; "teamId": string; "kind": string; "actorId": string | null; "actor": string; "previousValue": unknown; "nextValue": unknown; "createdAt": string; "updatedAt": string };
+  "WarehouseCycles": { "id": string; "teamId": string; "name": string; "startsAt": string; "endsAt": string; "capacity": number | null; "closedAt": string | null; "createdAt": string; "updatedAt": string };
+  "WarehouseProjects": { "id": string; "name": string; "description": string; "leadOperatorId": string; "startDate": string | null; "targetDate": string | null; "priority": string; "lifecycle": string; "archivedAt": string | null; "createdAt": string; "updatedAt": string };
 }
 export interface Operations {
   "schema_get_0": { input: Record<string, never>; output: unknown; errors: { "400": unknown; "401": unknown; "403": unknown; "404": unknown; "409": unknown; "429": unknown } };
@@ -50,6 +54,10 @@ export interface Operations {
   "initiatives_update_put": { input: { path: { "id": string }; body: { "expectedVersion": number; "projectIds": (string)[] } }; output: unknown; errors: { "400": unknown; "401": unknown; "403": unknown; "404": unknown; "409": unknown; "429": unknown } };
   "team_privacy_put": { input: { path: { "id": string }; body: { "name": string; "identifierPrefix": string } }; output: unknown; errors: { "400": unknown; "401": unknown; "403": unknown; "404": unknown; "409": unknown; "429": unknown } };
   "labels_get": { input: { path: { "id": string } }; output: Components["Label"]; errors: { "400": unknown; "401": unknown; "403": unknown; "404": unknown; "409": unknown; "429": unknown } };
+  "warehouse_issues_list": { input: { query?: { "limit"?: number; "cursor"?: string; "team"?: string } }; output: { "resource": "issues"; "rows": (Components["WarehouseIssues"])[]; "total": number; "nextCursor": string | null }; errors: { "400": unknown; "401": unknown; "403": unknown; "404": unknown; "409": unknown; "429": unknown } };
+  "warehouse_history_list": { input: { query?: { "limit"?: number; "cursor"?: string; "team"?: string } }; output: { "resource": "history"; "rows": (Components["WarehouseHistoryRow"])[]; "total": number; "nextCursor": string | null }; errors: { "400": unknown; "401": unknown; "403": unknown; "404": unknown; "409": unknown; "429": unknown } };
+  "warehouse_cycles_list": { input: { query?: { "limit"?: number; "cursor"?: string; "team"?: string } }; output: { "resource": "cycles"; "rows": (Components["WarehouseCycles"])[]; "total": number; "nextCursor": string | null }; errors: { "400": unknown; "401": unknown; "403": unknown; "404": unknown; "409": unknown; "429": unknown } };
+  "warehouse_projects_list": { input: { query?: { "limit"?: number; "cursor"?: string; "team"?: string } }; output: { "resource": "projects"; "rows": (Components["WarehouseProjects"])[]; "total": number; "nextCursor": string | null }; errors: { "400": unknown; "401": unknown; "403": unknown; "404": unknown; "409": unknown; "429": unknown } };
 }
 export const operations = {
   "schema_get_0": {
@@ -417,5 +425,41 @@ export const operations = {
       "labels:read"
     ],
     "authenticated": true
+  },
+  "warehouse_issues_list": {
+    "method": "GET",
+    "path": "/report-exports/issues",
+    "scopes": [
+      "reports:read"
+    ],
+    "authenticated": true,
+    "pagination": "cursor"
+  },
+  "warehouse_history_list": {
+    "method": "GET",
+    "path": "/report-exports/history",
+    "scopes": [
+      "reports:read"
+    ],
+    "authenticated": true,
+    "pagination": "cursor"
+  },
+  "warehouse_cycles_list": {
+    "method": "GET",
+    "path": "/report-exports/cycles",
+    "scopes": [
+      "reports:read"
+    ],
+    "authenticated": true,
+    "pagination": "cursor"
+  },
+  "warehouse_projects_list": {
+    "method": "GET",
+    "path": "/report-exports/projects",
+    "scopes": [
+      "reports:read"
+    ],
+    "authenticated": true,
+    "pagination": "cursor"
   }
 } as const;

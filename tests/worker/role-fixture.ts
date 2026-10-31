@@ -13,7 +13,7 @@ const app = createServerApp();
  * whatever role its member holds on each request. */
 async function person(cookie: string): Promise<Person> {
   const call: Call = (path, method = "GET", body) => request("/api" + path, method, body, cookie);
-  const minted = await call("/settings/integrations/tokens", "POST", { name: "Role journey", scopes: [...tokenScopes,'initiatives:read','initiatives:write','releases:read','releases:write'] });
+  const minted = await call("/settings/integrations/tokens", "POST", { name: "Role journey", scopes: [...tokenScopes,'initiatives:read','initiatives:write','releases:read','releases:write','reports:read'] });
   expect(minted.status).toBe(201);
   const token = ((await minted.json()) as { token: string }).token;
   const api: Call = (path, method = "GET", body) => app.request(bindings.APP_ORIGIN + "/api/v1" + path, {

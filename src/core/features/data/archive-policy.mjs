@@ -1,5 +1,7 @@
 // Document mentions, followers, Inbox history and consumed revision receipts are portable domain data.
 // Restore retains history without scanning text, scheduling channels or replaying deliveries.
+// Report schedules and safe receipts are portable; credentials, active claims
+// and digest checkpoints remain installation state, so restore never replays exports.
 // Document issue references retain live and removed backlinks as portable domain data.
 // Webhook event selections and team filters are portable configuration. Restored
 // event history remains held and destination secrets still require re-entry.
@@ -22,11 +24,11 @@
 // Scheduling never reconstructs notices from restored receipts.
 export const portabilityPolicy = {
  product: 'just-every/vector-projects',
- excludeTables: ['agent_door_state', 'agent_door_agents', 'agent_door_audit', 'agent_door_calls', 'agent_door_approvals', 'agent_door_reviews', 'agent_door_events', 'agent_door_usage', 'bs_settings', 'bs_overrides', 'bs_logo', 'bs_team', 'bs_audit', 'bs_assert', 'vector_oauth_apps', 'vector_oauth_codes', 'vector_oauth_grants', 'calendar_feed_tokens', 'subissue_progress_events', 'operator_sessions', 'magic_links', 'local_mail_outbox', 'access_rate_limits', 'notification_development_mail', 'vector_restore_status', 'vector_restore_operator_grants', 'vector_restore_mail_holds', 'notification_channel_restore_holds', 'integration_tokens', 'vector_integration_secret_keys', 'vector_webhook_restore_holds', 'vector_integration_authority_guard', 'vector_http_bootstrap', 'vector_http_restore', 'vector_slack_member_links', 'vector_slack_request_keys', 'vector_invitation_roles'],
+ excludeTables: ['vector_report_export_rows', 'agent_door_state', 'agent_door_agents', 'agent_door_audit', 'agent_door_calls', 'agent_door_approvals', 'agent_door_reviews', 'agent_door_events', 'agent_door_usage', 'bs_settings', 'bs_overrides', 'bs_logo', 'bs_team', 'bs_audit', 'bs_assert', 'vector_oauth_apps', 'vector_oauth_codes', 'vector_oauth_grants', 'calendar_feed_tokens', 'subissue_progress_events', 'operator_sessions', 'magic_links', 'local_mail_outbox', 'access_rate_limits', 'notification_development_mail', 'vector_restore_status', 'vector_restore_operator_grants', 'vector_restore_mail_holds', 'notification_channel_restore_holds', 'integration_tokens', 'vector_integration_secret_keys', 'vector_webhook_restore_holds', 'vector_integration_authority_guard', 'vector_http_bootstrap', 'vector_http_restore', 'vector_slack_member_links', 'vector_slack_request_keys', 'vector_invitation_roles'],
  includeTables: ['oa_operators'],
  replaceableTables: ['search_index_state', 'issue_list_revision', 'subscription_clock'],
  derivedTables: ['search_issues', 'search_projects', 'search_views'],
- secretColumns: { team_email_intake: ['event_verification_key'], notification_digest_batches: ['claim_token'], notification_deliveries: ['claim_token'], ik_jobs: ['lease_token'], integration_deliveries: ['claim'] },
+ secretColumns: { vector_report_exports: ['claim'], team_email_intake: ['event_verification_key'], notification_digest_batches: ['claim_token'], notification_deliveries: ['claim_token'], ik_jobs: ['lease_token'], integration_deliveries: ['claim'] },
  buckets: { FILES: {} },
  requiredConfiguration: ['FIRST_OWNER_EMAIL', 'SESSION_SECRET', 'APP_ORIGIN', 'MAIL_MODE', 'MAIL_FROM'],
 };

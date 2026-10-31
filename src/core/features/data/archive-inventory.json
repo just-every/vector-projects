@@ -2202,5 +2202,38 @@
     "actor_name",
     "created_at",
     "read_at"
+  ],
+  "vector_report_exports": [
+    "id",
+    "workspace_id",
+    "owner_id",
+    "name",
+    "kind",
+    "configuration",
+    "enabled",
+    "version",
+    "next_at",
+    "last_rows",
+    "last_columns",
+    "state",
+    "claim",
+    "last_error",
+    "created_at",
+    "updated_at"
+  ],
+  "vector_report_export_rows": [
+    "export_id",
+    "resource",
+    "row_id",
+    "digest"
+  ],
+  "vector_report_export_runs": [
+    "id",
+    "export_id",
+    "started_at",
+    "finished_at",
+    "state",
+    "row_count",
+    "error"
   ]
 }
