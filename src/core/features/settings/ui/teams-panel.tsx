@@ -1,3 +1,4 @@
+import {IssueTemplateSettings} from '../../issue-templates/controls';
 import '../../documents/ui/documents.css';
 import { CreateSlackChannel } from "../../projects/ui/project-slack-choice";
 import {TeamJoinRules} from "./team-join-rules";
@@ -78,6 +79,7 @@ export function TeamsPanel({
           <button>Save team creation permission</button>
         </fieldset>
       </form>}
+      <IssueTemplateSettings />
       <h3>Team directory</h3>
       <ul className="team-directory">
         {data.teams.map((team) => {

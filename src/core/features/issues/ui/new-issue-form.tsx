@@ -1,3 +1,5 @@
+import {IssueTemplateChoice} from '../../issue-templates/controls';
+import type {IssueTemplate} from '../../issue-templates/schema';
 import { preferenceSchema } from "../../views/schema";
 import { lastCreatedTeamKey, preferredTeam } from "./preferred-team";
 import { administrationSchema } from "../../administration/schema";
@@ -41,6 +43,8 @@ export function NewIssueForm() {
   const administration = useApiResource("/api/metadata", administrationSchema);
   const boardPreference = useApiResource("/api/preferences/board", preferenceSchema);
   const [values, setValues] = useState<NewIssueDraft>(emptyNewIssueDraft);
+  const [template,setTemplate]=useState<IssueTemplate|null>(null);
+  const typedTemplateFields=useRef(new Set<string>());
   const openingDefaults = useRef(emptyNewIssueDraft);
   const [draftReady, setDraftReady] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -110,7 +114,7 @@ export function NewIssueForm() {
     [options.data, values.teamId],
   );
 
-  const changeTeam = (teamId: string) =>
+  const changeTeam = (teamId: string) => { setTemplate(null); typedTemplateFields.current.clear();
     setValues((current) => ({
       ...current,
       teamId,
@@ -133,6 +137,8 @@ export function NewIssueForm() {
           : "",
     }));
 
+  };
+
   const toggleLabel = (labelId: string) =>
     setValues((current) => ({
       ...current,
@@ -154,7 +160,7 @@ export function NewIssueForm() {
           method: "POST",
           headers: { "content-type": "application/json", ...(!isIntake ? { 'x-vector-page': 'issue' } : {}) },
           body: JSON.stringify(
-            isIntake ? createIntakePayload(values, effectiveTimezone) : createIssuePayload(values),
+            isIntake ? createIntakePayload(values, effectiveTimezone) : {...createIssuePayload(values),...(template?{templateId:template.id,templateVersion:template.version}:{})},
           ),
         },
       );
@@ -215,6 +221,7 @@ export function NewIssueForm() {
       <form
         className="new-issue-form"
         onSubmit={submit}
+        onChangeCapture={event=>{const name=(event.target as HTMLInputElement).name;if(name)typedTemplateFields.current.add(name)}}
         aria-busy={submitting}
         onInvalidCapture={(event) => {
           let disclosure = (event.target as HTMLElement).closest("details");
@@ -294,11 +301,13 @@ export function NewIssueForm() {
               Intake<span>Needs a decision</span>
             </label>
           </fieldset>
+          {values.mode==='issue'&&<IssueTemplateChoice key={values.teamId} values={values} setValues={setValues} onApplied={setTemplate} typed={typedTemplateFields.current}/>}
+          {template&&values.mode==='issue'&&<p role="status">{template.name} · {template.subissues.length} subissues will be created. <button type="button" onClick={()=>setTemplate(null)}>Remove template selection</button></p>}
           <section className="new-issue-section">
             <label className="new-issue-title-field">
               Title<span>Required</span>
               <input
-                value={values.title}
+                name="title" value={values.title}
                 onChange={(event) =>
                   setValues({ ...values, title: event.target.value })
                 }
@@ -324,7 +333,7 @@ export function NewIssueForm() {
             </label>
             <label className="new-issue-description">
               Description <span>Markdown supported</span>
-              <MentionTextarea
+              <MentionTextarea name="description"
                 aria-label="Description"
                 value={values.description}
                 onValueChange={(description) =>
@@ -401,7 +410,7 @@ export function NewIssueForm() {
                   <label>
                     Status<span>Optional</span>
                     <select
-                      value={values.statusId}
+                      name="statusId" value={values.statusId}
                       onChange={(event) =>
                         setValues({ ...values, statusId: event.target.value })
                       }
@@ -418,7 +427,7 @@ export function NewIssueForm() {
                   <label>
                     Assignee
                     <select
-                      value={values.assigneeOperatorId}
+                      name="assigneeOperatorId" value={values.assigneeOperatorId}
                       onChange={(event) =>
                         setValues({
                           ...values,
@@ -437,7 +446,7 @@ export function NewIssueForm() {
                   <label>
                     Project
                     <select
-                      value={values.projectId}
+                      name="projectId" value={values.projectId}
                       onChange={(event) =>
                         setValues({ ...values, projectId: event.target.value, milestoneId: "" })
                       }
@@ -480,7 +489,7 @@ export function NewIssueForm() {
                   <label>
                     Priority
                     <select
-                      value={values.priority}
+                      name="priority" value={values.priority}
                       onChange={(event) =>
                         setValues({
                           ...values,
@@ -503,7 +512,7 @@ export function NewIssueForm() {
                       min="1"
                       max="100"
                       step="1"
-                      value={values.estimate}
+                      name="estimate" value={values.estimate}
                       onChange={(event) =>
                         setValues({ ...values, estimate: event.target.value })
                       }
@@ -535,7 +544,7 @@ export function NewIssueForm() {
                         <label key={label.id}>
                           <input
                             type="checkbox"
-                            checked={values.labelIds.includes(label.id)}
+                            name="labelIds" checked={values.labelIds.includes(label.id)}
                             disabled={
                               !values.labelIds.includes(label.id) &&
                               values.labelIds.length >= labelsPerIssue

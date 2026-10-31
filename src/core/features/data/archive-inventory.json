@@ -2159,5 +2159,16 @@
   ],
   "bs_assert": [
     "value"
+  ],
+  "issue_templates": [
+    "id",
+    "workspace_id",
+    "team_id",
+    "name",
+    "defaults_json",
+    "subissues_json",
+    "version",
+    "created_at",
+    "updated_at"
   ]
 }

@@ -1,29 +1,30 @@
+import {SettingsError} from '../settings/repository'
+import {z} from 'zod'
+import {createIssueFromRequest} from '../issue-templates/application'
 import { requireIssueProjection } from "./projection-access"
 import { IssueAccessError } from "./access"
 import { readRequestJson } from '../../app/input'
 import type { Context } from 'hono'
 import {
   acceptIssueInputSchema,
-  createIssueInputSchema,
   declineIssueInputSchema,
   deferIssueInputSchema,
 } from './input'
 import { IssueMutationError } from './errors'
-import { acceptIssue, createIssue, declineIssue, deferIssue } from './mutations'
+import { acceptIssue, declineIssue, deferIssue } from './mutations'
 import type { AppEnvironment } from '../../app/bindings'
 
 const issueParamPattern = /^[A-Z]{2,10}-[1-9][0-9]*$/
 
 export async function createIssueRoute(context: Context<AppEnvironment>) {
-  const parsed = createIssueInputSchema.safeParse(await requestBody(context))
-  if (!parsed.success) return invalidRequest(context, parsed.error.issues)
+  const input = await requestBody(context)
   return respondToMutation(
     context,
     async () => ({
-      issue: await createIssue(
+      issue: await createIssueFromRequest(
         context.env.DB,
         context.get('operatorId'),
-        parsed.data,
+        input,
         new Date(),
         context.get('drainNotifications'),
       ),
@@ -124,6 +125,8 @@ async function respondToMutation(
         )
       : context.json(result.issue, writtenStatus)
   } catch (error) {
+    if(error instanceof SettingsError)return context.json({error:error.code,message:error.message},error.status)
+    if(error instanceof z.ZodError)return invalidRequest(context,error.issues)
     if (error instanceof IssueAccessError) return context.json({error:error.code,message:error.message},error.status)
     if (!(error instanceof IssueMutationError)) throw error
     if (error.code === 'issue_not_found')

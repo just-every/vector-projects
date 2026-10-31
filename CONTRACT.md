@@ -778,8 +778,8 @@ API-004 provenance: ct reviewed `93ab66269b4f8fc4109d91504ccfe5233b563c5c` on 27
 | Clauses | Done | Partial | Missing | Total |
 | --- | ---: | ---: | ---: | ---: |
 | Published | 98 | 6 | 0 | 104 |
-| Target and push further | 38 | 60 | 70 | 168 |
-| All | 136 | 66 | 70 | 272 |
+| Target and push further | 38 | 61 | 69 | 168 |
+| All | 136 | 67 | 69 | 272 |
 
 | Clause | Title | Kind | Status | Evidence | Gap |
 | --- | --- | --- | --- | --- | --- |
@@ -825,7 +825,7 @@ API-004 provenance: ct reviewed `93ab66269b4f8fc4109d91504ccfe5233b563c5c` on 27
 | `ISSUE-013` | Mentions | published | done | `tests/e2e/collaboration-events.mjs` |  |
 | `ISSUE-014` | Labels | published | partial | `tests/e2e/admin-label-journey.mjs`, `tests/worker/role-matrix.test.ts`, `tests/e2e/admin-access-journey.mjs` | Workspace labels follow the role matrix; Settings → Labels is Owner/Admin write and Member read-only. Inline issue-picker creation and session/scoped API creation enforce the audited workspace permission on the next request. Workspace merge rewrites issues, projects and saved-view filters atomically. Team labels and groups remain absent |
 | `ISSUE-015` | Unsent drafts | published | done | `tests/e2e/core-draft-journey.mjs` |  |
-| `ISSUE-016` | Issue templates | target | missing |  | No implementation yet |
+| `ISSUE-016` | Issue templates | target | partial | `tests/worker/issue-templates.test.ts` native and scoped templates create an atomic issue graph with current authority and typed fields | Browser management and application proof, populated upgrade and archive proof remain pending. Command palette, Slack, email intake and request forms, Linear and Jira template import, typed custom fields and required-field integration under FIELD-001, TEAM-005 default templates, AUTO-001 recurrence and PROJ-012 receiving integration remain owed. Team templates follow current team visibility; explicit supplied fields win over defaults, and creation commits the native parent and ordered children together. |
 | `ISSUE-017` | Reactions | target | partial | `src/core/features/reactions/`, `tests/worker/role-matrix.test.ts`, `tests/e2e/collaboration-runtime.mjs`, `tests/e2e/data-roundtrip.mjs` | Slack thread reaction synchronization awaits SLACK-002. |
 | `ISSUE-018` | Description history | target | done | `tests/worker/description-history.test.ts`; `evidence/issue-writing/ISSUE-018/` |  |
 | `ISSUE-019` | Sub-issue progress | target | done | `tests/worker/subissues.test.ts`, `tests/worker/subissues-access.test.ts`, `tests/worker/subissues-import.test.ts`, `tests/e2e/core-subissues-journey.mjs` |  |
