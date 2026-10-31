@@ -60,6 +60,8 @@ export async function issueTemplatesJourney({page,runtime,capture,expectedTempla
     await issueForm.getByLabel('Description',{exact:false}).first().fill('Already typed description')
     await issueForm.getByText('Optional context',{exact:true}).click()
     await issueForm.getByLabel('Priority',{exact:true}).selectOption('none')
+    await issueForm.getByLabel(/^Team/).selectOption('')
+    await issueForm.getByLabel(/^Team/).selectOption(team.id)
     await issueForm.getByRole('combobox',{name:'Issue template',exact:true}).selectOption(template.id)
     // While the current definition is loading, submission cannot race ahead without its children.
     let releaseTemplate,finishTemplate

@@ -5790,7 +5790,7 @@
       "executable": false
     },
     "src/core/features/issue-templates/controls.tsx": {
-      "sha256": "3c76d1c5570e348a1ec881a9212e2012e3c3d74d66de57cc97c77c68fa75668c",
+      "sha256": "35b03bb3ace209ac23ec660344f25e053be86d42ce924393eb167d3283006d8a",
       "executable": false
     },
     "src/core/features/issue-templates/properties.ts": {
@@ -6146,7 +6146,7 @@
       "executable": false
     },
     "src/core/features/issues/ui/new-issue-form.tsx": {
-      "sha256": "af257010b007ddb26c2bb1d7e74d2bf06d87247486685d526d20469fa25a58f9",
+      "sha256": "028db7a4f38f4e5a5aa6aacac1aff945139612142d1c631a0531828e103d401e",
       "executable": false
     },
     "src/core/features/issues/ui/new-issue.css": {
@@ -8086,7 +8086,7 @@
       "executable": false
     },
     "tests/e2e/issue-templates-journey.mjs": {
-      "sha256": "a0286ca381d1dbb0ae3e11f4836792c02f027f4542826dd64bdf4d615024ce89",
+      "sha256": "6d90f996572b7931563324c4b8dda863fb954b8ff5b269f8146cd1c5db4c3817",
       "executable": false
     },
     "tests/e2e/jira-capture-support.mjs": {

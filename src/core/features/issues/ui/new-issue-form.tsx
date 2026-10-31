@@ -115,7 +115,12 @@ export function NewIssueForm() {
     [options.data, values.teamId],
   );
 
-  const changeTeam = (teamId: string) => { setTemplate(null); typedTemplateFields.current.clear();
+  const changeTeam = (teamId: string) => {
+    setTemplate(null);
+    // A team change retains deliberate empty choices for workspace properties.
+    if (values.statusId && !options.data?.statuses.some(status =>
+      status.id === values.statusId && status.teamId === teamId && allowedStatusCategories.has(status.category)))
+      typedTemplateFields.current.delete('statusId');
     setValues((current) => ({
       ...current,
       teamId,

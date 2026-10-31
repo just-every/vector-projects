@@ -7,13 +7,14 @@ import { templateSchema,templateListSchema,type TemplateInput,type IssueTemplate
 import type { NewIssueDraft } from '../issues/ui/new-issue-draft'
 import '../project-templates/templates.css'
 
+// Unmounted controls retire their state while admitted private reads drain.
 const url='/api/issue-templates'
 const send=(method:string,body:unknown)=>({method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
 type Defaults=TemplateInput['defaults']
 const blank=():TemplateInput=>({name:'',teamId:null,defaults:{},subissues:[]})
 
 export function IssueTemplateSettings() {
-  const list=useApiResource(url,templateListSchema),options=useApiResource('/api/options',workspaceOptionsSchema)
+  const list=useApiResource(url,templateListSchema,undefined,{abortPendingOnDispose:false}),options=useApiResource('/api/options',workspaceOptionsSchema)
   const [draft,setDraft]=useState<TemplateInput|null>(null),[editing,setEditing]=useState<IssueTemplate|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[confirm,setConfirm]=useState(false)
   const reset=()=>{setDraft(null);setEditing(null);setConfirm(false)}
   const act=async(run:()=>Promise<void>)=>{setBusy(true);setError('');setNotice('');try{await run();list.reload()}catch(e){setError(e instanceof Error?e.message:'Template change failed.')}finally{setBusy(false)}}
@@ -53,7 +54,7 @@ function TemplateFields({label,value,change,teamId,options}:{label:string;value:
 }
 
 export function IssueTemplateChoice({values,setValues,onApplied,typed,onBusy}:{values:NewIssueDraft;setValues:React.Dispatch<React.SetStateAction<NewIssueDraft>>;onApplied:(t:IssueTemplate)=>void;typed:ReadonlySet<string>;onBusy:(busy:boolean)=>void}) {
-  const list=useApiResource(url,templateListSchema),[chosen,setChosen]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false)
+  const list=useApiResource(url,templateListSchema,undefined,{abortPendingOnDispose:false}),[chosen,setChosen]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false)
   return <section className="new-issue-section" aria-label="Issue template">
     <label>Issue template<select aria-label="Issue template" value={chosen} onChange={e=>setChosen(e.target.value)}><option value="">No template</option>{list.data?.templates.filter(t=>!t.teamId||t.teamId===values.teamId).map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
     <button type="button" disabled={!chosen||busy} onClick={async()=>{setBusy(true);onBusy(true);setError('');try{
