@@ -26,8 +26,9 @@ export function CommentDraftList() {
     <h2>Comment drafts</h2>
     {resource.error && <p role="alert">{resource.error.message}<button type="button" onClick={resource.reload}>Retry comment drafts</button></p>}
     {resource.data?.drafts.length ? <ul>{resource.data.drafts.map(draft => <li key={draft.id}>
-      <button type="button" aria-label={'Open comment draft ' + draft.identifier} onClick={() => void navigate({to:'/app/issues/$identifier',params:{identifier:draft.identifier},hash:draft.parentId ? 'reply-' + draft.parentId : 'comment-draft'})}>
-        {draft.identifier}{draft.parentId ? ' · Reply' : ' · Comment'}</button>{' · '}{draft.team}{' · '}
+      <button type="button" aria-label={'Open comment draft ' + draft.identifier} onClick={() => void navigate({to:'/app/issues/$identifier',params:{identifier:draft.identifier},
+        hash:draft.parentId ? 'reply-' + draft.parentId : draft.anchor ? 'quote-draft' : 'comment-draft'})}>
+        {draft.identifier}{draft.parentId ? ' · Reply' : draft.anchor ? ' · Quoted comment' : ' · Comment'}</button>{' · '}{draft.team}{' · '}
       <time dateTime={draft.updatedAt}>{new Date(draft.updatedAt).toLocaleString()}</time>{' '}
       <button type="button" aria-label={'Discard comment draft ' + draft.identifier} onClick={() => {
         setError('');

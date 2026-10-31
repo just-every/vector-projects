@@ -2,41 +2,53 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouteContext } from '@tanstack/react-router';
 import { ApiError, fetchJson } from '../../app/api-client';
 import { createUlid } from '../../shared/ids';
+import type { DescriptionAnchorInput } from '../discussion/anchors';
 import { commentDraftReceiptSchema, commentDraftsSchema, type CommentDraft } from './comment-schema';
 import type { DraftReference } from './schema';
 
-export function useCommentDraft(identifier: string, parentId?: string) {
+type Content = { body: string; anchor: DescriptionAnchorInput | null };
+const empty: Content = { body:'', anchor:null };
+
+/** One account composer: a comment, a reply (parentId) or a quoted description
+ * thread (quote), whose saved selection reopens it on the author's other browsers. */
+export function useCommentDraft(identifier: string, parentId?: string, quote = false) {
   const { operator } = useRouteContext({ from:'/app' });
   // Operator identities are workspace-specific, so the browser copy needs no
   // options read; a remounted composer (Current's default detail) starts no extra I/O.
-  const key = `vector:comment-draft:${operator.id}:${identifier}:${parentId ?? ''}`;
-  const [body,setBody] = useState(''), [ready,setReady] = useState(false), [message,setMessage] = useState('');
-  const selected = useRef<DraftReference | null>(null), synced = useRef(''), latest = useRef('');
+  const key = `vector:comment-draft:${operator.id}:${identifier}:${parentId ?? (quote ? 'quote' : '')}`;
+  const [content,setContent] = useState<Content>(empty), [ready,setReady] = useState(false), [message,setMessage] = useState('');
+  const selected = useRef<DraftReference | null>(null), synced = useRef(JSON.stringify(empty)), latest = useRef<Content>(empty);
   const alive = useRef(true), posting = useRef(false), queue = useRef<Promise<unknown>>(Promise.resolve());
+  const matches = (row: CommentDraft) => row.identifier === identifier && row.parentId === (parentId ?? null) && (row.anchor !== null) === quote;
+  const show = (next: Content) => { latest.current = next; if (alive.current) setContent(next); };
   const apply = (draft: CommentDraft | null, notice: string) => {
     selected.current = draft ? { id:draft.id,revision:draft.revision } : null;
-    synced.current = draft?.body ?? ''; latest.current = synced.current;
-    if (alive.current) { setBody(latest.current); setMessage(notice); }
+    const next = draft ? { body:draft.body,anchor:draft.anchor } : empty;
+    synced.current = JSON.stringify(next); show(next);
+    if (alive.current) setMessage(notice);
     try { localStorage.removeItem(key); } catch { /* Account custody is still available. */ }
   };
-  const changed = (value: string) => {
-    latest.current = value; setBody(value);
-    try { localStorage.setItem(key,JSON.stringify({ body:value,reference:selected.current })); }
+  const changed = (next: Content) => {
+    show(next);
+    try { localStorage.setItem(key,JSON.stringify({ ...next,reference:selected.current })); }
     catch { setMessage('This browser could not retain offline changes.'); }
   };
+  const restore = (local: (Partial<Content> & {reference?: DraftReference}) | null) =>
+    typeof local?.body === 'string' ? { body:local.body,anchor:quote ? local.anchor ?? null : null } : null;
   async function persist() {
     if (posting.current || !ready) return selected.current;
-    const snapshot = latest.current;
-    if (snapshot === synced.current || (!selected.current && !snapshot)) return selected.current;
+    const snapshot = latest.current, encoded = JSON.stringify(snapshot);
+    if (encoded === synced.current || (!selected.current && !snapshot.body)) return selected.current;
     if (!selected.current) selected.current = {id:createUlid(new Date()),revision:0};
     const ref = selected.current, creating = ref.revision === 0;
     try {
       const receipt = await fetchJson(creating ? `/api/issues/${identifier}/comment-drafts` : '/api/comment-drafts/' + ref.id,
         commentDraftReceiptSchema,{ method:creating ? 'POST' : 'PATCH',headers:{'content-type':'application/json'},
-          body:JSON.stringify({body:snapshot,...(creating ? {id:ref.id,...(parentId ? {parentId} : {})} : {revision:ref.revision})}) });
+          body:JSON.stringify({body:snapshot.body,...(snapshot.anchor ? {anchor:snapshot.anchor} : {}),
+            ...(creating ? {id:ref.id,...(parentId ? {parentId} : {})} : {revision:ref.revision})}) });
       if (!receipt.draft) throw new Error('Unable to save comment draft.');
-      selected.current = {id:receipt.draft.id,revision:receipt.draft.revision}; synced.current = snapshot;
-      try { localStorage.setItem(key,JSON.stringify({body:latest.current,reference:selected.current})); } catch { /* The editor reports browser storage failures. */ }
+      selected.current = {id:receipt.draft.id,revision:receipt.draft.revision}; synced.current = encoded;
+      try { localStorage.setItem(key,JSON.stringify({...latest.current,reference:selected.current})); } catch { /* The editor reports browser storage failures. */ }
       if (alive.current) setMessage('Comment draft saved to your account.');
       return selected.current;
     } catch (error) {
@@ -58,16 +70,17 @@ export function useCommentDraft(identifier: string, parentId?: string) {
     let canceled = false;
     void fetchJson('/api/comment-drafts',commentDraftsSchema).then(result => {
       if (canceled) return;
-      const draft = result.drafts.find(row => row.identifier === identifier && row.parentId === (parentId ?? null));
-      let local: {body?: string;reference?: DraftReference} | null = null;
+      const draft = result.drafts.find(matches);
+      let local: (Partial<Content> & {reference?: DraftReference}) | null = null;
       try { local = JSON.parse(localStorage.getItem(key) ?? 'null'); } catch { /* Ignore malformed browser metadata. */ }
       apply(draft ?? null,draft ? 'Restored your account comment draft.' : '');
-      if (typeof local?.body === 'string' && (draft ? local.reference?.id === draft.id && local.reference.revision === draft.revision : !local.reference)) changed(local.body);
+      const offline = restore(local);
+      if (offline && (draft ? local?.reference?.id === draft.id && local.reference.revision === draft.revision : !local?.reference)) changed(offline);
     }).catch(() => {
       if (canceled) return;
       try {
-        const local = JSON.parse(localStorage.getItem(key) ?? 'null');
-        if (typeof local?.body === 'string') { selected.current = local.reference ?? null; changed(local.body); }
+        const local = JSON.parse(localStorage.getItem(key) ?? 'null'), offline = restore(local);
+        if (offline) { selected.current = local.reference ?? null; changed(offline); }
       } catch { /* No browser copy available. */ }
       setMessage('Account drafts unavailable. This browser keeps your unsent comment.');
     }).finally(() => { if (!canceled) setReady(true); });
@@ -78,9 +91,11 @@ export function useCommentDraft(identifier: string, parentId?: string) {
     const save = () => { void flush().catch(() => undefined); };
     const timer = setTimeout(save,350); window.addEventListener('online',save);
     return () => { clearTimeout(timer); window.removeEventListener('online',save); };
-  }, [ready,body]);
+  }, [ready,content]);
+  // A closed quote composer only reads on mount; open composers follow other devices.
+  const following = !quote || content.anchor !== null;
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !following) return;
     let busy = false;
     const refresh = () => {
       if (busy || posting.current || document.hidden) return;
@@ -89,7 +104,7 @@ export function useCommentDraft(identifier: string, parentId?: string) {
         const observed = selected.current;
         const result = await fetchJson('/api/comment-drafts',commentDraftsSchema);
         if (!alive.current || observed !== selected.current) return;
-        const draft = result.drafts.find(row => row.identifier === identifier && row.parentId === (parentId ?? null));
+        const draft = result.drafts.find(matches);
         if (draft && (!observed || draft.id !== observed.id || draft.revision > observed.revision))
           apply(draft,'Showing the newer comment draft from another device.');
         else if (!draft && observed && observed.revision > 0) apply(null,'This comment draft was posted or discarded on another device.');
@@ -97,13 +112,14 @@ export function useCommentDraft(identifier: string, parentId?: string) {
     };
     const timer = setInterval(refresh,2000); window.addEventListener('focus',refresh);
     return () => { clearInterval(timer); window.removeEventListener('focus',refresh); };
-  }, [ready]);
+  }, [ready,following]);
   async function submit(mutate: (init: RequestInit,onSuccess: () => void) => Promise<void>, done?: () => void) {
     try {
       const reference = await flush(); posting.current = true;
+      const { body, anchor } = latest.current;
       await mutate({method:'POST',headers:{'content-type':'application/json',...(reference ? {
         'x-vector-comment-draft-id':reference.id,'x-vector-comment-draft-revision':String(reference.revision)} : {})},
-        body:JSON.stringify({body:latest.current,...(parentId ? {parentId} : {})})},() => { apply(null,'Comment posted.'); done?.(); });
+        body:JSON.stringify({body,...(parentId ? {parentId} : {}),...(anchor ? {anchor} : {})})},() => { apply(null,'Comment posted.'); done?.(); });
     } catch { /* Autosave reports its own error and retains the composer. */ }
     finally { posting.current = false; }
   }
@@ -112,8 +128,10 @@ export function useCommentDraft(identifier: string, parentId?: string) {
       const ref = await flush();
       if (ref) await fetchJson('/api/comment-drafts/' + ref.id,commentDraftReceiptSchema,{method:'DELETE',
         headers:{'content-type':'application/json'},body:JSON.stringify({revision:ref.revision})});
-      apply(null,'Comment draft discarded.');
+      apply(null,ref ? 'Comment draft discarded.' : '');
     } catch { if (alive.current) setMessage('Unable to discard this draft. Review the current comment and try again.'); }
   }
-  return {body,setBody:changed,ready,message,submit,discard};
+  return {body:content.body,anchor:content.anchor,ready,message,submit,discard,
+    setBody:(body: string) => changed({...latest.current,body}),
+    setAnchor:(anchor: DescriptionAnchorInput) => changed({...latest.current,anchor})};
 }

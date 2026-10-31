@@ -96,13 +96,14 @@ export function addDiscussionRoutes(app: Hono<AppEnvironment>) {
       const draftId = c.req.header('x-vector-comment-draft-id');
       const revision = Number(c.req.header('x-vector-comment-draft-revision'));
       const reference = draftId ? { id:draftId,revision } : undefined;
-      let savedBody = input.data.body;
+      let savedBody = input.data.body, savedAnchor: string | null = null;
+      const posted = input.data.anchor ? JSON.stringify(input.data.anchor) : null;
       const matchesDraft = async () => {
         if (!reference) return true;
         const draft = await readCommentDraft(c.env.DB,c.get('operatorId'),reference.id);
-        if (draft) savedBody = draft.body;
+        if (draft) { savedBody = draft.body; savedAnchor = draft.anchor ? JSON.stringify(draft.anchor) : null; }
         return Number.isSafeInteger(revision) && draft?.revision === revision && draft.identifier === issue.identifier &&
-          draft.parentId === (input.data.parentId ?? null) && draft.body.trim() === input.data.body;
+          draft.parentId === (input.data.parentId ?? null) && draft.body.trim() === input.data.body && savedAnchor === posted;
       };
       const changed = () => c.json({ error:'draft_changed',message:'This comment draft changed or was removed. Review it before posting.' },409);
       if (!await matchesDraft()) return changed();
@@ -113,7 +114,7 @@ export function addDiscussionRoutes(app: Hono<AppEnvironment>) {
         c.get("operatorId"),
         input.data.body,
         input.data.parentId,
-        reference ? db => consumeCommentDraftStatements(db,c.get('operatorId'),issue.id,input.data.parentId,savedBody,reference) : undefined,
+        reference ? db => consumeCommentDraftStatements(db,c.get('operatorId'),issue.id,input.data.parentId,savedBody,savedAnchor,reference) : undefined,
         input.data.anchor,
       ); } catch (error) {
         if (reference && !await matchesDraft()) return changed();

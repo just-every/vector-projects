@@ -5,6 +5,7 @@ import { ReactionProvider } from '../../reactions/ui';
 import { useHydrated } from '../../../app/initial-resources';
 import { CommentThread, commentThreads } from './discussion-thread';
 import { useDiscussion } from './discussion-client';
+import { useCommentDraft } from '../../drafts/use-comment-draft';
 import './description-discussion.css';
 
 function sourceBoundaries(element: HTMLElement, source: string) {
@@ -77,9 +78,10 @@ export function DescriptionDiscussion({ identifier, description, version, writab
   identifier: string; description: string; version: number; writable: boolean; onRefresh: () => void; children: ReactNode;
 }) {
   const container = useRef<HTMLDivElement>(null), previousVersion = useRef(version);
-  const [selection, setSelection] = useState<DescriptionAnchorInput | null>(null),
-    [draft, setDraft] = useState<DescriptionAnchorInput | null>(null), [body, setBody] = useState('');
+  const [selection, setSelection] = useState<DescriptionAnchorInput | null>(null);
   const { resource, busy, error, mutate } = useDiscussion(identifier, onRefresh), hydrated = useHydrated();
+  // The quoted comment is an account draft: its selection and text reopen on other browsers.
+  const draft = useCommentDraft(identifier, undefined, true);
   useEffect(() => {
     if (previousVersion.current !== version) {
       previousVersion.current = version;
@@ -101,24 +103,25 @@ export function DescriptionDiscussion({ identifier, description, version, writab
   const threads = commentThreads(resource.data?.comments ?? []).filter(({ root }) => root.anchor);
   return <div className="description-discussion">
     <div className="description-source" ref={container}>{children}
-      {writable && description && <button type="button" disabled={!selection || busy || !hydrated} onClick={() => { setDraft(selection); setSelection(null); }}>
+      {writable && description && <button type="button" disabled={!selection || busy || !hydrated || !draft.ready} onClick={() => { if (selection) draft.setAnchor(selection); setSelection(null); }}>
         Comment on selection
       </button>}
     </div>
-    {(threads.length > 0 || draft || error || resource.error) && <aside className="description-thread-margin" aria-label="Description threads">
+    {(threads.length > 0 || (writable && draft.anchor) || error || resource.error) && <aside className="description-thread-margin" aria-label="Description threads">
       <h2>Description threads</h2>
       <ReactionProvider identifier={identifier}>{threads.map(({ root, replies }) => <CommentThread key={root.id} root={root} replies={replies}
         onLocateQuote={anchor => { if(container.current) locateQuote(container.current, description, anchor); }}
         writable={writable} identifier={identifier} data={resource.data!} busy={busy} mutate={mutate}
         onLinksChanged={() => { resource.refreshAfterMutation(); onRefresh(); }} />)}</ReactionProvider>
-      {draft && <form className="issue-mutation-form comment-composer" onSubmit={event => {
+      {writable && draft.anchor && <form id="quote-draft" className="issue-mutation-form comment-composer" onSubmit={event => {
         event.preventDefault();
-        void mutate('comments', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ body, anchor: draft }) }, () => { setDraft(null); setBody(''); });
+        void draft.submit((init, done) => mutate('comments', init, done));
       }}>
-        <blockquote>{draft.quote}</blockquote>
-        <label>Comment on quoted text<MentionTextarea aria-label="Comment on quoted text" required maxLength={100000} disabled={busy || !hydrated} value={body} onValueChange={setBody}/></label>
-        <button disabled={busy || !hydrated}>Start thread</button>
-        <button type="button" disabled={busy} onClick={() => { setDraft(null); setBody(''); }}>Cancel</button>
+        <blockquote>{draft.anchor.quote}</blockquote>
+        <label>Comment on quoted text<MentionTextarea aria-label="Comment on quoted text" required maxLength={100000} disabled={busy || !hydrated || !draft.ready} value={draft.body} onValueChange={draft.setBody}/></label>
+        <button disabled={busy || !hydrated || !draft.ready}>Start thread</button>
+        <button type="button" disabled={busy || !draft.ready} onClick={() => void draft.discard()}>Cancel</button>
+        {draft.message && <p role="status">{draft.message}</p>}
       </form>}
       {error && <p role="alert">{error}</p>}
       {resource.error && <p role="alert">{resource.error.message} <button type="button" onClick={resource.reload}>Retry description threads</button></p>}

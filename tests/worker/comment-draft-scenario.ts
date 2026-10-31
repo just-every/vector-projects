@@ -15,7 +15,8 @@ async function json<T = any>(response: Response,status=200): Promise<T> {
 
 export async function commentDraftScenario() {
   const f = await collaborationFixture(), team = f.initial.teams[0], second = await signIn();
-  const issue = await json(await f.call('/issues','POST',{teamId:team.id,title:'synthetic-vector-2860'}),201);
+  const description = 'synthetic-vector-2867 quoted words';
+  const issue = await json(await f.call('/issues','POST',{teamId:team.id,title:'synthetic-vector-2860',description}),201);
   const target = '/issues/' + issue.identifier, text = 'synthetic-vector-2861';
   const id = createUlid(new Date());
   const draft: CommentDraft = (await json(await f.call(target+'/comment-drafts','POST',{id,body:text}),201)).draft;
@@ -61,6 +62,20 @@ export async function commentDraftScenario() {
   expect((await json(await f.call('/comment-drafts'))).drafts).toEqual([]);
   expect(await env.DB.prepare('SELECT body FROM comment_drafts WHERE id=?').bind(id).first('body')).toBeNull();
   expect((await json(await f.call(target+'/discussion'))).comments).toEqual([expect.objectContaining({id:comment.id,body:newer.trim()})]);
+  // A quoted description comment is its own composer; posting consumes its exact saved selection.
+  const anchor = {quote:'quoted words',start:22,end:34,expectedDescription:description}, quoteId = createUlid(new Date());
+  const quoted = (await json(await f.call(target+'/comment-drafts','POST',{id:quoteId,body:text,anchor}),201)).draft;
+  expect(quoted).toMatchObject({id:quoteId,body:text,parentId:null,anchor});
+  expect((await json(await f.any(second,'/comment-drafts'))).drafts).toEqual([quoted]);
+  expect((await f.call(target+'/comment-drafts','POST',{id:createUlid(new Date()),body:text,parentId:comment.id,anchor})).status).toBe(400);
+  const quote = (selection: unknown) => createServerApp().request(origin+'/api'+target+'/comments',{method:'POST',
+    headers:{Host:new URL(origin).host,Cookie:second,Origin:origin,'content-type':'application/json',
+      'x-vector-comment-draft-id':quoteId,'x-vector-comment-draft-revision':'1'},body:JSON.stringify({body:text,anchor:selection})},bindings);
+  expect((await quote({...anchor,quote:'quoted',end:28})).status).toBe(409);
+  const thread = await json(await quote(anchor),201);
+  expect((await json(await f.call('/comment-drafts'))).drafts).toEqual([]);
+  expect((await json(await f.call(target+'/discussion'))).comments).toContainEqual(expect.objectContaining({id:thread.id,body:text,
+    anchor:{quote:'quoted words',start:22,end:34,removed:false}}));
   const reply = (await json(await f.call(target+'/comment-drafts','POST',{id:createUlid(new Date()),body:text,parentId:comment.id}),201)).draft;
   expect(reply.parentId).toBe(comment.id);
   expect((await f.any(second,'/comment-drafts/'+reply.id,'DELETE',{revision:1})).status).toBe(200);

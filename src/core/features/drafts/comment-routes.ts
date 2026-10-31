@@ -20,19 +20,21 @@ export function addCommentDraftRoutes(app: Hono<AppEnvironment>) {
       catch (error) { if (error instanceof ThreadError) return c.json({error:'not_found'},404); throw error; }
     }
     const result = await saveCommentDraft(c.env.DB,c.get('operatorId'),{id:input.data.id,revision:0},input.data.body,
-      { issueId:issue.id,parentId:input.data.parentId });
+      input.data.anchor,{ issueId:issue.id,parentId:input.data.parentId });
     return c.json({ draft:result.draft },result.written ? 201 : 409);
   }));
   for (const method of ['PATCH','DELETE'] as const) app.on(method,'/comment-drafts/:id',discussionAccess(async c => {
     c.set('mutationPageProjection',true);
-    const input = (method === 'PATCH' ? commentDraftWriteSchema : draftRevisionSchema).safeParse(await readRequestJson(c.req.raw));
+    const body = await readRequestJson(c.req.raw);
+    const write = method === 'PATCH' ? commentDraftWriteSchema.safeParse(body) : null;
+    const input = write ?? draftRevisionSchema.safeParse(body);
     if (!input.success) return c.json({ error:'invalid_request' },400);
     const current = await readCommentDraft(c.env.DB,c.get('operatorId'),c.req.param('id') ?? '');
     if (!current) return c.json({ draft:null },409);
     await requireIssueProjection(c,current.identifier);
     const ref = {id:current.id,revision:input.data.revision};
-    const result = method === 'DELETE' ? await discardCommentDraft(c.env.DB,c.get('operatorId'),ref)
-      : await saveCommentDraft(c.env.DB,c.get('operatorId'),ref,'body' in input.data && typeof input.data.body === 'string' ? input.data.body : '');
+    const result = write?.success ? await saveCommentDraft(c.env.DB,c.get('operatorId'),ref,write.data.body,write.data.anchor)
+      : await discardCommentDraft(c.env.DB,c.get('operatorId'),ref);
     return c.json({ draft:result.draft },result.written ? 200 : 409);
   }));
 }

@@ -2025,7 +2025,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "8f51e40c28071c7be4a844d558c2a58a047be7335ea31218d8878ab9fb5f9afa",
+      "sha256": "1fd9eb0d765eaa07807bc996880777b5c62f7357a53438a88edc37ae2263da40",
       "executable": false
     },
     "migrations/core/0001_data_spine.sql": {
@@ -2513,7 +2513,7 @@
       "executable": false
     },
     "migrations/core/0122_comment_drafts.sql": {
-      "sha256": "fb9cc924ae08d77148ca2e4c8c7c37020c9564f8335c83a398b55c27914b5dac",
+      "sha256": "1fc3236deca08d06dca854b577d2e48510f16cd10c5872601df984d351367e83",
       "executable": false
     },
     "OPERATIONS.json": {
@@ -4541,7 +4541,7 @@
       "executable": false
     },
     "src/core/features/data/archive-inventory.json": {
-      "sha256": "d19660d6afc255511fe36b2f0a07c835856a9b05a272184b57492de982ba10fc",
+      "sha256": "51d34648035f6130b5e44766930a677b0a56c8673c9f5c244e81e3c96ee45e95",
       "executable": false
     },
     "src/core/features/data/archive-inventory.mjs": {
@@ -4893,7 +4893,7 @@
       "executable": false
     },
     "src/core/features/discussion/routes.ts": {
-      "sha256": "e6b129146a1027044a101b8a47346d1629bb6e0486de5c322bb0f6c7cacd3ff1",
+      "sha256": "e42972a190cb6297819018e6efc84bea254547d5cde663e902e86fd49034a6df",
       "executable": false
     },
     "src/core/features/discussion/schema.ts": {
@@ -4953,19 +4953,19 @@
       "executable": false
     },
     "src/core/features/drafts/comment-repository.ts": {
-      "sha256": "868a7f1016851fb2f8e221082386381998eb196bdc6c0d9dee33217f76e78113",
+      "sha256": "2945ba198c36d78e580fac178982c32cf4788ce4954465880eb49cc30dcc9895",
       "executable": false
     },
     "src/core/features/drafts/comment-routes.ts": {
-      "sha256": "7e8baa93cbff1043e3a771a50b7147cf2c655867148ed1ae4e57ad1fac8cc7e0",
+      "sha256": "e1eb4dfa8630ee7f7d7c7fed7393ff41c7de1fdc2f49cff6ab88200b68d81e32",
       "executable": false
     },
     "src/core/features/drafts/comment-schema.ts": {
-      "sha256": "0791dcc34417e3dbc04f135502ab581569ad4725613c9f19e03df42558019059",
+      "sha256": "37e411fc98ee8eb5367ab4aac836d3d055e9273451288c6aa2a22a125081a736",
       "executable": false
     },
     "src/core/features/drafts/list.tsx": {
-      "sha256": "ac7a138843e19664345f8afab263f11637c45cf6324d71a48fd5face2f71aa39",
+      "sha256": "0baa4fe078f0be85d2db9d585bc76f875f47592c91ca7a26a446dc02def67a72",
       "executable": false
     },
     "src/core/features/drafts/repository.ts": {
@@ -4981,7 +4981,7 @@
       "executable": false
     },
     "src/core/features/drafts/use-comment-draft.ts": {
-      "sha256": "b51791255a26ad8327b98f02d0dde4a712345a5f6ef56ed942a0a746b7efe4dc",
+      "sha256": "6c981ead27f7d367538cfae1658090585fd31df4d8cfb34ad25912ca742daa22",
       "executable": false
     },
     "src/core/features/drafts/use-drafts.ts": {
@@ -5969,7 +5969,7 @@
       "executable": false
     },
     "src/core/features/issues/ui/description-discussion.tsx": {
-      "sha256": "468fafe5ea63fa05691525471acd285339614a0314697a3ef721c72c8c5dd84a",
+      "sha256": "089f7fdef06e396eae8523137cb0eab2d47dd1247ff91c2effce20ddf0ce0c2e",
       "executable": false
     },
     "src/core/features/issues/ui/detail-context.css": {
@@ -7701,7 +7701,7 @@
       "executable": false
     },
     "tests/e2e/comment-drafts-journey.mjs": {
-      "sha256": "1732d94f014bf03557a9111f4603c113b468c3f6eeb6920d163148d32892020f",
+      "sha256": "5d753282aedf72c12e02fde850612ff95e06d3838d71ddb49b4681f3dd808ad2",
       "executable": false
     },
     "tests/e2e/core-board-journey.mjs": {
@@ -8505,7 +8505,7 @@
       "executable": false
     },
     "tests/worker/comment-draft-scenario.ts": {
-      "sha256": "90678a44f34d36fb92307ff2f76bed7e3eadaafd976fdd2336c813dec7b27039",
+      "sha256": "cdd511f985aabb5395a9ac3477e8f61be1dad8bdc3c1cf510a4c475d7345f5ed",
       "executable": false
     },
     "tests/worker/current-disjoint.test.ts": {

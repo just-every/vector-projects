@@ -2177,6 +2177,7 @@
     "author_operator_id",
     "issue_id",
     "parent_comment_id",
+    "anchor_json",
     "body",
     "revision",
     "state",

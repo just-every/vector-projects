@@ -106,7 +106,29 @@ export async function commentDraftJourney(page,context,second,other,base,issue,e
     const discussion=await (await context.request.get(base+'/api/issues/'+issue.identifier+'/discussion')).json();
     assert.ok(discussion.comments.some(row=>row.body===reply+'-posted'&&row.parentId===root));
     await until(()=>get(context.request),rows=>rows.length===0,'Posted reply disappears from Drafts');
-    record('ISSUE-028','Comment and reply account autosave, independent-browser recovery, Drafts navigation and team and edit time, newer text, delayed-save refusal after atomic posting, and cross-browser discard; existing composers remain keyboard accessible without overflow at both widths.');
+    // A quoted description comment keeps its exact selection in the author's account.
+    const quoteSource='synthetic-vector-2879 quoted account words', current=await (await context.request.get(base+'/api/issues/'+issue.identifier)).json();
+    assert.equal((await context.request.patch(base+'/api/issues/'+issue.identifier,{headers:{Origin:base},data:{expectedVersion:current.version,description:quoteSource}})).status(),200);
+    await visit(page,target);
+    await page.locator('.issue-description [data-description-start]').filter({hasText:quoteSource}).first().evaluate(element=>{
+      const range=document.createRange();range.selectNodeContents(element);
+      const selected=window.getSelection();selected.removeAllRanges();selected.addRange(range);
+    });
+    await page.getByRole('button',{name:'Comment on selection',exact:true}).click();
+    const quoted=text+'-quoted';
+    await page.getByRole('textbox',{name:'Comment on quoted text',exact:true,disabled:false}).fill(quoted);
+    await until(()=>get(context.request),rows=>rows.some(row=>row.body===quoted&&row.anchor?.quote===quoteSource),'Quoted comment draft keeps its selection');
+    await visit(second,target);
+    await second.getByRole('textbox',{name:'Comment on quoted text',exact:true,disabled:false}).waitFor();
+    await until(()=>second.getByRole('textbox',{name:'Comment on quoted text',exact:true}).inputValue(),value=>value===quoted,'Independent browser reopens the quoted composer');
+    assert.equal(await second.locator('#quote-draft blockquote').innerText(),quoteSource);
+    const threadPosted=second.waitForResponse(response=>response.url()===base+'/api/issues/'+issue.identifier+'/comments'&&response.request().method()==='POST');
+    await second.getByRole('button',{name:'Start thread',exact:true}).click();assert.equal((await threadPosted).status(),201);
+    await page.locator('#quote-draft').waitFor({state:'detached'});
+    assert.deepEqual(await get(context.request),[]);
+    const anchored=(await (await context.request.get(base+'/api/issues/'+issue.identifier+'/discussion')).json()).comments.find(row=>row.body===quoted);
+    assert.equal(anchored.anchor.quote,quoteSource);
+    record('ISSUE-028','Comment, reply and quoted description comment account autosave, independent-browser recovery, Drafts navigation and team and edit time, newer text, delayed-save refusal after atomic posting, and cross-browser discard; existing composers remain keyboard accessible without overflow at both widths.');
   } finally {
     release();await page.unroute(url,intercept);expectedConflicts.delete(url);
   }
