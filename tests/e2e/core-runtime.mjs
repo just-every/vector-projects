@@ -611,6 +611,7 @@ try {
   let expectedConflictUrl = null;
   let expectedBulkConflictUrl = null;
   const classifiedDraftConsole = [];
+  const classifiedAccountDraftConsole = [];
   const classifiedBulkConsole = [];
   const classifiedBoardConsole = [];
   const classifiedUndoConsole = [];
@@ -644,7 +645,7 @@ try {
     }
     if (expectedAccountDraftConflicts.has(m.location().url) &&
         /^Failed to load resource: the server responded with a status of 409(?: \([^)]*\))?$/.test(m.text())) {
-      classifiedDraftConsole.push({ url: m.location().url, text: m.text(), expected: 'Deliberate delayed draft save with newer text retained' });
+      classifiedAccountDraftConsole.push({ url: m.location().url, text: m.text(), expected: 'Deliberate delayed draft save with newer text retained' });
       return;
     }
     if (expectedUndoConflicts.has(m.location().url) &&
@@ -1604,12 +1605,13 @@ try {
     "No horizontal overflow on mobile",
   );
   assert.equal(classifiedDraftConsole.length, journeyGroup === 'current' ? 0 : 1, 'Exactly the injected metadata failure is classified');
+  assert.equal(classifiedAccountDraftConsole.length, journeyGroup === 'current' ? 0 : 1, 'Exactly the deliberately delayed draft save is classified');
   assert.deepEqual(errors, []);
   assert.deepEqual(failed, []);
   assert.deepEqual(externalRequests, []);
   record(
     "RENDER-BROWSER",
-    "Hydration and internal navigation retain performance.timeOrigin; UI issue/comment/link persistence works; raw HTML is removed; only the intentional metadata GET500 and stale-edit PATCH409 and stale-bulk POST409 resource console events are classified; no unexpected page/console/request errors or external URL fetches; desktop/mobile screenshots captured.",
+    "Hydration and internal navigation retain performance.timeOrigin; UI issue/comment/link persistence works; raw HTML is removed; only the intentional metadata GET500, delayed draft save PATCH409 and stale-edit PATCH409 and stale-bulk POST409 resource console events are classified; no unexpected page/console/request errors or external URL fetches; desktop/mobile screenshots captured.",
   );
   await page.setViewportSize({ width: 1440, height: 1000 });
   const browserSignoutPromise = page.waitForResponse(
