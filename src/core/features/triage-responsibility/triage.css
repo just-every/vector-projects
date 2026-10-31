@@ -1,9 +1,37 @@
-.triage-page { font-size: 14px; }
-.triage-team { margin: 24px 0; padding: 20px; border: 1px solid var(--app-line-strong); border-radius: 12px; }
-.triage-team h2 { font-size: 20px; margin: 0 0 12px; }
-.triage-team h3 { font-size: 15px; }
-.triage-items { list-style: none; padding: 0; margin: 0; }
-.triage-items li { padding: 10px 0; overflow-wrap: anywhere; }
-.triage-items a { display: block; }
-.triage-items span { font-variant-numeric: tabular-nums; margin-right: 8px; }
-@media (max-width: 600px) { .triage-team { padding: 14px; } }
+.triage-page {
+  font-size: 14px;
+}
+.triage-team {
+  margin: 24px 0;
+  padding: 20px;
+  border: 1px solid var(--app-line-strong);
+  border-radius: 12px;
+}
+.triage-team h2 {
+  font-size: 20px;
+  margin: 0 0 12px;
+}
+.triage-team h3 {
+  font-size: 15px;
+}
+.triage-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.triage-items li {
+  padding: 10px 0;
+  overflow-wrap: anywhere;
+}
+.triage-items a {
+  display: block;
+}
+.triage-items span {
+  font-variant-numeric: tabular-nums;
+  margin-right: 8px;
+}
+@media (max-width: 600px) {
+  .triage-team {
+    padding: 14px;
+  }
+}
