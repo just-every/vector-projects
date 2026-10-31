@@ -16,6 +16,29 @@ async function json<T>(response: Response, status = 200): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+function pausedDraftProjection() {
+  let entered!: () => void, resume!: () => void, waiting = true;
+  const reading = new Promise<void>(resolve => { entered = resolve; });
+  const released = new Promise<void>(resolve => { resume = resolve; });
+  const db = new Proxy(env.DB, { get(target, key) {
+    if (key === 'prepare') return (sql: string) => {
+      const wrap = (statement: D1PreparedStatement): D1PreparedStatement => new Proxy(statement, { get(item, method) {
+        if (method === 'bind') return (...values: unknown[]) => wrap(item.bind(...values));
+        if (method === 'first' && sql.includes('SELECT d.id,d.revision,d.body_json')) return async (column?: string) => {
+          if (waiting) { waiting = false; entered(); await released; }
+          return column === undefined ? item.first() : item.first(column);
+        };
+        const value = Reflect.get(item, method, item);
+        return typeof value === 'function' ? value.bind(item) : value;
+      } });
+      return wrap(target.prepare(sql));
+    };
+    const value = Reflect.get(target, key, target);
+    return typeof value === 'function' ? value.bind(target) : value;
+  } });
+  return { db, reading, resume };
+}
+
 it('[ISSUE-028] private account drafts survive independent sessions, reconcile competing saves and are consumed atomically without resurrection', async () => {
   const f = await collaborationFixture(), team = f.initial.teams[0];
   for (const name of ['synthetic-vector-2801', 'synthetic-vector-2802'])
@@ -120,6 +143,20 @@ it('[ISSUE-028] private account drafts survive independent sessions, reconcile c
   expect((await rows()).results).toEqual(guestState);
   await env.DB.prepare("UPDATE operators SET role='member' WHERE id=?").bind(f.bob).run();
   const own=(await json<{draft:AccountDraft}>(await f.any(f.bobCookie,'/drafts','POST',{id:createUlid(new Date()),values}),201)).draft;
+  const projection = pausedDraftProjection(), projectionSession = await signIn(), projectionId = createUlid(new Date());
+  const pendingProjection = createServerApp().request(origin+'/api/drafts',{method:'POST',
+    headers:{Host:new URL(origin).host,Cookie:projectionSession,Origin:origin,'content-type':'application/json'},
+    body:JSON.stringify({id:projectionId,values})},{...bindings,DB:projection.db});
+  await Promise.race([projection.reading,pendingProjection.then(r=>{throw Error('Projection read not reached: '+r.status);})]);
+  expect((await request('/auth/signout','POST',{},projectionSession)).status).toBe(204);
+  const newerProjection={...values,title:'synthetic-vector-2850'};
+  await json(await f.call('/drafts/'+projectionId,'PATCH',{revision:1,values:newerProjection}));
+  projection.resume();
+  const concealedProjection=await pendingProjection, concealedBody=await concealedProjection.text();
+  expect(concealedProjection.status,concealedBody).toBe(401);
+  expect(concealedBody).not.toContain(newerProjection.title);
+  expect((await json<{draft:AccountDraft}>(await f.call('/drafts/'+projectionId))).draft.values).toEqual(newerProjection);
+  expect((await f.call('/drafts/'+projectionId,'DELETE',{revision:2})).status).toBe(200);
   const workspace=createUlid(new Date());
   await env.DB.prepare('INSERT INTO workspace_settings(id,name,timezone,created_at,updated_at) SELECT ?,name,timezone,created_at,updated_at FROM workspace_settings LIMIT 1').bind(workspace).run();
   await env.DB.prepare('UPDATE operators SET workspace_id=? WHERE id=?').bind(workspace,f.bob).run();
