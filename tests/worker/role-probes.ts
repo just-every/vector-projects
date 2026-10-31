@@ -96,7 +96,7 @@ export function probes(w: Workspace): Record<RowId, Probe> {
       return ()=>actor.call(`/teams/${id}/requests`,"POST",{});
     }},
     "teams.join": { session: async (_who, actor) => { const id = await team(`Directory team ${unique()}`, "DIR"); return () => actor.call(`/teams/${id}/join`, "POST", {}); } },
-    "teams.settings": { permission: "settings", session: async (_who, actor, id) => { const value = unique() % 2 === 0; return () => actor.call(`/settings/teams/${id}`, "PATCH", { autoCycleStarted: value }); } },
+    "teams.settings": { permission: "settings", session: async (_who, actor, id) => { const value = unique() % 2 === 0; return () => actor.call(`/settings/teams/${id}`, "PATCH", { autoCycleStarted: value, cyclesEnabled: true }); } },
     "teams.workflow": { permission: "settings", session: async (_who, actor, id) => { const status = await backlog(id), name = `Backlog ${unique()}`; return () => actor.call(`/settings/teams/${id}/statuses/${status}`, "PATCH", { name }); } },
     // Checked under both settings values: All team members never lets a member archive.
     "teams.archive": { permission: "settings", session: async (_who, actor, id) => async () => {

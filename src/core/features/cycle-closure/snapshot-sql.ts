@@ -4,7 +4,7 @@ export const snapshotSql = `
 WITH closing AS (
  SELECT c.*,w.timezone FROM cycles c JOIN teams t ON t.id=c.team_id
  JOIN workspace_settings w ON w.id=t.workspace_id
- WHERE c.id=? AND c.closed_at IS NULL AND julianday(c.ends_at)<=julianday(?)
+ WHERE c.id=? AND t.cycles_enabled=1 AND c.closed_at IS NULL AND julianday(c.ends_at)<=julianday(?)
  AND NOT EXISTS(SELECT 1 FROM vector_restore_status WHERE effects_held=1)
 ), committed AS (
  SELECT i.identifier,i.project_id,p.name project_name,i.estimate,s.category FROM issues i

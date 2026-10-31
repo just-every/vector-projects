@@ -22,7 +22,7 @@ import {
   assertSignOut,
   exerciseWorkspaceRoles,
 } from "./admin-access-journey.mjs";
-import { createTeamWorkflow, removeUsedStatus, exerciseTeamRoles, teamCreationPermission, teamJoinPermissions } from "./admin-team-journey.mjs";
+import { createTeamWorkflow, removeUsedStatus, exerciseTeamRoles, teamCreationPermission, teamJoinPermissions, teamCyclesSettings } from "./admin-team-journey.mjs";
 import { authorLabel, deleteAppliedLabel, memberLabelCreation } from "./admin-label-journey.mjs";
 import {
   authorProject,
@@ -140,6 +140,7 @@ await contract(
           await teamCreationPermission({ ...shared, ...roles, evidence });
           await teamJoinPermissions({ ...shared, ...roles, evidence });
           await exerciseAuditAccess({ ...shared, ...roles });
+          await teamCyclesSettings({ ...shared, ...roles, evidence });
         } finally {
           await roles.context.close();
         }

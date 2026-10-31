@@ -30,7 +30,7 @@ export async function maintainCycleSchedules(
   const schedules = (
     await db
       .prepare(
-        `SELECT s.*,w.timezone FROM team_cycle_schedules s JOIN teams t ON t.id=s.team_id JOIN workspace_settings w ON w.id=t.workspace_id WHERE t.archived_at IS NULL ${teamId ? "AND t.id=?" : ""}`,
+        `SELECT s.*,w.timezone FROM team_cycle_schedules s JOIN teams t ON t.id=s.team_id JOIN workspace_settings w ON w.id=t.workspace_id WHERE t.archived_at IS NULL AND t.cycles_enabled=1 ${teamId ? "AND t.id=?" : ""}`,
       )
       .bind(...(teamId ? [teamId] : []))
       .all<Schedule>()
@@ -57,7 +57,7 @@ export async function maintainCycleSchedules(
     const writes: D1PreparedStatement[] = [
       guard(
         db,
-        "EXISTS(SELECT 1 FROM team_cycle_schedules s JOIN teams t ON t.id=s.team_id JOIN workspace_settings w ON w.id=t.workspace_id WHERE s.team_id=? AND s.revision=? AND s.generation=? AND t.archived_at IS NULL AND w.timezone=?)",
+        "EXISTS(SELECT 1 FROM team_cycle_schedules s JOIN teams t ON t.id=s.team_id JOIN workspace_settings w ON w.id=t.workspace_id WHERE s.team_id=? AND s.revision=? AND s.generation=? AND t.archived_at IS NULL AND t.cycles_enabled=1 AND w.timezone=?)",
         s.team_id,
         s.revision,
         s.generation,

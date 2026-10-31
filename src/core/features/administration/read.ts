@@ -24,7 +24,7 @@ export async function readAdministration(db: D1Database, actor: string) {
       db
         .prepare(
           `SELECT t.id,t.name,CASE WHEN ${visibleTeam('reader','t.id')} THEN t.identifier_prefix ELSE '' END AS identifierPrefix,t.is_private AS isPrivate,${visibleTeam('reader','t.id')} AS canRead,
-      CASE WHEN reader.role IN('owner','admin') OR ${visibleTeam('reader','t.id')} THEN (SELECT count(*) FROM main.issues i WHERE i.team_id=t.id) ELSE NULL END AS issueCount,t.archived_at AS archivedAt,t.auto_cycle_started AS autoCycleStarted,t.auto_cycle_completed AS autoCycleCompleted,
+      CASE WHEN reader.role IN('owner','admin') OR ${visibleTeam('reader','t.id')} THEN (SELECT count(*) FROM main.issues i WHERE i.team_id=t.id) ELSE NULL END AS issueCount,t.archived_at AS archivedAt,t.cycles_enabled AS cyclesEnabled,t.auto_cycle_started AS autoCycleStarted,t.auto_cycle_completed AS autoCycleCompleted,
       CASE WHEN t.is_private=1 THEN 'invite_only' ELSE t.membership_mode END AS membershipMode,t.requests_enabled AS requestsEnabled,t.settings_permission AS settingsPermission,t.planning_permission AS planningPermission,
       NOT EXISTS(SELECT 1 FROM team_issue_history h WHERE h.team_id=t.id) AS prefixEditable
       FROM main.teams t JOIN operators reader ON reader.id='${actor.replaceAll("'","''")}' WHERE t.workspace_id=? AND (reader.role='admin' OR ${visibleTeam('reader','t.id')} OR ${requestableTeam('reader','t.id')}) ORDER BY t.name,t.id`,
@@ -97,6 +97,7 @@ export async function readAdministration(db: D1Database, actor: string) {
       canRead: Boolean(t.canRead),
       requestsEnabled: Boolean(t.requestsEnabled),
       joinRequests: joinRequests.results.filter(request=>request.teamId===t.id),
+      cyclesEnabled: Boolean(t.cyclesEnabled),
       autoCycleStarted: Boolean(t.autoCycleStarted),
       autoCycleCompleted: Boolean(t.autoCycleCompleted),
       statuses: statuses.results.filter((s) => s.teamId === t.id),

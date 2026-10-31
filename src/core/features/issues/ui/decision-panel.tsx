@@ -385,7 +385,7 @@ export function DecisionPanel({
                     ))}
                   </select>
                 </label>
-                <label>
+                {options?.teams.find(team => team.id === issue.team.id)?.cyclesEnabled && <label>
                   <span>
                     Cycle{" "}
                     {recommendation.recommended.cycle &&
@@ -420,7 +420,7 @@ export function DecisionPanel({
                       </option>
                     ))}
                   </select>
-                </label>
+                </label>}
                 <label className="decision-form__wide">
                   Reason <span>(optional)</span>
                   <textarea

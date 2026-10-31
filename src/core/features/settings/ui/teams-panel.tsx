@@ -156,6 +156,7 @@ function TeamEditor({
     const fields = new FormData(event.currentTarget);
     await action.run(`/api/settings/teams/${team.id}`, "PATCH", {
       name: fields.get("name"),
+      cyclesEnabled: fields.has("cyclesEnabled"),
       autoCycleStarted: fields.has("autoCycleStarted"),
       autoCycleCompleted: fields.has("autoCycleCompleted"),
       ...(team.prefixEditable
@@ -218,6 +219,10 @@ function TeamEditor({
               team has issued an identifier.
             </p>
           )}
+          <label className="admin-checkbox"><input type="checkbox" name="cyclesEnabled" key={String(team.cyclesEnabled)} defaultChecked={team.cyclesEnabled} />
+            Enable cycles
+          </label>
+          <p>Turning cycles off hides cycle controls and pauses automation. Commitments, schedules and closed snapshots stay available when you turn cycles on again.</p>
           <label className="admin-checkbox"><input type="checkbox" name="autoCycleStarted" defaultChecked={team.autoCycleStarted} />
             Add uncommitted work to the active cycle when it starts
           </label>

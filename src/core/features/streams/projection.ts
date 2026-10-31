@@ -221,6 +221,7 @@ export function classifyCurrentIssue(
     issue.dueDate >= today &&
     issue.dueDate <= addDays(today, 7);
   const cycleCommitted =
+    snapshot.teams.some(team => team.id === issue.teamId && team.cyclesEnabled) &&
     issue.cycleId !== null && isActiveOrNextCycle(snapshot, issue.cycleId, now);
   if (dueSoon || cycleCommitted) {
     return {
@@ -286,7 +287,7 @@ function toStreamItem(
     title: issue.title,
     version: issue.version,
     estimate: issue.estimate,
-    cycle: issue.cycleId === null ? null : (() => {
+    cycle: !team.cyclesEnabled || issue.cycleId === null ? null : (() => {
       const cycle = snapshot.cycles.find(row => row.id === issue.cycleId);
       if (!cycle) throw new Error(`Issue ${issue.identifier} references a missing cycle`);
       return { id: cycle.id, name: cycle.name };

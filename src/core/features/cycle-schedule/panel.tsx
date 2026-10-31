@@ -38,7 +38,7 @@ export function CycleSchedulePanel({
         automatic cycles; cycles already started keep their dates.
       </p>
       {data.teams
-        .filter((t) => !t.archivedAt)
+        .filter((t) => !t.archivedAt && t.cyclesEnabled)
         .map((team) => {
           const schedule = data.cycleSchedules.find(
             (s) => s.teamId === team.id,
