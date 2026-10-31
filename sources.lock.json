@@ -5014,7 +5014,7 @@
       "executable": false
     },
     "src/core/features/drafts/use-drafts.ts": {
-      "sha256": "a5d774ee3cf164548dfe80b608cdf5bd63a64319517fc5f7be59df50219526bb",
+      "sha256": "777400c84c967cee6f6f6e65cfa093c519d19a18c3a8703787aefd3d255ef8d0",
       "executable": false
     },
     "src/core/features/due-reminders/calendar.ts": {
@@ -7590,7 +7590,7 @@
       "executable": false
     },
     "tests/e2e/account-drafts-journey.mjs": {
-      "sha256": "679fb7c0e61a389ae1bfe0f627b86e3741673b134ef0a68768757d5d6a3e77d4",
+      "sha256": "df5339c8ddd256ac4fd401762fc2b0bf4bc14f8bb0f38434c2ae7b4f02a66510",
       "executable": false
     },
     "tests/e2e/admin-access-journey.mjs": {
