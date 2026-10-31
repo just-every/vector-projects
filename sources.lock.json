@@ -2025,7 +2025,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "a36f98e7b7f46441cd7e5ff69c9d24999c5e61f09c9dd2a6e1b7b7d9084368a3",
+      "sha256": "2901cf6a1cfc0f21a765be9414ea370ee4279bceeb76820c542e3dd6c7510db3",
       "executable": false
     },
     "migrations/core/0001_data_spine.sql": {
@@ -7685,7 +7685,7 @@
       "executable": false
     },
     "tests/e2e/collaboration-runtime.mjs": {
-      "sha256": "d88c0578631bb4940a78d368b2c2006837b6b97f2f2c58012c2f668e9d8e7cd9",
+      "sha256": "d811c8e7ea34f29bd24d66cf0e7a32d83ba4c338a861dea5850d88667ae58b68",
       "executable": false
     },
     "tests/e2e/collaboration-support.mjs": {
@@ -9025,7 +9025,7 @@
       "executable": false
     },
     "tests/worker/role-viewer-census.ts": {
-      "sha256": "e95803bd36a2a73ea2160b8b0814405b0c110627cebeabd7f3eff3028fc482f4",
+      "sha256": "5d0349087a82e59036e1995855284e1cb18eddb4f0d2c03a8214412f058c3a9a",
       "executable": false
     },
     "tests/worker/role-viewer-journey.ts": {

@@ -7,6 +7,7 @@ import {env} from 'cloudflare:workers';
 import {expect} from 'vitest';
 import * as administrationInput from '../../src/core/features/administration/schema';
 import {housekeepingSchema} from '../../src/core/features/housekeeping/schema';
+import {rotationInput} from '../../src/core/features/triage-responsibility/schema';
 import {channelDefaultsInputSchema} from '../../src/core/features/notifications/channel-schema';
 import {initiativeInput,initiativeEdit,initiativeProjects} from '../../src/core/features/initiatives/schema';
 import {releaseInput,releaseEdit,releaseScope} from '../../src/core/features/releases/schema';
@@ -200,6 +201,7 @@ export async function prepareViewerCensus(w:Workspace,seed:{issue:any;comment:an
   native('POST','/settings/integrations/sources',{sourceId:'synthetic-vector-31060',name:'synthetic-vector-31060',teamId:w.team.id});native('POST','/settings/integrations/sources/:id/rotate',{overlapHours:1},{id:source.id});native('POST','/settings/integrations/sources/:id/webhook-url',undefined,{id:source.id});native('DELETE','/settings/integrations/sources/:id',undefined,{id:source.id});
   both('POST','/settings/projects','/projects',{name:'synthetic-vector-31061',leadOperatorId:member.id});both('PATCH','/settings/projects/:id','/projects/:id',{name:'synthetic-vector-31062'},pp);both('DELETE','/settings/projects/:id','/projects/:id',undefined,pp);both('POST','/settings/projects/:id/milestones','/projects/:id/milestones',{name:'synthetic-vector-31063'},pp);both('PATCH','/settings/projects/:id/milestones/:milestoneId','/projects/:id/milestones/:milestoneId',{name:'synthetic-vector-31064'},{...pp,milestoneId:milestone.id});both('PUT','/settings/projects/:id/milestones/order','/projects/:id/milestones/order',{milestoneIds:[milestone.id]},pp);both('DELETE','/settings/projects/:id/milestones/:milestoneId','/projects/:id/milestones/:milestoneId',undefined,{...pp,milestoneId:milestone.id});
   both('POST','/settings/cycles','/cycles',{teamId:w.team.id,name:'synthetic-vector-31065',startsLocal:'2032-01-05T09:00',endsLocal:'2032-01-12T09:00',capacity:null});native('PUT','/settings/teams/:id/cycle-schedule',{weeks:2,startWeekday:1,cooldownWeeks:0,upcomingCount:2},tp);
+  native('PUT','/settings/teams/:id/triage-rotation',{startsLocal:'2032-01-05T09:00',operatorIds:[owner.id,w.lead.id]},tp);
   native('POST','/views',{name:'synthetic-vector-31066',isShared:true,query:{team:w.team.id}});native('PATCH','/views/:id',{name:'synthetic-vector-31067'},{id:ownView.id});native('DELETE','/views/:id',undefined,{id:ownView.id});native('POST','/views/:id/duplicate',{name:'synthetic-vector-31068'},{id:ownView.id});
   native('POST','/settings/integrations/delivery',{accountId:Array.from(crypto.getRandomValues(new Uint8Array(16)),n=>n.toString(16).padStart(2,'0')).join(''),apiToken:'synthetic-vector-31069-token'});native('POST','/settings/integrations/destinations',{name:'synthetic-vector-31070',url:'https://synthetic-vector-31070.example.com/events'});for(const action of ['test','reenter'])native('POST','/settings/integrations/destinations/:id/'+action,undefined,{id:destination.id});native('DELETE','/settings/integrations/destinations/:id',undefined,{id:destination.id});
   native('PUT','/settings/integrations/destinations/:id/subscriptions',subscriptionInput.parse({events:['comment.created'],teamIds:[w.team.id]}),{id:destination.id});
@@ -241,6 +243,7 @@ export async function prepareViewerCensus(w:Workspace,seed:{issue:any;comment:an
    'PUT /settings/projects/:id/milestones/order':administrationInput.projectMilestoneOrderSchema,
    'POST /settings/cycles':administrationInput.cycleCreateSchema,
    'PUT /settings/teams/:id/cycle-schedule':administrationInput.cycleScheduleSchema,
+   'PUT /settings/teams/:id/triage-rotation':rotationInput,
    'PUT /settings/teams/:id/housekeeping':housekeepingSchema,
    'POST /settings/teams/:id/housekeeping/preview':housekeepingSchema,
    'PUT /settings/notifications/channel-defaults':channelDefaultsInputSchema,
