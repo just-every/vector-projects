@@ -1,3 +1,5 @@
+import {addIssueTemplateRoutes} from '../issue-templates/routes';
+import {createIssueFromRequest} from '../issue-templates/application';
 import {createTeam} from "../administration/teams";
 import {setTeamPrivacy} from '../team-membership/privacy';
 import {teamPrivacySchema} from '../administration/schema';
@@ -25,8 +27,6 @@ import { drainNotificationMail } from '../notifications/mail';
 import { mutationDatabase,isMutationAccessError,fileSettlementDatabase,AuthorityChangedError, VisibilityChangedError } from '../auth/mutation-database';
 import { visibilityDatabase } from '../roles/visibility-database';
 import { doorAuthority } from '../roles/enforcement';
-import { createIssueInputSchema } from '../issues/input';
-import { createIssue } from '../issues/mutations';
 import { IssueAccessError,requireIssueAccess } from '../issues/access';
 import { IssueMutationError } from '../issues/errors';
 import { getIssueDetail } from '../issues/service';
@@ -116,9 +116,10 @@ export function createIntegrationApi(){
   return c.json({...value,issues,nextCursor:offset<value.total?nextCursor(offset,value.revision,scope):null});
  });
  app.get('/issues/:identifier',async c=>{const id=parse(identifier,c.req.param('identifier'));await requireIssueAccess(c.env.DB,id,c.get('operatorId'));const value=await getIssueDetail(c.env.DB,id,new Date());await requireIssueAccess(c.env.DB,id,c.get('operatorId'));return c.json(value);});
- app.post('/issues',async c=>c.json(await createIssue(c.env.DB,c.get('operatorId'),parse(createIssueInputSchema,await readRequestJson(c.req.raw))),201));
+ app.post('/issues',async c=>c.json(await createIssueFromRequest(c.env.DB,c.get('operatorId'),await readRequestJson(c.req.raw)),201));
  app.patch('/issues/:identifier',async c=>{const id=parse(identifier,c.req.param('identifier')),input=parse(updateIssueSchema,await readRequestJson(c.req.raw));await requireIssueAccess(c.env.DB,id,c.get('operatorId'));const state=await updateIssueRecord(c.env.DB,id,c.get('operatorId'),input),issue=await getIssueDetail(c.env.DB,id,new Date());await requireIssueAccess(c.env.DB,id,c.get('operatorId'));return state==='stale'?c.json({error:'stale_version',version:issue?.version},409):c.json(issue);});
  app.post('/issues/:identifier/comments',async c=>{const id=parse(identifier,c.req.param('identifier')),input=parse(comment,await readRequestJson(c.req.raw)),issue=await requireIssueAccess(c.env.DB,id,c.get('operatorId'));return c.json({id:await addComment(c.env.DB,issue.id,c.get('operatorId'),input.body)},201);});
+ addIssueTemplateRoutes(app);
  addIssueCopyRoutes(app,false);
  addProjectApi(app);
  addCommentApi(app);

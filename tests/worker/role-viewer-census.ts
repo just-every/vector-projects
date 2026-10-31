@@ -1,3 +1,4 @@
+import {templateInputSchema as issueTemplateInputSchema} from '../../src/core/features/issue-templates/schema';
 import {jsonMediaType} from '../../src/core/features/oauth-apps/media-types';
 import {subscriptionInput} from '../../src/core/features/integrations/subscriptions';
 import {exchangeInput} from '../../src/core/features/oauth-apps/schema';
@@ -81,6 +82,8 @@ export async function prepareViewerCensus(w:Workspace,seed:{issue:any;comment:an
  const ownView=await call(member,'/views','POST',{name:'synthetic-vector-31016',isShared:true,query:{team:w.team.id}});
  const templateInput={name:'synthetic-vector-31017',teamId:w.team.id,issues:[{title:'synthetic-vector-31018',offsetDays:null,milestonePosition:null}]};
  const template=await call(member,'/project-templates','POST',templateInput);
+ const issueTemplateInput=issueTemplateInputSchema.parse({name:'synthetic-vector-1653',teamId:w.team.id,defaults:{title:'synthetic-vector-1654'},subissues:[{title:'synthetic-vector-1655'},{title:'synthetic-vector-1656'}]});
+ const issueTemplate=await call(member,'/issue-templates','POST',issueTemplateInput);
  const dashboardInput={name:'synthetic-vector-31019',teamId:w.team.id,widgets:[{name:'synthetic-vector-31020',kind:'count',filters:{team:w.team.id},chart:{}}]};
  const dashboard=await call(member,'/dashboards','POST',dashboardInput);
  const document=await call(owner,'/documents','POST',{parentKind:'project',parentId:project.id,title:'synthetic-vector-31100',body:'synthetic-vector-31100'});
@@ -166,6 +169,7 @@ export async function prepareViewerCensus(w:Workspace,seed:{issue:any;comment:an
   native('PUT','/issues/:identifier/specification',{documentId:otherDocument.id},ip);
   native('DELETE','/issues/:identifier/specification',undefined,ip);
   native('POST','/subscriptions',{subjectType:'label',subjectId:label.id});native('DELETE','/subscriptions/:id',undefined,{id:subscription.id});
+  both('POST','/issue-templates','/issue-templates',issueTemplateInput);both('PUT','/issue-templates/:id','/issue-templates/:id',{...issueTemplateInput,expectedVersion:issueTemplate.version},{id:issueTemplate.id});both('DELETE','/issue-templates/:id','/issue-templates/:id',{expectedVersion:issueTemplate.version},{id:issueTemplate.id});
   native('POST','/project-templates',templateInput);native('PUT','/project-templates/:id',{...templateInput,expectedVersion:template.version},{id:template.id});native('DELETE','/project-templates/:id',{expectedVersion:template.version},{id:template.id});native('POST','/project-templates/:id/apply',{name:'synthetic-vector-31041',startDate:'2032-01-05',teamId:w.team.id,expectedVersion:template.version},{id:template.id});native('POST','/project-templates/from-project/:id',{name:'synthetic-vector-31042',teamId:w.team.id,referenceDate:'2032-01-05'},pp);
   native('POST','/dashboards',dashboardInput);native('PUT','/dashboards/:id',{...dashboardInput,expectedVersion:dashboard.version},{id:dashboard.id});native('DELETE','/dashboards/:id',{expectedVersion:dashboard.version},{id:dashboard.id});
   native('PUT','/initiatives/:id/channel-binding',{provider:'slack',channelId,events:['initiative.updated'],expectedVersion:null},{id:initiative.id});native('DELETE','/initiatives/:id/channel-binding',{expectedVersion:binding.id},{id:initiative.id});
@@ -247,6 +251,7 @@ export async function prepareViewerCensus(w:Workspace,seed:{issue:any;comment:an
    'POST /documents':documentInput,'PATCH /documents/:documentId':documentEdit,'POST /documents/:documentId/comments':documentComment,'PUT /issues/:identifier/specification':specificationInput,
    'POST /initiatives':initiativeInput,'PATCH /initiatives/:id':initiativeEdit,'PUT /initiatives/:id/projects':initiativeProjects,
    'POST /releases':releaseInput,'PATCH /releases/:id':releaseEdit,'PUT /releases/:id/scope':releaseScope,
+   'POST /issue-templates':issueTemplateInputSchema,
    'POST /views':createViewSchema,'PATCH /views/:id':updateViewSchema,'POST /views/:id/duplicate':duplicateViewSchema,
   };
   for(const [route,schema] of Object.entries(schemas))schema.parse(plans.native.get(route)!.body);

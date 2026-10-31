@@ -474,3 +474,25 @@ refused writes leave issue storage unchanged. Sync and agent examples, their
 local CI execution, complete developer documentation and release packaging and
 delivery remain API-005 gaps. API-004's independent consent and UI gate and all
 API-003 schema and object-operation gaps remain unchanged.
+
+Issue templates have native equivalents at `/api/issue-templates` and scoped
+operations at `/api/v1/issue-templates`: GET lists visible templates and POST
+creates one; GET, PUT and DELETE on `/api/v1/issue-templates/{id}` read, replace
+and delete one. Reading needs `issue-templates:read`; management needs
+`issue-templates:write` plus current native workspace or team planning authority.
+PUT and DELETE require `expectedVersion`; PUT retains the original scope.
+
+A template has `name`, nullable `teamId`, `defaults` and ordered `subissues`.
+Defaults and each child accept native title, Markdown description, status ID,
+priority, label IDs, assignee ID, estimate and project ID; each child needs a
+nonempty title. There are at most 50 children. Typed custom fields and imported
+provider templates remain unqualified. Team templates follow current team
+visibility; Guests use only templates of invited teams.
+
+POST `/api/v1/issues` with `teamId`, `templateId` and `templateVersion` applies a
+template under `issues:write`. Explicit native fields override template defaults,
+including empty descriptions, empty label arrays and null values. Omitted fields
+receive defaults. The parent, ordered child edges, activity and notification
+intents commit together. Stale versions return 409; deleted or invisible templates
+return 404; invalid or unavailable properties are refused. Sequence reservations
+may leave gaps after a refusal. Template deletion never deletes created issues.
