@@ -522,7 +522,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "33a014a8da1114ee06fa244d88a5e2f51f2ded2f6a37d25a1d56e8ca2b9adce8",
+      "sha256": "316df5510783820d1966322ecf87fcc14f1e86f6b76ef84c0b17233c33687e2b",
       "executable": false
     },
     "DEMO.md": {
@@ -7674,7 +7674,7 @@
       "executable": false
     },
     "tests/e2e/core-agent-approval-journey.mjs": {
-      "sha256": "94f93ac75eecb41082fc2e12e054722a64ccbf4abbed36ba081ce27c69961bd7",
+      "sha256": "82cdfad34f85a390fdfe8990dc2790830e0c92fa5579a060c0b2e8384c196b02",
       "executable": false
     },
     "tests/e2e/core-board-journey.mjs": {
@@ -8402,7 +8402,7 @@
       "executable": false
     },
     "tests/worker/agent-approval-lifecycle.test.ts": {
-      "sha256": "ed0e24f655f51d4e3de7766b674b3789edfa121f84480524e201f8f70ec02579",
+      "sha256": "4ec659f042b1c00fb1cd6dab2f22119f90af3c260a52cb83e47d00b1ebc6c8ae",
       "executable": false
     },
     "tests/worker/agent-resource-journey.ts": {

@@ -13,7 +13,7 @@ it('a named person approves the saved native issue edit once, while changed, rej
   expect(member).not.toBe(approver);
   const minted = await request('/api/settings/integrations/tokens', 'POST', { name: 'synthetic-vector-7003', scopes: ['issues:write'] }, memberCookie);
   expect(minted.status).toBe(201);
-  const { token } = await minted.json() as { token: string };
+  const { token, credential } = await minted.json() as { token: string; credential: { id: string } };
   const app = createServerApp();
   const send = async (path: string, method = 'GET', body?: unknown, cookie = f.cookie, extra: Record<string, string> = {}) => {
     const req = new Request(origin + path, { method, headers: { Host: new URL(origin).host, Origin: origin, Cookie: cookie, 'Content-Type': 'application/json', ...extra }, body: body === undefined ? undefined : JSON.stringify(body) });
@@ -60,7 +60,8 @@ it('a named person approves the saved native issue edit once, while changed, rej
   };
   const evidence = (approval: any) => ({ revision: approval.revision, summary_sha256: approval.summary_sha256 });
   // Freeze the pipeline's clock without rewriting policy, pending actions or native rows.
-  const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.now());
+  const now = Date.now();
+  const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
   try {
     const initial = await native(), pending = await prepare(args('synthetic-vector-7005'));
     for (const cookie of [memberCookie, f.cookie]) {
@@ -117,6 +118,13 @@ it('a named person approves the saved native issue edit once, while changed, rej
     const expiry = await json(await send(expired.path + '/approve', 'POST', evidence(expired.approval), approverCookie), 409);
     expect(expiry.code).toBe('approval_expired');
     expect((await call(expired.input))._meta['com.runeditrun/error'].code).toBe('approval_expired');
+    expect(await native()).toEqual(concurrent);
+
+    clock.mockReturnValue(now);
+    const revoked = await prepare(args('synthetic-vector-7017', issue.version + 2));
+    await json(await send('/api/settings/integrations/tokens/' + credential.id, 'DELETE', undefined, memberCookie));
+    const withdrawn = await json(await send(revoked.path + '/approve', 'POST', evidence(revoked.approval), approverCookie));
+    expect(withdrawn.approval).toMatchObject({ state: 'refused', code: 'insufficient_scope' });
     expect(await native()).toEqual(concurrent);
   } finally { clock.mockRestore(); }
 });

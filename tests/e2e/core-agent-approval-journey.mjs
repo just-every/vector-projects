@@ -84,16 +84,21 @@ export async function agentApprovalJourney(ownerPage, ownerContext, base, state,
     const approve = page.getByRole('button', { name: 'Approve', exact: true });
     await approve.focus();
     assert.equal(await approve.evaluate(element => document.activeElement === element), true);
-    for (const width of [1440, 390]) {
-      await page.setViewportSize({ width, height: 1000 });
-      await page.screenshot({ path: evidence + '/agent-approval-' + width + '.png', fullPage: true });
-    }
+    const capture = async state => {
+      for (const width of [1440, 390]) {
+        await page.setViewportSize({ width, height: 1000 });
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, state + ' approval fits at ' + width);
+        await page.screenshot({ path: evidence + '/agent-approval-' + state + '-' + width + '.png', fullPage: true });
+      }
+    };
+    await capture('pending');
     await page.setViewportSize({ width: 1440, height: 1000 });
     await approve.focus();
     const approvedResponse = page.waitForResponse(response => new URL(response.url()).pathname === '/agents/api/approvals/' + handle.id + '/approve');
     await approve.press('Enter');
     assert.equal((await approvedResponse).status(), 200);
     await page.locator('[data-approval-state="executed"]').waitFor();
+    await capture('executed');
     const result = await call(input), receipt = result._meta['com.runeditrun/receipt'];
     assert.equal(result.isError, false);
     assert.equal(result.structuredContent.version, issue.version + 1);
@@ -115,6 +120,7 @@ export async function agentApprovalJourney(ownerPage, ownerContext, base, state,
     await page.getByRole('button', { name: 'Decline', exact: true }).click();
     assert.equal((await declined).status(), 200);
     await page.locator('[data-approval-state="rejected"]').waitFor();
+    await capture('rejected');
     assert.equal((await call(freshInput))._meta['com.runeditrun/error'].code, 'approval_rejected');
     assert.deepEqual(await json(sponsor.context, '/api/issues/' + issue.identifier), edited);
     assert.deepEqual(pageErrors, []);
