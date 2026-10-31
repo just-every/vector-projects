@@ -3,6 +3,7 @@ import { navigate, settleReads, trackRequests } from './collaboration-navigation
 import { inviteReader, readerApi } from './role-reader-support.mjs';
 import { readDevelopmentLink } from './outbox-session.mjs';
 import { roleScreens } from './role-ui-support.mjs';
+import { readLocalD1 } from './local-d1-read.mjs';
 
 // Independent native sign-ins, never a copied profile or session. The same
 // helper is reached by the ordinary core keyboard journey in push Verify.
@@ -98,7 +99,7 @@ export async function favoritesJourney({ page, context, base, state, sql, eviden
     await secondPage.waitForURL(base + '/app');
     const secondApi = readerApi(secondPage, base);
     assert.equal((await secondApi('/session')).operatorId, member.id);
-    const sessions = sql(`SELECT count(DISTINCT s.id) n FROM oa_sessions s JOIN vector_auth_operators m ON m.auth_id=s.operator_id WHERE m.operator_id='${member.id}' AND s.revoked_at IS NULL`);
+    const sessions = readLocalD1(state, `SELECT count(DISTINCT s.id) n FROM oa_sessions s JOIN vector_auth_operators m ON m.auth_id=s.operator_id WHERE m.operator_id='${member.id}' AND s.revoked_at IS NULL`);
     assert.ok(sessions[0].n >= 2, 'Two independent native sessions exist');
     await navigate(secondPage, base + '/app/views/' + view.id);
     await ready(secondPage);
