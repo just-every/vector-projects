@@ -7649,7 +7649,7 @@
       "executable": false
     },
     "tests/e2e/collaboration-pagination.mjs": {
-      "sha256": "983ce0da110117cd3bb0c30252e3d184b0b3bd54b49d07ace8679b9b26f41ff8",
+      "sha256": "abf30f10dfc785a82f6e716f6d1a37d3e0f353e01dcfe1547479a32a90e7948b",
       "executable": false
     },
     "tests/e2e/collaboration-preferences.mjs": {

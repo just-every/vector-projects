@@ -162,6 +162,14 @@ export async function paginationAndRemoval({
         401,
         "recipient native session revoked",
       );
+      const deniedFavorites = await peer.request.get(runtime.base + "/api/favorites");
+      assert.equal(deniedFavorites.status(), 401, "the retired session cannot read personal favorites");
+      assert.ok(!(await deniedFavorites.text()).includes(issue.id), "the denial exposes no favorite identity");
+      assert.equal(
+        runtime.sql(`SELECT count(*) n FROM member_favorites WHERE operator_id='${operator.id}'`)[0].n,
+        0,
+        "the refused read cannot recreate erased navigation",
+      );
     },
   );
 }
