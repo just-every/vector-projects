@@ -141,7 +141,7 @@ await contract(
           await teamCreationPermission({ ...shared, ...roles, evidence });
           await teamJoinPermissions({ ...shared, ...roles, evidence });
           await exerciseAuditAccess({ ...shared, ...roles });
-          await dueRuleConfigurationRefusals({...shared,...roles});
+          await dueRuleConfigurationRefusals({...shared,...roles,proofDirectory:evidence});
         } finally {
           await roles.context.close();
         }

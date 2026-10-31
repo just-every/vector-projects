@@ -3,6 +3,9 @@ import { useState, type FormEvent } from "react";
 import { fetchJson, useApiResource } from "../../app/api-client";
 import { dueRulesSchema, type DueRule } from "./schema";
 
+const utc = (instant: string) =>
+  new Date(instant).toISOString().replace("T", " ").slice(0, 16) + " UTC";
+
 export function DueRulesPanel() {
   const resource = useApiResource(
     "/api/settings/automation",
@@ -61,20 +64,17 @@ export function DueRulesPanel() {
                     (run.notified
                       ? " · Assignee notified"
                       : " · Notification muted")}
-                  {run.outcome === "succeeded" && run.failureReason && (
-                    <span>
-                      {" "}
-                      · Recovered after {run.failureReason} at {run.failedAt}
-                    </span>
-                  )}
+                  {run.outcome === "succeeded" &&
+                    run.failureReason &&
+                    run.failedAt && (
+                      <span>
+                        {" "}
+                        · Recovered after {run.failureReason} at{" "}
+                        <time dateTime={run.failedAt}>{utc(run.failedAt)}</time>
+                      </span>
+                    )}
                   {" · "}
-                  <time dateTime={run.at}>
-                    {new Date(run.at)
-                      .toISOString()
-                      .replace("T", " ")
-                      .slice(0, 16)}{" "}
-                    UTC
-                  </time>
+                  <time dateTime={run.at}>{utc(run.at)}</time>
                 </li>
               ))}
             </ul>

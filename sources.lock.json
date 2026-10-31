@@ -521,7 +521,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "fa344340dd7e00a62e93ed82bcfd840dc48dcd1eaef5ee86f46d6d0e42ebc1da",
+      "sha256": "c29ef0cddb6e49b8eb2ed3523f309f0ec89d7b4664b4726282bde2724e568cc8",
       "executable": false
     },
     "DEMO.md": {
@@ -4281,7 +4281,7 @@
       "executable": false
     },
     "src/core/features/automation-rules/panel.tsx": {
-      "sha256": "ced3d6d55f3ba5e547719b649f198bb5cb12319726eea7f8543a7af259fccefa",
+      "sha256": "2ed123fcbb96995d7d64328f0370264860616e9aa7f9b5ce9a30ec3f42c1324c",
       "executable": false
     },
     "src/core/features/automation-rules/routes.ts": {
@@ -7557,7 +7557,7 @@
       "executable": false
     },
     "tests/e2e/admin-due-rules-journey.mjs": {
-      "sha256": "b3bd4d73c27a783574b568d46d35d57e345a0a9c0953a192ff01e617fb35139d",
+      "sha256": "3042b81eec174d2d325aca0f6c1cce4ce9e4b6f62aeae10bc89ba9411778c7cd",
       "executable": false
     },
     "tests/e2e/admin-issue-journey.mjs": {
@@ -7581,7 +7581,7 @@
       "executable": false
     },
     "tests/e2e/admin-runtime.mjs": {
-      "sha256": "d44fe74df8da06d271d5137fa0d7570a226a252cc8c115b0dc79da18a862a385",
+      "sha256": "f2af15a5a063cc2b8463c98c9cd982d30d3323a858993a3a75e32f55082eb6d0",
       "executable": false
     },
     "tests/e2e/admin-saved-view-fixture.mjs": {

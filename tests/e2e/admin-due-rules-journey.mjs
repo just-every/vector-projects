@@ -9,10 +9,10 @@ async function api(page,base,path,method='GET',data){
     const body=await response.json();assert(response.ok(),`${method} ${path}: ${response.status()}`);return body;
   });
 }
-export async function dueRuleConfigurationRefusals({page,peer,memberId,runtime,clause}){
+export async function dueRuleConfigurationRefusals({page,peer,memberId,runtime,clause,proofDirectory}){
   const {base,sql}=runtime;
   await clause('AUTO-006 ROLE-001','only Owners and Admins configure workspace due-soon rules',async()=>{
-    const team=(await api(page,base,'/settings/administration')).teams[0];
+    const team=(await api(page,base,'/settings/administration')).teams[0],viewport=peer.viewportSize();
     for(const role of ['member','guest','viewer']){
       await api(page,base,'/settings/operators/'+memberId+'/role','PATCH',{role,...(role==='guest'?{teamIds:[team.id]}:{})});
       const before=sql('SELECT * FROM workspace_due_rules ORDER BY id');
@@ -22,8 +22,15 @@ export async function dueRuleConfigurationRefusals({page,peer,memberId,runtime,c
       });
       assert.deepEqual(sql('SELECT * FROM workspace_due_rules ORDER BY id'),before);
       await beforePrivateNavigation(peer,base+'/app/settings');await peer.goto(base+'/app/settings');
-      await peer.getByRole('heading',{name:'Settings',exact:true}).waitFor();
-      assert.equal(await peer.getByRole('form',{name:'Due-soon rule',exact:true}).count(),0);
+      // The refused role's Settings offers no rule surface at desktop or phone width.
+      for(const width of [1440,390]){
+        await peer.setViewportSize({width,height:width===390?844:1000});
+        await peer.getByRole('heading',{name:'Settings',exact:true}).waitFor();
+        assert.equal(await peer.getByRole('region',{name:'Due-soon automation',exact:true}).count(),0);
+        assert.equal(await peer.getByRole('form',{name:'Due-soon rule',exact:true}).count(),0);
+        if(proofDirectory)await peer.screenshot({path:proofDirectory+'/AUTO-006-'+role+'-refusal-'+width+'.png'});
+      }
+      await peer.setViewportSize(viewport);
     }
     await api(page,base,'/settings/operators/'+memberId+'/role','PATCH',{role:'member'});
   });
@@ -70,12 +77,24 @@ export async function dueRulesJourney({page,runtime,clause,capture,proofDirector
     for(const width of [1440,390]){
       await page.setViewportSize({width,height:width===390?844:1000});await region.scrollIntoViewIfNeeded();
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-      if(proofDirectory)await region.screenshot({path:proofDirectory+'/AUTO-006-'+width+'.png'});
+      // A region taller than the phone viewport would stitch the sticky Settings navigation over it.
+      if(proofDirectory){
+        await region.evaluate(root=>{for(const element of document.querySelectorAll('body *'))if(['fixed','sticky'].includes(getComputedStyle(element).position)&&!root.contains(element)&&!element.contains(root))element.setAttribute('data-capture-hidden','');});
+        await region.screenshot({path:proofDirectory+'/AUTO-006-'+width+'.png',style:'[data-capture-hidden] { visibility: hidden !important; }'});
+        await page.evaluate(()=>document.querySelectorAll('[data-capture-hidden]').forEach(element=>element.removeAttribute('data-capture-hidden')));
+      }
       await capture('due-soon-'+width);
     }
     await form.getByLabel('Enable due-soon rule',{exact:true}).uncheck();
     const disabled=page.waitForResponse(r=>r.url().endsWith('/settings/automation/due-soon')&&r.request().method()==='PUT');
     await form.getByRole('button',{name:'Save due-soon rule',exact:true}).click();assert.equal((await disabled).status(),200);
+    // The saved disabled rule leaves the next due-soon issue untouched and unannounced.
+    assert.equal((await api(page,base,'/settings/automation')).rule.enabled,false);
+    const quiet=await api(page,base,'/issues','POST',{title:'Confirm the paused rule stays quiet',teamId:team.id,assigneeOperatorId:operatorId,dueDate:'2026-03-11'});
+    await tick('2026-03-09T08:00:00Z');
+    assert.equal((await api(page,base,'/issues/'+quiet.identifier)).cycle,null);
+    assert.equal((await api(page,base,'/settings/automation')).runs.length,1);
+    assert.equal((await api(page,base,'/notifications')).items.some(n=>n.identifier===quiet.identifier),false);
     await api(page,base,'/settings','PATCH',{timezone:original.timezone,reminderTime:original.reminderTime});
   });
 }
