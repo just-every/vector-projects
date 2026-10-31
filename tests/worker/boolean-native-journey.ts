@@ -3,10 +3,11 @@ import { roleWorkspace, resetLimits, snapshot } from './role-fixture';
 
 /** One populated native-filter journey; each query traverses the mounted list. */
 export async function nativeBooleanJourney() {
+  // Sign-in reads the newest captured mail, so the workspace is made on the real clock.
+  const f = await roleWorkspace(), owner = f.people.owner, marker = 'synthetic-vector-133';
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(new Date('2026-10-31T16:00:00.000Z'));
   try {
-    const f = await roleWorkspace(), owner = f.people.owner, marker = 'synthetic-vector-133';
     const send = async (path: string, method = 'GET', body?: unknown, status = 200) => {
       await resetLimits();
       const response = await owner.call(path, method, body);

@@ -8465,7 +8465,7 @@
       "executable": false
     },
     "tests/worker/boolean-native-journey.ts": {
-      "sha256": "b305d5a002e436333892565c69bbcba1ab24502daab7df763078854e0139bc44",
+      "sha256": "ff6b0ff5dfe8cdac4a46765f0e03000607e2f22d0736584b6067e13400a50d2a",
       "executable": false
     },
     "tests/worker/bootstrap-owner.test.ts": {
