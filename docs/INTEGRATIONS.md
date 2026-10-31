@@ -177,7 +177,7 @@ uncertainty. This is local composition proof, with no live endpoint.
 
 Native issue deletion erases local event, delivery and retained receiver-inbox bodies atomically. Permanent event-identity guards prevent stale enqueue, replay publication, claims and transport. Attempts retain only protocol-generated kind/code/status/retry delay; the native webhook classifier ignores response bodies and Base projects the result before persistence. Operator-entered reconciliation codes can contain private text, so deletion replaces them with a fixed deletion code while retaining the decision, identity and time. The same rule applies to late reconciliation. Vector currently mounts no generic Base replay receiver, but populated archive replay rows receive the same erasure and publication guard. An already invoked external provider operation cannot be recalled.
 
-## GitHub pull requests, commits and deployments
+## GitHub pull requests, reviews, commits and deployments
 
 Register the repository by owner and name, save its reveal-once secret, and select
 Pull requests, Pushes and Deployment statuses in the repository's webhook settings.
@@ -191,6 +191,19 @@ deliveries to Vector, not a call Vector made to GitHub.
 
 PR branches, titles and bodies name native issue keys without creating members or
 issues. Closing and contributing phrases distinguish completion from contribution.
+Signed `pull_request_review` submitted and dismissed events project reviewer IDs,
+logins and approved or changes-requested state for an already linked PR. Enable
+**Pull request reviews** in the repository webhook's individual events. Reviews
+are bound to that repository, PR and signed head and review commit SHAs. A changed
+or contradictory head clears approval certainty until a fresh review; returning
+to an earlier SHA does not revive its approval. Dismissals are terminal for that
+review identity. Older reviews cannot replace a review submitted later, and
+conflicting states for one review display uncertainty. Native issue access
+protects this projection. Review history and receipt digests survive archives;
+restored receivers still require credentials and effect review. This makes no
+provider API call and does not qualify required checks, review requests,
+notifications, mergeability, stacked parents or Git-state list filters.
+
 Draft opening, review requests and merges use each team's configured status.
 Defaults match In Progress, In Review and Done by name; an absent name means no
 move. Explicitly disabling a rule also means no move. Completed work is never

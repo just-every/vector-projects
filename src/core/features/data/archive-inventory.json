@@ -1057,7 +1057,12 @@
     "state",
     "updated_at",
     "received_at",
-    "merge_sha"
+    "merge_sha",
+    "head_sha",
+    "head_version",
+    "head_changed_at",
+    "head_conflicted",
+    "head_observed_at"
   ],
   "vector_github_repositories": [
     "id",
@@ -2159,5 +2164,17 @@
   ],
   "bs_assert": [
     "value"
+  ],
+  "github_reviews": [
+    "repository_id",
+    "number",
+    "review_id",
+    "reviewer_id",
+    "reviewer_login",
+    "commit_sha",
+    "head_version",
+    "state",
+    "submitted_at",
+    "received_at"
   ]
 }

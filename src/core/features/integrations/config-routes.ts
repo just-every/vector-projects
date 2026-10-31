@@ -20,6 +20,7 @@ import { deliveryResult } from './delivery-result';
 import { NativeWebhookRepository } from './outbound-repository';
 import { destinationSigningProblems } from './destination-signing';
 import { IntegrationError } from './errors';
+import {IssueAccessError} from '../issues/access';
 import { requireIssueProjection } from '../issues/projection-access';
 import { githubIssueProjection } from './github-read';
 const inputHelp:Record<string,string>={name:'Enter a name for this connection.',sourceId:'Use a source ID with letters, numbers, dots, underscores or hyphens.',teamId:'Choose a team for new reports.',repository:'Enter the GitHub owner and repository separated by /, for example just-every/run-vector.',overlapHours:'Choose a whole number of hours from 0 to 24.',accountId:'Enter the 32-character Cloudflare account ID.',apiToken:'Enter the Cloudflare read-only API token.',scopes:'Choose at least one API permission.',expiresAt:'Choose a valid future expiry date.'};
@@ -71,8 +72,10 @@ export function addIntegrationConfigRoutes(app:Hono<AppEnvironment>){
   try{await new NativeWebhookRepository(guardedSql(c.env.DB,ownerPredicate(owner)),owner.workspace).resolve(delivery,{kind:input.kind,code:input.evidenceCode},Date.now());}catch{throw new IntegrationError(409,'delivery_not_uncertain');}return c.json({resolved:true,state:input.kind});
  });
  app.get('/issues/:identifier/github',async c=>{
-  const issue=await requireIssueProjection(c,c.req.param('identifier'));
-  const projection=await githubIssueProjection(c.env.DB,issue.id);
-  await requireIssueProjection(c,issue.identifier);return c.json(projection);
+  try{
+   const issue=await requireIssueProjection(c,c.req.param('identifier'));
+   const projection=await githubIssueProjection(c.env.DB,issue.id);
+   await requireIssueProjection(c,issue.identifier);return c.json(projection,200,{'Cache-Control':'no-store'});
+  }catch(error){if(error instanceof IssueAccessError)return c.json({error:error.code,message:error.message},error.status,{'Cache-Control':'no-store'});throw error;}
  });
 }
