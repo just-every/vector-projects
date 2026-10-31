@@ -3,6 +3,7 @@ import { navigate, settleReads, trackRequests } from './collaboration-navigation
 import { inviteReader, readerApi } from './role-reader-support.mjs';
 import { readDevelopmentLink } from './outbox-session.mjs';
 import { roleScreens } from './role-ui-support.mjs';
+import { confirmInviter } from './core-operator-journey.mjs';
 
 // Independent native sign-ins, never a copied profile or session. The same
 // helper is reached by the ordinary core keyboard journey in push Verify.
@@ -130,12 +131,22 @@ export async function favoritesJourney({ page, context, base, state, sql, eviden
     await navigate(secondPage, base + '/app/issues/' + issue.identifier);
     await ready(secondPage);
     assert.equal(await nav(secondPage).getByRole('link', { name: view.name, exact: true }).count(), 0);
+    await confirmInviter(page, context, base, state);
+    await owner('/settings/operators/' + member.id, 'DELETE');
+    await nav(secondPage).getByRole('status').waitFor();
+    assert.match(await nav(secondPage).getByRole('status').innerText(), /session|active|sign in/i);
+    assert.equal(await nav(secondPage).getByRole('alert').count(), 0, 'A background navigation failure does not duplicate the page alert');
+    assert.equal(await nav(secondPage).locator('[data-favorite-id]').count(), 0, 'Removal clears every cached pin');
+    assert.ok(!(await nav(secondPage).innerText()).includes(issue.title));
+    await secondApi('/favorites', 'PUT', { expectedVersion: 0, folders: [], entries: [{ kind: 'issue', subjectId: issue.id, folderId: null }] }, 401);
+    assert.equal(sql(`SELECT count(*) n FROM member_favorites WHERE operator_id='${member.id}'`)[0].n, 0);
     assert.deepEqual(errors, []);
     assert.deepEqual(member.errors, []);
     record('VIEW-010', 'A Member pins issue, project and saved view by keyboard, folders the view and reorders the project; a separate Chromium and independent native sign-in reload the same exact order and folder. Saved definitions are unchanged, another member is isolated, private-project withdrawal and view deletion remove titles from HTTP and navigation. Both widths pass accessibility, keyboard, overflow and hydration proof.');
     console.log('PROBE VIEW-010 pins-and-sync: native Member pages and second independently authenticated Chromium -> issue, project, view, Delivery work folder and exact project then issue then view order retained');
     console.log('PROBE VIEW-010 current-visibility: private-project membership withdrawal and view deletion -> subject and former title absent in HTTP and rendered Favorites');
     console.log('PROBE VIEW-010 subject-admission: Backlog and New project -> no pin control and no favorite subject lookup; actual issue, project and view pages remain pinnable');
+    console.log('PROBE VIEW-010 session-loss: native member removal -> cached pins cleared, polite navigation status, and delayed old-session write refused 401 without recreating the collection');
   } finally {
     await member.context.close();
     if (secondBrowser) await secondBrowser.close();
