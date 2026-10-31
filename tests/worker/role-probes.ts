@@ -140,6 +140,14 @@ export function probes(w: Workspace): Record<RowId, Probe> {
       const intake = await json<Issue>(owner.call("/intake", "POST", { title: `Decision ${unique()}`, teamId: w.team.id }));
       return () => actor.call(`/issues/${intake.identifier}/decline`, "POST", { expectedVersion: intake.version, reason: "Not ours" }); } },
     "sources.manage": { session: async (_who, actor) => () => actor.call("/settings/integrations/sources", "POST", { sourceId: `probe-source-${unique()}`, name: "Probe source", teamId: w.team.id }) },
+    "issue-templates.workspace": {
+      session:async(_who,actor)=>()=>actor.call('/issue-templates','POST',{name:'synthetic-vector-'+(1650+unique()),teamId:null,defaults:{title:'synthetic-vector-1650'},subissues:[{title:'synthetic-vector-1651'},{title:'synthetic-vector-1652'}]}),
+      api:async(_who,actor)=>()=>actor.api('/issue-templates','POST',{name:'synthetic-vector-'+(1750+unique()),teamId:null,defaults:{title:'synthetic-vector-1750'},subissues:[{title:'synthetic-vector-1751'},{title:'synthetic-vector-1752'}]}),
+    },
+    "issue-templates.team": {permission:'planning',
+      session:async(_who,actor,teamId)=>()=>actor.call('/issue-templates','POST',{name:'synthetic-vector-'+(1850+unique()),teamId,defaults:{title:'synthetic-vector-1850'},subissues:[{title:'synthetic-vector-1851'},{title:'synthetic-vector-1852'}]}),
+      api:async(_who,actor,teamId)=>()=>actor.api('/issue-templates','POST',{name:'synthetic-vector-'+(1950+unique()),teamId,defaults:{title:'synthetic-vector-1950'},subissues:[{title:'synthetic-vector-1951'},{title:'synthetic-vector-1952'}]}),
+    },
     "cycles.manage": { permission: "planning",
       session: async (_who, actor, id) => { const input = cycle(id); return () => actor.call("/settings/cycles", "POST", input); },
       api: async (_who, actor, id) => { const input = cycle(id); return () => actor.api("/cycles", "POST", input); } },

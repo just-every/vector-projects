@@ -3742,7 +3742,7 @@
       "executable": false
     },
     "src/core/app/page-resources.server.ts": {
-      "sha256": "07b736a608f2e66428d1c46278ea08b4058062bb11ea7c07c6b08e733ff76c72",
+      "sha256": "c22e9635741be9ee41b213b99e47339aac72e71b2a2e618dd59e8ff3afd66f3d",
       "executable": false
     },
     "src/core/app/public-paths.ts": {
@@ -6774,7 +6774,7 @@
       "executable": false
     },
     "src/core/features/roles/matrix.ts": {
-      "sha256": "5c25ea203867583f012b4c0ad03f4b35032774ed01c387706741e104e4d3b3cd",
+      "sha256": "197fd17c472c66a4548aec3e273950759a4e43391f14743fcc26e0fb53d83adc",
       "executable": false
     },
     "src/core/features/roles/policy.ts": {
@@ -9022,7 +9022,7 @@
       "executable": false
     },
     "tests/worker/role-fixture.ts": {
-      "sha256": "fb16aac9f80dc0dc83dafaef2372579c1a3c0a3fc663fa9c894276f9cb041a76",
+      "sha256": "cff4017402b530955b39ef909ca288fa2a5c9a95db95548901f5640ccbfbfd46",
       "executable": false
     },
     "tests/worker/role-guest-journey.ts": {
@@ -9030,7 +9030,7 @@
       "executable": false
     },
     "tests/worker/role-matrix.test.ts": {
-      "sha256": "4a88dd0f358c7c73c3602720921227bba9069c9bf021e602dd94181955ba1bcf",
+      "sha256": "fed4e6e4adb30ef65d0651bf373cae5aa89a20b8446f84fb96832fd7f6650ec7",
       "executable": false
     },
     "tests/worker/role-private-journey.ts": {
@@ -9038,11 +9038,11 @@
       "executable": false
     },
     "tests/worker/role-probes.ts": {
-      "sha256": "c0dfd03838a14e6d6e84423a882fa8ab224f3e934b719cc35b50bfed47ca5f9d",
+      "sha256": "4a1dd1e3102608534170e0bf7e8641559800a78d6d26ed042cf41cefd2a7cc94",
       "executable": false
     },
     "tests/worker/role-viewer-census.ts": {
-      "sha256": "e95803bd36a2a73ea2160b8b0814405b0c110627cebeabd7f3eff3028fc482f4",
+      "sha256": "2d01ab2f9590498b36b04136e05e35a12322c58cce60c24ecc924bbe6825f536",
       "executable": false
     },
     "tests/worker/role-viewer-journey.ts": {
