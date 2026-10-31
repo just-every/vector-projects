@@ -522,7 +522,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "92cc15f0441797985f9c14350ee1dbb6fe02441b721ae8c32d220d067325114a",
+      "sha256": "f07b861ea00969fb34bdcf6e77792742195765aff8295188818ee66bd238372a",
       "executable": false
     },
     "DEMO.md": {
@@ -2026,7 +2026,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "0899805a5c0ed7997373efca35f8557d8cf4ad7e7f3bc6acbf8af8854ed6be75",
+      "sha256": "362359bffe3f48ceb75cfa8d6db187550474e5afbe25e999b068d8e3f9f87ac2",
       "executable": false
     },
     "migrations/core/0001_data_spine.sql": {
@@ -2590,7 +2590,7 @@
       "executable": false
     },
     "RELEASE.json": {
-      "sha256": "9a05f61b9355fbd4ad06332f5a1d2069ad71f522af20d58f1f2ef1a6d6c0066d",
+      "sha256": "a0302103100610401325b2ece63c2118044dc812f98b08a50a3ab161eb4b006d",
       "executable": false
     },
     "rer-project.json": {
@@ -4978,7 +4978,7 @@
       "executable": false
     },
     "src/core/features/drafts/routes.ts": {
-      "sha256": "d599356978376b2fbbe596303465803c4dc8829b774911dd0ae77b83ba2a5ec1",
+      "sha256": "b46528cdd494e3c0ffe78d43a13645c1c28baba649cc11da86aae389f608f5df",
       "executable": false
     },
     "src/core/features/drafts/schema.ts": {
@@ -8422,7 +8422,7 @@
       "executable": false
     },
     "tests/worker/account-drafts.test.ts": {
-      "sha256": "7e050f1b80fae8bb9e40164296c8bcd936019a40303423887f7b4120cb8708c9",
+      "sha256": "dd1171bd57d7f812e436e082f3263ef571b8e692f279ac2e34e76eb6ebca56a7",
       "executable": false
     },
     "tests/worker/administration-fixture.ts": {

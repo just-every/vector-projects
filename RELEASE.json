@@ -101,6 +101,10 @@
     {
       "id": "0120_comment_webhook_author_labels.sql",
       "buyerSteps": "Apply after 0119_webhook_subscriptions.sql without rewriting applied SQL. Retains identifier-only comment deletion events for external author labels. Preserve additive schema and terminal delivery ledgers on compatible-source rollback."
+    },
+    {
+      "id": "0121_issue_drafts.sql",
+      "buyerSteps": "Apply after unchanged 0120_comment_webhook_author_labels.sql and all earlier migrations. Adds private account issue drafts and content-free submitted/discarded tombstones. Preserve the additive schema and tombstones on compatible-source rollback; archive drafts remain private to their author."
     }
   ],
   "breaking": false,
