@@ -22,7 +22,7 @@ import {
   assertSignOut,
   exerciseWorkspaceRoles,
 } from "./admin-access-journey.mjs";
-import { createTeamWorkflow, removeUsedStatus, exerciseTeamRoles, teamCreationPermission, teamJoinPermissions } from "./admin-team-journey.mjs";
+import { triageResponsibilityJourney, createTeamWorkflow, removeUsedStatus, exerciseTeamRoles, teamCreationPermission, teamJoinPermissions } from "./admin-team-journey.mjs";
 import { authorLabel, deleteAppliedLabel, memberLabelCreation } from "./admin-label-journey.mjs";
 import {
   authorProject,
@@ -57,7 +57,7 @@ await contract(
   async () => {
     try {
       await assertRoleDoorCoverage();
-      browser = await chromium.launch({ headless: true, args: ["--use-mock-keychain", "--password-store=basic"] });
+      browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, args: ["--use-mock-keychain", "--password-store=basic", ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? ["--no-sandbox"] : [])] });
       for (const viewport of [
         { width: 390, height: 844 },
       ]) {
@@ -129,6 +129,7 @@ await contract(
         };
         await bootstrapOwner(page, runtime);
         await auditEmptyWorkspace(shared);
+        await triageResponsibilityJourney({...shared,evidence});
         const team = await createTeamWorkflow(shared);
         const label = await authorLabel(shared);
         const project = await authorProject(shared);

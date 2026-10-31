@@ -1,3 +1,4 @@
+import {TriageProvider,TriageCount} from '../../features/triage-responsibility/ui';
 import { useHydrated } from '../initial-resources'
 import { MobileAccount } from './mobile-account'
 import { DeletionNotice } from '../../features/issue-deletion/receipt-notice'
@@ -39,6 +40,7 @@ type NavigationItem = {
     | '/app/releases'
     | '/app/initiatives'
     | '/app/issues'
+    | '/app/triage'
     | '/app/inbox'
     | '/app/board' | '/app/insights' | '/app/calendar'
   label: string
@@ -53,6 +55,7 @@ const navigation: NavigationItem[] = [
   { to: '/app/releases', label: 'Releases', icon: '◉' },
   { to: '/app/issues', label: 'Issues', icon: '▤' },
   { to: '/app/board', label: 'Board', icon: '▥' },
+  { to: '/app/triage', label: 'Triage', icon: '▹' },
   { to: '/app/inbox', label: 'Inbox', icon: '▣' },
   { to: '/app/insights', label: 'Insights', icon: '▧' },
   { to: '/app/calendar', label: 'Calendar', icon: '▦' },
@@ -63,7 +66,7 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <SavedViewReceiptProvider key={operator.id}>
       <NotificationProvider>
-        <StreamPlanningProvider><AppShellContent>{children}</AppShellContent></StreamPlanningProvider>
+        <TriageProvider><StreamPlanningProvider><AppShellContent>{children}</AppShellContent></StreamPlanningProvider></TriageProvider>
       </NotificationProvider>
     </SavedViewReceiptProvider>
   )
@@ -374,6 +377,7 @@ function NavLink({
       <span aria-hidden="true">{item.icon}</span>
       <span>{item.label}</span>
       {item.to === '/app/inbox' && <InboxCount />}
+      {item.to === '/app/triage' && <TriageCount />}
     </Link>
   )
 }

@@ -58,7 +58,7 @@ export async function readPageResources(env: WorkerBindings, request: Request, o
     const base = '/api/issues/' + encodeURIComponent(identifier)
     await Promise.all([read(base), read(base + '/discussion'), read(base + '/subscription'), read(base + '/github'), read(base + '/reminders'), read(base + '/references'), read(base + '/email-intake'), read(base + '/reactions')])
   }
-  const shared = [read('/api/settings/personal-time'), read('/api/views'), read('/api/notifications/count'), read('/api/mentions/options')]
+  const shared = [read('/api/triage-responsibility'), read('/api/settings/personal-time'), read('/api/views'), read('/api/notifications/count'), read('/api/mentions/options')]
   const path = url.pathname
   const personal = path.match(/^\/app\/my-work\/(created|subscribed|activity)(?:\/([A-Z]{2,10}-[1-9][0-9]*))?$/)
   const surface = personal ? null : path === '/app' || path.startsWith('/app/current') ? 'current'
@@ -108,6 +108,7 @@ export async function readPageResources(env: WorkerBindings, request: Request, o
     await Promise.all([read('/api/projects' + (preference?.filters.includeArchived ? '?includeArchived=true' : '')), read('/api/metadata')])
   } else if (path === '/app/projects/new') await read('/api/metadata')
   else if (path === '/app/cycles') await read('/api/metadata')
+  else if (path === '/app/triage') await read('/api/triage-responsibility')
   else if (path === '/app/inbox' || path === '/app/inbox/snoozed') await read('/api/notifications' + (path.endsWith('/snoozed') ? '?snoozed=true' : ''))
   else if (path === '/app/settings/audit') await read('/api/settings/audit?')
   else if (path === '/app/settings') {

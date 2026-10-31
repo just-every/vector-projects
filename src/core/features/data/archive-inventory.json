@@ -2159,5 +2159,23 @@
   ],
   "bs_assert": [
     "value"
+  ],
+  "team_triage_rotations": [
+    "team_id",
+    "starts_local",
+    "revision",
+    "updated_at"
+  ],
+  "team_triage_rotation_members": [
+    "team_id",
+    "position",
+    "operator_id"
+  ],
+  "triage_creation_receipts": [
+    "issue_id",
+    "event_id",
+    "recipient_id",
+    "period_starts_at",
+    "created_at"
   ]
 }

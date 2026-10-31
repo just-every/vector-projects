@@ -1,3 +1,5 @@
+import {triageUpgrade} from './triage-upgrade';
+import {triageResponsibilityJourney} from './triage-responsibility-journey';
 import {exerciseErrorProviders} from './error-provider-journey';
 import {env} from 'cloudflare:workers';
 import {it,expect} from 'vitest';
@@ -44,6 +46,8 @@ it('[ERROR-001 INTAKE-001 INTAKE-002 INTAKE-003 INTAKE-011] signed native source
  expect((await f.call('/settings/integrations/sources/'+config.id,'DELETE')).status).toBe(200);expect((await f.signed(config,input)).status).toBe(401);
  expect((await env.DB.prepare('PRAGMA foreign_key_check').all()).results).toEqual([]);
  await exerciseErrorProviders(f);
+ await triageResponsibilityJourney(f);
+ await triageUpgrade();
 },180000);
 it('[INTAKE-002 ISSUE-010] deletion winning a new source revision returns gone and cannot allocate a replacement',async()=>{
  const {beforeCommit}=await import('./removal-interleaving');

@@ -1,3 +1,4 @@
+export {triageResponsibilityJourney} from './triage-responsibility-journey.mjs';
 import {inviteReader,readerResponse} from './role-reader-support.mjs';
 import {teamCreationReaderCell,teamJoinReaderCells,privateTeamCreationCells} from './team-reader-cells.mjs';
 // Settle native polling before replacing an authorized private document.

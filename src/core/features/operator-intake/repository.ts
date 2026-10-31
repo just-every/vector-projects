@@ -1,3 +1,4 @@
+import {triageCreationStatements} from '../triage-responsibility/repository';
 import { issueReferenceStatements } from "../issue-references/repository";
 import { followStatements, mentionStatements, finalizeEvent } from '../notifications/events';
 import { mutationDatabase, isMutationAccessError } from '../auth/mutation-database'
@@ -115,8 +116,9 @@ export async function createOperatorIntake(
       issueId,
     );
   const event = { id: activityId, issueId, actor, at };
+  const triage = await triageCreationStatements(db,event,team.id);
   let result;
-  try { result = await db.batch<{ id: string }>([creationGuard(db,actor,team.workspaceId,team.id,status.id,{projectId:null,cycleId:null,labelIds:[]},status.category,allocation.prefix),issue,evidence,activity,...followStatements(db,event,[actor]),...mentionStatements(db,event,input.description),...issueReferenceStatements(db,event,input.description),...finalizeEvent(db,event),...(onCommit?.(db,{id:issueId,identifier}) ?? [])]); }
+  try { result = await db.batch<{ id: string }>([creationGuard(db,actor,team.workspaceId,team.id,status.id,{projectId:null,cycleId:null,labelIds:[]},status.category,allocation.prefix),issue,evidence,activity,...triage,...followStatements(db,event,[actor]),...mentionStatements(db,event,input.description),...issueReferenceStatements(db,event,input.description),...finalizeEvent(db,event),...(onCommit?.(db,{id:issueId,identifier}) ?? [])]); }
   catch (error) { return creationError(db,team.id,error,true); }
   // The indexed issue insert returns its own identity independently of trigger writes.
   if (result[1].results.length !== 1 || result[1].results[0].id !== issueId)

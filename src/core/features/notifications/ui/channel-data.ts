@@ -23,6 +23,7 @@ export const channelLabels = {
   mention: "Mentions",
   comment: "Followed comments",
   thread_reopened: "Reopened threads",
+  triage: "Triage responsibility",
   intake_return: "Deferred intake returns",
   unblocked: "Last blocker resolved",
   due_reminder: "Due reminders",

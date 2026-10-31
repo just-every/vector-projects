@@ -1,3 +1,4 @@
+import {TeamTriageRotation} from '../../triage-responsibility/panel';
 import '../../documents/ui/documents.css';
 import { CreateSlackChannel } from "../../projects/ui/project-slack-choice";
 import {TeamJoinRules} from "./team-join-rules";
@@ -239,6 +240,7 @@ function TeamEditor({
           </button>
         </fieldset>
       </form>
+      {access.settings && !team.archivedAt && <TeamTriageRotation data={data} team={team}/>}
       <TeamMembers data={data} team={team} onChanged={onChanged} />
       <TeamJoinRules data={data} team={team} onChanged={onChanged}/>
       <TeamPermissions data={data} team={team} onChanged={onChanged} />

@@ -5,6 +5,7 @@ const actions: Record<NotificationKind, string> = {
   mention: "mentioned you on",
   comment: "commented on",
   thread_reopened: "reopened a thread on",
+  triage: "sent new triage work to you:",
   intake_return: "returned your deferred intake",
   unblocked: "removed the last blocker from",
   due_reminder: "has a due reminder for",

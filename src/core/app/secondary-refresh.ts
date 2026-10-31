@@ -22,7 +22,7 @@ export function onSecondaryRefresh(refresh: () => void) {
 
 export function isSecondaryRead(url: string) {
   const { pathname } = new URL(url, 'http://vector.invalid');
-  return pathname === '/api/notifications/count' || pathname === '/api/mentions/options' ||
+  return pathname === '/api/triage-responsibility' || pathname === '/api/notifications/count' || pathname === '/api/mentions/options' ||
     pathname === '/api/notifications' ||
     /^\/api\/issues\/[A-Z][A-Z0-9_]{0,99}-[1-9][0-9]*(?:\/(?:subscription|reminders|references|discussion|reactions|email-intake))?$/.test(pathname);
 }

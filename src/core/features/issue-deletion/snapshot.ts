@@ -65,6 +65,7 @@ for (const table of [
   "issue_labels",
   "evidence_revisions",
   "intake_decisions",
+  "triage_creation_receipts",
   "issue_deferral_origins",
   "issue_followers",
   "issue_notification_mutes",

@@ -252,6 +252,8 @@ export const doors: Door[] = [
   { method: 'DELETE', path: '/settings/projects/:id/milestones/:milestoneId', row: 'milestones.write' },
   // Cycles
   { method: 'POST', path: '/settings/cycles', row: 'cycles.manage', teams: bodyTeam },
+  { method: 'GET', path: '/settings/teams/:id/triage-rotation', row: 'teams.settings', teams: team('id') },
+  { method: 'PUT', path: '/settings/teams/:id/triage-rotation', row: 'teams.settings', teams: team('id') },
   { method: 'PUT', path: '/settings/teams/:id/cycle-schedule', row: 'cycles.schedule', teams: team('id') },
   // Saved views
   { method: 'POST', path: '/views', row: async request => await field(request, 'isShared') === true ? 'views.share' : 'views.private' },

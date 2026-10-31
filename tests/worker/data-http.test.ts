@@ -95,6 +95,13 @@ it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA
  expect((await f.call('/settings/operators/'+f.peer+'/role','PATCH',{role:'owner'})).status).toBe(200);
  await invite('member@http-archive.test',f.cookie);await invite('admin@http-archive.test',f.cookie,'admin');await invite('synthetic-vector-1701@vector.test',f.cookie,'viewer');
  const roles=(db:D1Database)=>db.prepare('SELECT id,email,role FROM operators ORDER BY id').all().then(rows=>rows.results);
+ const triagePath='/settings/teams/'+f.team.id+'/triage-rotation';
+ expect((await f.call('/settings/teams/'+f.team.id+'/members/'+f.peer,'PUT',{role:'member'})).status).toBe(200);
+ expect((await f.call(triagePath,'PUT',{startsLocal:'2026-01-05T09:00',operatorIds:[f.owner,f.peer]})).status).toBe(200);
+ expect((await f.call('/intake','POST',{teamId:f.team.id,title:'synthetic-vector-9131'})).status).toBe(201);
+ const triageTables=['team_triage_rotations','team_triage_rotation_members','triage_creation_receipts'];
+ const triageRows=await Promise.all(triageTables.map(async name=>(await env.DB.prepare('SELECT * FROM '+name+' ORDER BY rowid').all()).results));
+ expect(triageRows[0]).toHaveLength(1);expect(triageRows[1]).toHaveLength(2);expect(triageRows[2]).toHaveLength(1);
  const archivedRoles=await roles(env.DB);
  expect(new Set(archivedRoles.map(row=>row.role))).toEqual(new Set(['owner','admin','member','viewer']));
  const created=await f.call('/portability/exports','POST',{});expect(created.status).toBe(201);const id=(await created.json() as {id:string}).id;
@@ -154,6 +161,9 @@ it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA
  const credentialState=async()=>await (await targetCall('/api/settings/integrations','GET',undefined,historical)).json() as CredentialState;
  const restoredErrors=await (await targetCall('/api/settings/integrations/errors','GET',undefined,historical)).json() as any;expect(restoredErrors.connections).toContainEqual(expect.objectContaining({id:errorConnection.id,regressionRule:'reopen',requiresReentry:1}));
  expect((await createServerApp().request(targetBindings.APP_ORIGIN+new URL(errorConnection.receiver).pathname,{method:'POST',body:'{}'},targetBindings)).status).toBe(401);
+ for(let index=0;index<triageTables.length;index++)expect((await destination.ARCHIVE_TARGET_DB.prepare('SELECT * FROM '+triageTables[index]+' ORDER BY rowid').all()).results).toEqual(triageRows[index]);
+ const restoredTriage=await targetCall('/api/triage-responsibility','GET',undefined,historical);expect(restoredTriage.status).toBe(200);
+ expect((await restoredTriage.json() as {teams:unknown[]}).teams).toHaveLength(1);
  const restoredCredentials=await credentialState();
  const restoredChannels=await (await targetCall('/api/settings/integrations/channels','GET',undefined,historical)).json() as any;expect(restoredChannels.slack).toMatchObject({connected:false,needsAttention:true,signingSecret:false});
  expect((await (await targetCall('/api/settings/notifications','GET',undefined,historical)).json() as any).slack).toMatchObject({available:false,link:null,actionsEnabled:false});expect(restoredChannels.bindings).toEqual(expect.arrayContaining([expect.objectContaining({id:channelBinding.id,objectId:f.project.id,channelId:'CARCHIVE'}),expect.objectContaining({id:discordBinding.id,objectId:f.team.id,provider:'discord',needsAttention:true})]));

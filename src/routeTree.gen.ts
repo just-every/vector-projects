@@ -25,6 +25,7 @@ import { Route as AppNewRouteImport } from './routes/app.new'
 import { Route as AppNewIssueRouteImport } from './routes/app.new-issue'
 import { Route as AppSearchRouteImport } from './routes/app.search'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppTriageRouteImport } from './routes/app.triage'
 import { Route as DocsIndexRouteImport } from './routes/docs.index'
 import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as AppBoardIdentifierRouteImport } from './routes/app.board.$identifier'
@@ -136,6 +137,11 @@ const AppSearchRoute = AppSearchRouteImport.update({
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTriageRoute = AppTriageRouteImport.update({
+  id: '/triage',
+  path: '/triage',
   getParentRoute: () => AppRoute,
 } as any)
 const DocsIndexRoute = DocsIndexRouteImport.update({
@@ -319,6 +325,7 @@ export interface FileRoutesByFullPath {
   '/app/new-issue': typeof AppNewIssueRoute
   '/app/search': typeof AppSearchRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/triage': typeof AppTriageRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/app/': typeof AppIndexRoute
   '/docs/': typeof DocsIndexRoute
@@ -365,6 +372,7 @@ export interface FileRoutesByTo {
   '/app/new-issue': typeof AppNewIssueRoute
   '/app/search': typeof AppSearchRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/triage': typeof AppTriageRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/app': typeof AppIndexRoute
   '/docs': typeof DocsIndexRoute
@@ -416,6 +424,7 @@ export interface FileRoutesById {
   '/app/new-issue': typeof AppNewIssueRoute
   '/app/search': typeof AppSearchRoute
   '/app/settings': typeof AppSettingsRoute
+  '/app/triage': typeof AppTriageRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/app/': typeof AppIndexRoute
   '/docs/': typeof DocsIndexRoute
@@ -468,6 +477,7 @@ export interface FileRouteTypes {
     | '/app/new-issue'
     | '/app/search'
     | '/app/settings'
+    | '/app/triage'
     | '/docs/$slug'
     | '/app/'
     | '/docs/'
@@ -514,6 +524,7 @@ export interface FileRouteTypes {
     | '/app/new-issue'
     | '/app/search'
     | '/app/settings'
+    | '/app/triage'
     | '/docs/$slug'
     | '/app'
     | '/docs'
@@ -564,6 +575,7 @@ export interface FileRouteTypes {
     | '/app/new-issue'
     | '/app/search'
     | '/app/settings'
+    | '/app/triage'
     | '/docs/$slug'
     | '/app/'
     | '/docs/'
@@ -720,6 +732,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/app/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/triage': {
+      id: '/app/triage'
+      path: '/triage'
+      fullPath: '/app/triage'
+      preLoaderRoute: typeof AppTriageRouteImport
       parentRoute: typeof AppRoute
     }
     '/docs/': {
@@ -1067,6 +1086,7 @@ interface AppRouteChildren {
   AppNewIssueRoute: typeof AppNewIssueRoute
   AppSearchRoute: typeof AppSearchRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppTriageRoute: typeof AppTriageRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCyclesCycleIdRoute: typeof AppCyclesCycleIdRoute
   AppDocumentsDocumentIdRoute: typeof AppDocumentsDocumentIdRoute
@@ -1098,6 +1118,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNewIssueRoute: AppNewIssueRoute,
   AppSearchRoute: AppSearchRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppTriageRoute: AppTriageRoute,
   AppIndexRoute: AppIndexRoute,
   AppCyclesCycleIdRoute: AppCyclesCycleIdRoute,
   AppDocumentsDocumentIdRoute: AppDocumentsDocumentIdRoute,
