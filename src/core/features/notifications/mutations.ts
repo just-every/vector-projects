@@ -4,13 +4,17 @@ import { SettingsError, settingsActor } from "../settings/repository";
 import type { NotificationKind } from "./schema";
 export async function markRead(db: D1Database, actor: string, id?: string) {
   db = mutationDatabase(db, actor);
-  const result = await db
-    .prepare(
+  const at = new Date().toISOString();
+  const result = await db.batch([
+    db.prepare(
       `UPDATE notifications SET read_at=COALESCE(read_at,?) WHERE recipient_id=? AND EXISTS(SELECT 1 FROM issues i JOIN teams t ON t.id=i.team_id JOIN operators o ON o.workspace_id=t.workspace_id WHERE i.id=notifications.issue_id AND o.id=notifications.recipient_id) ${id ? "AND id=?" : ""}`,
     )
-    .bind(new Date().toISOString(), actor, ...(id ? [id] : []))
-    .run();
-  if (id && result.meta.changes === 0)
+    .bind(at, actor, ...(id ? [id] : [])),
+    db.prepare(`UPDATE document_notifications SET read_at=COALESCE(read_at,?)
+      WHERE recipient_id=? AND document_id IN(SELECT id FROM documents) ${id ? 'AND id=?' : ''}`)
+      .bind(at,actor,...(id?[id]:[])),
+  ]);
+  if (id && result.every(row=>row.meta.changes === 0))
     throw new SettingsError("not_found", "Notification is unavailable.", 404);
 }
 export async function changeSubscription(

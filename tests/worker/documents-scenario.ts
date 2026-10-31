@@ -1,3 +1,4 @@
+import {documentMentionsScenario,documentMentionUpgrade} from './document-mentions-scenario';
 import {documentReferenceScenario} from './reference-scenario';
 import {env} from 'cloudflare:workers';
 import {expect} from 'vitest';
@@ -6,8 +7,9 @@ import {setupAdministration} from './administration-fixture';
 import {invite,actor,request} from './base-auth-fixture';
 import {snapshot} from './role-fixture';
 const read=async(response:Response,status=200)=>{expect(response.status,await response.clone().text()).toBe(status);return response.json() as Promise<any>;};
-const tables=['documents','document_revisions','document_comments','issue_specifications','issues','projects','teams'];
+const tables=['document_followers','document_mentions','document_notifications','document_notification_events','documents','document_revisions','document_comments','issue_specifications','issues','projects','teams'];
 export async function documentJourney(){
+ await documentMentionUpgrade();
  const f=await setupAdministration();
  const project=(await f.mutate('/settings/projects','POST',{name:'synthetic-vector-35001',leadOperatorId:f.owner})).projects.find(p=>p.name==='synthetic-vector-35001')!;
  const issue=await f.create({projectId:project.id,title:'synthetic-vector-35002'});
@@ -48,12 +50,16 @@ export async function documentJourney(){
  expect((await read(await request('/api/issues/'+issue.identifier+'/specification','GET',undefined,member))).specification).toEqual({id:teamDoc.id,title:teamDoc.title});
  await read(await f.call('/issues/'+issue.identifier+'/specification','PUT',{documentId:doc.id}));
  const reference=await documentReferenceScenario(f);
+ const mentioned=await documentMentionsScenario(f);
  // A native archive retains the document, parent identity, both edits and issue link.
  const exported=await read(await f.call('/portability/exports','POST',{}),201);
  let state={phase:'building'};while(state.phase==='building')state=await read(await f.call('/portability/exports/'+exported.id+'/advance','POST',{maxParts:16}));
  const download=await f.call('/portability/exports/'+exported.id+'/download');expect(download.status).toBe(200);
  const items:any[]=[];for await(const record of readArchive(download.body!))if(record.kind==='part')items.push(...record.items);
  const rows=(table:string)=>items.filter(item=>item.kind==='row'&&item.table===table).map(item=>item.row);
+ expect(rows('document_followers')).toContainEqual(expect.objectContaining({document_id:mentioned.doc.id,operator_id:mentioned.peerId}));
+ expect(rows('document_notifications')).toContainEqual(expect.objectContaining({document_id:mentioned.doc.id,recipient_id:mentioned.peerId}));
+ expect(rows('document_notification_events').filter(r=>r.document_id===mentioned.doc.id).length).toBe(mentioned.doc.version);
  expect(rows('document_issue_references')).toContainEqual(expect.objectContaining({document_id:reference.doc.id,target_issue_id:reference.target.id,removed:0}));
  expect(rows('documents')).toContainEqual(expect.objectContaining({id:issueDoc.id,parent_kind:'issue',parent_id:issue.id}));
  expect(rows('issues')).toContainEqual(expect.objectContaining({id:issue.id}));
