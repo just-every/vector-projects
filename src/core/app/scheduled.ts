@@ -1,4 +1,5 @@
 import {processSubscriptionQueue} from '../features/subscriptions/process';
+import { runReportExports } from '../features/report-exports/scheduled';
 import { captureDailyReports } from "../features/project-report/capture";
 import { maintainCycleSchedules } from "../features/cycle-schedule/service";
 import { deliverFollowups } from '../features/notification-followups/service';
@@ -36,4 +37,5 @@ export async function scheduled(
   await drainNotificationMail(env, { scheduled: true, now });
   await drainNotificationDigests(env, { now });
   await dispatchWebhooks(env);
+  await runReportExports(env, now);
 }

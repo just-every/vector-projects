@@ -25,6 +25,7 @@ export const matrix = {
   'work.read': row('Read visible work (OPS-001, ROLE-002, ROLE-003, ROLE-013)', 'yes', 'yes', 'yes', 'invited-teams', 'yes'),
   'viewers.manage': row('Invite or suspend Viewers; change between Member, Guest and Viewer (ROLE-013)', 'yes', 'yes', 'no', 'no'),
   'reports.read': row('Open Insights and shared dashboards (REPORT-001)', 'yes', 'yes', 'yes', 'no', 'yes'),
+  'reports.export': row('Schedule warehouse exports and Google Sheets syncs (REPORT-005)', 'yes', 'yes', 'no', 'no'),
   'dashboards.write': row('Create, edit or share a dashboard (REPORT-003)', 'yes', 'yes', 'own', 'no'),
   'calendar.feeds': row('Create, rotate or revoke a calendar feed (CAL-001)', 'yes', 'yes', 'own', 'no', 'own'),
   'initiatives.write': row('Create and edit initiatives; add projects to them (INIT-001)', 'yes', 'yes', 'yes', 'no'),

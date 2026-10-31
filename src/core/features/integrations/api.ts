@@ -9,6 +9,7 @@ import { addCommentApi } from './comment-api';
 import { addMilestoneApi } from './milestone-api';
 import { addCycleApi } from './cycle-api';
 import { addLabelApi } from './label-api';
+import { addReportExportApi } from '../report-exports/routes';
 import { pageQuery,pageScope,decodeCursor,nextCursor } from './api-pagination';
 import { CommentPermissionError } from '../discussion/permissions';
 import { admitRate } from '../auth/repository';
@@ -125,6 +126,7 @@ export function createIntegrationApi(){
  addMilestoneApi(app);
  addCycleApi(app);
  addLabelApi(app);
+ addReportExportApi(app);
  addDescriptionHistoryRoutes(app,false);
  return app;
 }

@@ -98,6 +98,10 @@ async function memberRole(db: D1Database, id: string) {
 }
 
 export const doors: Door[] = [
+  {method:'GET',path:'/settings/report-exports',row:'reports.export'},
+  {method:'POST',path:'/settings/report-exports',row:'reports.export'},
+  {method:'PATCH',path:'/settings/report-exports/:id',row:'reports.export'},
+  {method:'DELETE',path:'/settings/report-exports/:id',row:'reports.export'},
   ...([
     ['POST','/documents'],['PATCH','/documents/:documentId'],['POST','/documents/:documentId/comments'],
     ['PUT','/issues/:identifier/specification'],['DELETE','/issues/:identifier/specification'],
@@ -284,6 +288,7 @@ export const doors: Door[] = [
 
 /** /api/v1: bearer-token doors of the same actions. */
 export const apiDoors: Door[] = [
+  ...(['issues','history','cycles','projects'] as const).map(resource => ({method:'GET' as const,path:'/report-exports/'+resource,row:'reports.export' as const})),
   {method:'POST',path:'/initiatives',row:'initiatives.write'},
   {method:'PATCH',path:'/initiatives/:id',row:'initiatives.write'},
   {method:'PUT',path:'/initiatives/:id/projects',row:'initiatives.write'},

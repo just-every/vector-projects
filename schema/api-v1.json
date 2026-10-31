@@ -4005,6 +4005,470 @@
           }
         ]
       }
+    },
+    "/report-exports/issues": {
+      "get": {
+        "operationId": "warehouse_issues_list",
+        "summary": "Page visible issues for a warehouse consumer",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-scopes": [
+          "reports:read"
+        ],
+        "x-object": "warehouse issues",
+        "x-operation": "list",
+        "x-pagination": "cursor",
+        "x-filters": [
+          "team"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          {
+            "name": "team",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current visible warehouse page, ordered by stable ID. Live reads, not a frozen archive.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "resource",
+                    "rows",
+                    "total",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "resource": {
+                      "const": "issues"
+                    },
+                    "rows": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "items": {
+                        "$ref": "#/components/schemas/WarehouseIssues"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Token authority refused"
+          },
+          "403": {
+            "description": "Origin or native permission refused"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Stale state or invalidated cursor"
+          },
+          "429": {
+            "description": "Token rate limit",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds until the next minute"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/report-exports/history": {
+      "get": {
+        "operationId": "warehouse_history_list",
+        "summary": "Page visible history for a warehouse consumer",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-scopes": [
+          "reports:read"
+        ],
+        "x-object": "warehouse history",
+        "x-operation": "list",
+        "x-pagination": "cursor",
+        "x-filters": [
+          "team"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          {
+            "name": "team",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current visible warehouse page, ordered by stable ID. Live reads, not a frozen archive.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "resource",
+                    "rows",
+                    "total",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "resource": {
+                      "const": "history"
+                    },
+                    "rows": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "items": {
+                        "$ref": "#/components/schemas/WarehouseHistoryRow"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Token authority refused"
+          },
+          "403": {
+            "description": "Origin or native permission refused"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Stale state or invalidated cursor"
+          },
+          "429": {
+            "description": "Token rate limit",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds until the next minute"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/report-exports/cycles": {
+      "get": {
+        "operationId": "warehouse_cycles_list",
+        "summary": "Page visible cycles for a warehouse consumer",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-scopes": [
+          "reports:read"
+        ],
+        "x-object": "warehouse cycles",
+        "x-operation": "list",
+        "x-pagination": "cursor",
+        "x-filters": [
+          "team"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          {
+            "name": "team",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current visible warehouse page, ordered by stable ID. Live reads, not a frozen archive.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "resource",
+                    "rows",
+                    "total",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "resource": {
+                      "const": "cycles"
+                    },
+                    "rows": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "items": {
+                        "$ref": "#/components/schemas/WarehouseCycles"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Token authority refused"
+          },
+          "403": {
+            "description": "Origin or native permission refused"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Stale state or invalidated cursor"
+          },
+          "429": {
+            "description": "Token rate limit",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds until the next minute"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/report-exports/projects": {
+      "get": {
+        "operationId": "warehouse_projects_list",
+        "summary": "Page visible projects for a warehouse consumer",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-scopes": [
+          "reports:read"
+        ],
+        "x-object": "warehouse projects",
+        "x-operation": "list",
+        "x-pagination": "cursor",
+        "x-filters": [
+          "team"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          {
+            "name": "team",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current visible warehouse page, ordered by stable ID. Live reads, not a frozen archive.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "resource",
+                    "rows",
+                    "total",
+                    "nextCursor"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "resource": {
+                      "const": "projects"
+                    },
+                    "rows": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "items": {
+                        "$ref": "#/components/schemas/WarehouseProjects"
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Token authority refused"
+          },
+          "403": {
+            "description": "Origin or native permission refused"
+          },
+          "404": {
+            "description": "Resource unavailable"
+          },
+          "409": {
+            "description": "Stale state or invalidated cursor"
+          },
+          "429": {
+            "description": "Token rate limit",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "Seconds until the next minute"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4114,6 +4578,305 @@
               "#000000",
               "#ffffff"
             ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "WarehouseIssues": {
+        "type": "object",
+        "required": [
+          "id",
+          "identifier",
+          "teamId",
+          "title",
+          "description",
+          "statusId",
+          "status",
+          "statusCategory",
+          "priority",
+          "assigneeOperatorId",
+          "projectId",
+          "cycleId",
+          "startDate",
+          "dueDate",
+          "estimate",
+          "version",
+          "completedAt",
+          "canceledAt",
+          "archivedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "identifier": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "statusId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "status": {
+            "type": "string"
+          },
+          "statusCategory": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "assigneeOperatorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "projectId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "cycleId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "startDate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dueDate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "estimate": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "integer"
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "canceledAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "archivedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "WarehouseHistoryRow": {
+        "type": "object",
+        "required": [
+          "id",
+          "issueId",
+          "issueIdentifier",
+          "teamId",
+          "kind",
+          "actorId",
+          "actor",
+          "previousValue",
+          "nextValue",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable native activity identity, including retained reference identities."
+          },
+          "issueId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "issueIdentifier": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "actorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "previousValue": {
+            "description": "Native visible activity value; private references are omitted with their history row, and Undo custody is excluded."
+          },
+          "nextValue": {
+            "description": "Native visible activity value; private references are omitted with their history row, and Undo custody is excluded."
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "WarehouseCycles": {
+        "type": "object",
+        "required": [
+          "id",
+          "teamId",
+          "name",
+          "startsAt",
+          "endsAt",
+          "capacity",
+          "closedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "teamId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string"
+          },
+          "endsAt": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "closedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "WarehouseProjects": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "leadOperatorId",
+          "startDate",
+          "targetDate",
+          "priority",
+          "lifecycle",
+          "archivedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "leadOperatorId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "startDate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "targetDate": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priority": {
+            "type": "string"
+          },
+          "lifecycle": {
+            "type": "string"
+          },
+          "archivedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
           }
         },
         "additionalProperties": false

@@ -1,3 +1,4 @@
+import {exerciseWarehouseExports} from './warehouse-export-client.mjs';
 import {buildSdk} from '../../sdk/build.mjs';
 import {exerciseSdkIntake} from './integrations/sdk-intake.mjs';
 import {exerciseVideoPlayers} from "./video-players-journey.mjs";
@@ -26,9 +27,19 @@ try{
  await exerciseWebhookComments({page,runtime,cookie,team,evidence});
  await exerciseErrorProviders({page,runtime,cookie,team,evidence});
  await exerciseOAuthApps({page,runtime,cookie,evidence});
- for(const width of [1440,390]){await exerciseIntegrationSettings({page,runtime,cookie,team,width,evidence});await exerciseGithubChain({page,runtime,cookie,team,width,evidence});proof.widths.push(width);}
- const aliasSession=await signIn(runtime),aliasPage=await openAuthenticatedPage(browser,aliasSession.cookie,runtime.base);
- try{await exerciseImportAliases({page:aliasPage,runtime,cookie:aliasSession.cookie,evidence});}finally{await aliasPage.context().close();}
+ await exerciseWarehouseExports({runtime,cookie});
+ const aliasPage=await openAuthenticatedPage(browser,cookie,runtime.base);
+ try{await exerciseImportAliases({page:aliasPage,runtime,cookie,evidence});}finally{await aliasPage.context().close();}
+ // Each viewport exercises native administration with a recent real sign-in;
+ // earlier provider journeys must not consume its step-up freshness window.
+ for(const width of [1440,390]){
+  const widthSession=await signIn(runtime),widthPage=await openAuthenticatedPage(browser,widthSession.cookie,runtime.base);
+  try{
+   await exerciseIntegrationSettings({page:widthPage,runtime,cookie:widthSession.cookie,team,width,evidence});
+   await exerciseGithubChain({page:widthPage,runtime,cookie:widthSession.cookie,team,width,evidence});
+   proof.widths.push(width);
+  }finally{await widthPage.context().close();}
+ }
  proof.passed=true;
 }finally{await browser?.close();await runtime.stop();await mkdir(evidence,{recursive:true});await writeFile(join(evidence,'browser-proof.json'),JSON.stringify(proof,null,2)+'\n');}
 console.log('[SLACK-003 SLACK-004 NOTIFY-007] Native channel bindings, Slack creation and delivery, Discord, member-linked Slack direct messages, per-event email choices and workspace defaults passed at 1440 and 390.');

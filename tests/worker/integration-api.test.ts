@@ -1,3 +1,6 @@
+import { warehouseExportJourney } from './warehouse-export-journey';
+import { warehouseScheduleJourney } from './warehouse-schedule-journey';
+import { warehouseSheetsJourney } from './warehouse-sheets-journey';
 import {sdkIntakeJourney} from './sdk-intake-journey';
 import {jsonMediaType,formMediaType} from '../../src/core/features/oauth-apps/media-types';
 import {pkce} from '../../src/core/features/oauth-apps/repository';
@@ -168,6 +171,9 @@ it('[API-003 PROJ-011 ISSUE-008] public tokens page native planning and workspac
  for(const value of issues)expect((await call('/issues/'+value.identifier)).milestoneId).toBeNull();
  expect((await f.api(old,'/projects/'+second.id,'DELETE')).status).toBe(401);
  await call('/projects/'+second.id,'DELETE');expect((await f.api(token,'/projects/'+second.id)).status).toBe(404);
+ await warehouseExportJourney(f);
+ await warehouseScheduleJourney(f);
+ await warehouseSheetsJourney(f);
  expect((await env.DB.prepare('PRAGMA foreign_key_check').all()).results).toEqual([]);
 },180000);
 

@@ -390,6 +390,148 @@ registration and member consent. Excluding the entire registration avoids
 implying that a restored client secret or old redirect relationship remains
 trusted at a new installation.
 
+## Warehouse export reads (REPORT-005)
+
+Request the new `reports:read` scope explicitly when creating a token or OAuth
+grant. Existing grants keep their saved scopes. Only a current Owner or Admin
+may use these operations, and an Admin sees only currently readable teams.
+The scope grants no native writes, attachments, credentials or portable archive
+access. The safe Admin archive refusal under ROLE-002(c) is unchanged.
+
+| GET route | Rows |
+| --- | --- |
+| `/api/v1/report-exports/issues` | Issues with stable identifier, title, description, visible status, project and cycle IDs, priority, assignee ID, dates, estimate and version |
+| `/api/v1/report-exports/history` | Visible issue activity with stable ID, issue identifier, kind, actor ID and display name, previous and next values, and timestamps |
+| `/api/v1/report-exports/cycles` | Visible cycles with team ID, name, start, end, capacity, closure and timestamps |
+| `/api/v1/report-exports/projects` | Visible projects with name, description, lead ID, dates, priority, lifecycle, archive state and timestamps |
+
+Every endpoint returns `{resource, rows, total, nextCursor}`. Rows use ascending
+stable IDs; timestamps are ISO strings and optional fields are explicit nulls.
+`total` counts the complete currently visible filtered result, before paging.
+Pass `limit` (1–100, default 50), optional `team` (a native team ID), and the
+previous response's opaque `cursor` until `nextCursor` is null. A team filter
+on projects selects projects with currently visible issues in that team; without
+a team filter, native visibility also permits empty workspace projects.
+Hidden and foreign teams yield empty results without revealing whether they
+exist. Unknown query fields and invalid values return 400.
+
+Cursors are signed and bound to the actor, resource, team, limit and current
+role and team authority. Keep the query unchanged between pages. A malformed
+or tampered cursor returns 400; a foreign cursor or changed authority returns
+409 `pagination_invalidated`. Restart from page one after 409. Every request
+also rechecks current token scope, expiry, revocation, active identity and role;
+revoked access receives 401 and a disallowed current role receives 403.
+
+A separately consented OAuth grant follows the same current Owner or Admin
+and team visibility rules. Register `reports:read` on the application and
+select that scope during consent; registering additional application scopes
+does not grant them to the warehouse client. A valid OAuth grant missing the
+required scope returns 403 `insufficient_scope`. Revoking the grant invalidates
+its captured cursors as well as fresh page reads; an old cursor never restores
+revoked access.
+
+These are live read pages, not a frozen snapshot or incremental change feed.
+Each page and its total share a database snapshot; edits between requests may
+change totals and values. Consumers should upsert by stable ID and reconcile
+with a later full traversal. Use the bearer header and the same installation
+origin rules as the other API operations. Follow `Retry-After` on 429.
+For example, fetch `/api/v1/report-exports/issues?limit=50`, then the same URL
+with `&cursor=` and the URL-encoded returned cursor. The published schema at
+`/api/v1/schema` describes all four response projections.
+
+History uses the native visibility projection: retained references to currently
+hidden issues, teams, projects or source documents cannot reveal history rows.
+Undo custody is stripped from activity values. No member email, credential
+record, signing material, attachment object key or attachment bytes is exported.
+This adapter does not commission Fivetran or Airbyte connectors. Customer-link
+export still requires the actual customer model.
+
+## Scheduled warehouse exports
+
+Current Owners and Admins configure hourly exports through the native,
+same-origin Settings API. These operations require a native session; a
+`reports:read` bearer cannot configure or enable outbound transfers.
+
+| Native route | Operation |
+| --- | --- |
+| `GET /api/settings/report-exports` | Safe configuration, current version, next due time, credential re-entry state and the last 100 run receipts |
+| `POST /api/settings/report-exports` | Create a bucket or spreadsheet schedule with explicit `consent: true`; `enabled` defaults to false |
+| `PATCH /api/settings/report-exports/ID` | Set `enabled` with the current `expectedVersion` and `consent: true`; stale versions return 409 |
+| `DELETE /api/settings/report-exports/ID` | Stop the schedule and destroy its installation credential, retaining safe receipts |
+
+For a bucket schedule, send `kind: "bucket"`, a name, and this configuration:
+
+```json
+{
+  "endpoint": "https://ACCOUNT.r2.cloudflarestorage.com",
+  "region": "auto",
+  "bucket": "warehouse",
+  "prefix": "vector",
+  "format": "json",
+  "team": "OPTIONAL_TEAM_ID"
+}
+```
+
+Replace ACCOUNT with the 32-character R2 account identifier, or use the AWS S3
+regional endpoint `https://s3.REGION.amazonaws.com` and its region. This adapter
+uses S3 path-style PutObject with AWS Signature Version 4. Other S3-compatible
+hosts are refused until their destination boundary is qualified. Supply
+`credentials: {accessKeyId, secretAccessKey}` separately. Use a bucket-scoped
+write credential. Credentials are encrypted and never returned by the read API.
+
+Each successful hourly run writes one object at
+the configured prefix, schedule ID and run ID, ending in `.json` or `.csv`.
+The first object contains all current
+visible issues, visible issue history, cycles and projects in the selected team,
+or the current visible workspace when `team` is omitted. Subsequent objects
+contain only changed rows. JSON contains `version: 1` and a `records` array; CSV
+has `resource`, `id`, `operation` and JSON-encoded `row` columns. Apply `upsert`
+by resource and stable ID. Apply `delete` to remove a previously exported ID
+that is now deleted or no longer visible; its row is null and carries no former
+title or identifier. Empty deltas have no records. No credentials or attachment
+bytes are exported. Remote objects already delivered belong to the configured
+bucket owner; Vector cannot promise their retention or erasure.
+
+For a spreadsheet schedule, send `kind: "sheets"`, a name,
+`configuration: {viewId, spreadsheetId, sheet}` and
+`credentials: {clientId, clientSecret, refreshToken}`. The Google OAuth refresh
+grant must already have spreadsheet write access. Reserve a dedicated sheet
+with enough rows for the view: consent authorizes replacing its managed
+rectangle and clearing rows that leave the view. This is the documented native
+configuration door; a provider account connection screen is not yet supplied.
+
+Every due run refreshes the grant at Google's fixed token endpoint and calls
+`spreadsheets.values.batchUpdate` on that spreadsheet. It writes one header row
+and one row per issue in the current saved list view, retaining its filters and
+ordering. Columns cover the properties the current native list displays:
+identifier, title, status, priority, team, assignee, start date, due date, labels,
+parent, blocked state and checklist progress. RAW input preserves literal text
+without evaluating formulas. A smaller result pads the previously managed
+rectangle with empty strings, clearing departed rows. Board-specific and future
+property-choice integrations remain unqualified receiving duties.
+
+The installed Worker cron checks due schedules and refreshes successful ones
+hourly. Atomic claims prevent overlapping runs. Current administrator authority,
+view access and row visibility are rechecked before outbound data is sent;
+removing or demoting the accountable administrator stops their schedule. A
+failed provider response leaves checkpoints unchanged. An interrupted or
+ambiguous transfer is marked uncertain and receives no automatic retry: review
+the destination before explicitly enabling a fresh run. A definite refusal is
+visible in Settings receipts and can be retried on the next hour. Disabling or
+revoking a schedule stops later sends, including an in-flight collection before
+its final admission check.
+
+Historical run counts are withheld as `null` when the current reader cannot
+see every team in the workspace; a retained aggregate cannot be divided into
+currently visible rows. Safe configuration and run receipts survive native archives. Credentials,
+claim tokens and row checkpoints do not. Restore holds all background effects;
+even after review, a historical schedule remains inert without its excluded
+credential. Create and explicitly enable a replacement schedule after reviewing
+the destination. This adapter bounds each snapshot at 20,000 rows and each
+outbound body at 1 MiB; exceeding either fails visibly without advancing it.
+Provider-edge fixture proof establishes these protocols, not hosted provider
+commissioning, connector certification or customer-link model coverage.
+
 ## TypeScript client and intake example (API-005)
 
 The source SDK is in `./sdk/`. Generate it from the currently published

@@ -1,4 +1,6 @@
 import {jsonMediaType} from '../../src/core/features/oauth-apps/media-types';
+import { bucketScheduleInput } from './warehouse-schedule-journey';
+import { createSchedule, changeSchedule } from '../../src/core/features/report-exports/schedule-schema';
 import {subscriptionInput} from '../../src/core/features/integrations/subscriptions';
 import {exchangeInput} from '../../src/core/features/oauth-apps/schema';
 import {documentInput,documentEdit,documentComment,specificationInput} from '../../src/core/features/documents/schema';
@@ -150,6 +152,10 @@ export async function prepareViewerCensus(w:Workspace,seed:{issue:any;comment:an
   const bind=(route:string,params:Record<string,string>)=>route.replace(/:([A-Za-z]+)/g,(_,name)=>{expect(params[name],route+' parameter '+name).toBeTruthy();return params[name];});
   const add=(surface:Surface,method:Door['method'],route:string,body:unknown,params:Record<string,string>={},path?:string)=>{const id=method+' '+route;expect(plans[surface].has(id),id+' duplicate fixture').toBe(false);plans[surface].set(id,{path:path??bind(route,params),body});};
   const native=(method:Door['method'],route:string,body:unknown,params:Record<string,string>={},path?:string)=>add('native',method,route,body,params,path);
+  const reportExport=await call(owner,'/settings/report-exports','POST',bucketScheduleInput);
+  native('POST','/settings/report-exports',bucketScheduleInput);
+  native('PATCH','/settings/report-exports/:id',{expectedVersion:1,enabled:true,consent:true},{id:reportExport.id});
+  native('DELETE','/settings/report-exports/:id',undefined,{id:reportExport.id});
   const both=(method:Door['method'],nativePath:string,bearerPath:string,body:unknown,params:Record<string,string>={})=>{add('native',method,nativePath,body,params);add('bearer',method,bearerPath,body,params);};
   native('PATCH','/data/aliases/prefixes/:prefix',{active:false},{prefix:importInput.source});
   native('POST','/settings/integrations/slack/app/members',{operatorId:member.id,slackTeamId:slackIntakeFixture.team,slackUserId:slackIntakeFixture.user});native('DELETE','/settings/integrations/slack/app/members/:operatorId',undefined,{operatorId:member.id});native('POST','/settings/integrations/slack/app',appProfile);native('POST','/settings/integrations/slack/app/create',{configurationToken:'synthetic-vector-31081-token'});native('POST','/settings/integrations/slack/app/install',undefined);native('GET','/integrations/slack/oauth/callback',undefined,{},oauthPath);
@@ -222,6 +228,8 @@ export async function prepareViewerCensus(w:Workspace,seed:{issue:any;comment:an
   // Validate the administration/resource family bodies with the same schemas
   // their handlers use, independently of the role gate's early refusal.
   const schemas:Record<string,{parse(input:unknown):unknown}>={
+   'POST /settings/report-exports':createSchedule,
+   'PATCH /settings/report-exports/:id':changeSchedule,
    'PUT /settings/teams/creation':administrationInput.teamCreationPermissionSchema,
    'POST /settings/teams':administrationInput.teamCreateSchema,
    'PUT /settings/teams/:id/privacy':administrationInput.teamPrivacySchema,

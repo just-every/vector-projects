@@ -1,4 +1,6 @@
 import { auditSchema } from '../../src/core/features/audit/schema';
+import { bucketScheduleInput } from './warehouse-schedule-journey';
+import { runReportExports } from '../../src/core/features/report-exports/scheduled';
 import { expectAuditArchiveHistory } from './audit-archive';
 import {channelEdge} from './channel-edge-fixture';
 import {env} from 'cloudflare:workers';
@@ -13,6 +15,14 @@ import {createServerApp} from '../../src/core/app/server';
 import {freshTarget,targetCall,targetSignIn,httpExport,finalHash,finalBody,destination,targetBindings} from './http-archive-fixture';
 it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA-001 VIEW-006 REPORT-004 REPORT-002 PROJ-001] native archive HTTP requires current owner, origin and job identity; authenticated pristine bootstrap restores atomically and requires fresh historical owner authority',async()=>{
  const f=await populatedHttpSource();const peer=f.peerCookie;
+ const reportCreated=await f.call('/settings/report-exports','POST',{...bucketScheduleInput,enabled:true,configuration:{...bucketScheduleInput.configuration,team:f.team.id}});
+ expect(reportCreated.status).toBe(201);const reportProfile=await reportCreated.json() as {id:string};
+ const {vi:reportVi}=await import('vitest');
+ const reportEdge=reportVi.spyOn(globalThis,'fetch').mockImplementation(async(input,init)=>{expect(String(input).startsWith(bucketScheduleInput.configuration.endpoint+'/')).toBe(true);expect(init?.method).toBe('PUT');return new Response(null,{status:200});});
+ try{await runReportExports(bindings,new Date('2033-01-01T00:00:00Z'));}finally{reportEdge.mockRestore();}
+ const reportRuns=(await env.DB.prepare('SELECT * FROM vector_report_export_runs WHERE export_id=? ORDER BY id').bind(reportProfile.id).all()).results;
+ expect(reportRuns).toHaveLength(1);expect(reportRuns[0].state).toBe('succeeded');
+ expect(await env.DB.prepare('SELECT count(*) n FROM vector_report_export_rows WHERE export_id=?').bind(reportProfile.id).first<number>('n')).toBeGreaterThan(0);
  const migrationDigests=inject('migrationDigests') as Record<string,string>;
  const commentSubscriptions={events:['comment.created','comment.updated','comment.deleted'],teamIds:[f.team.id]};
  expect((await f.call('/settings/integrations/destinations/'+f.webhook+'/subscriptions','PUT',commentSubscriptions)).status).toBe(200);
@@ -110,6 +120,8 @@ it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA
  for(const name of ['project_templates','project_template_milestones','project_template_labels','project_template_issues'])expect(records[0].kind==='manifest' && records[0].tables.find(t=>t.name===name)?.count).toBe(1);
  for(const name of ['dashboards','dashboard_widgets'])expect(records[0].kind==='manifest' && records[0].tables.find(t=>t.name===name)?.count).toBe(1);
  const archiveText=JSON.stringify(records);
+ expect(records[0].kind==='manifest'&&records[0].tables.some(table=>table.name==='vector_report_export_rows')).toBe(false);
+ expect(archiveText.includes(bucketScheduleInput.credentials.accessKeyId)||archiveText.includes(bucketScheduleInput.credentials.secretAccessKey)).toBe(false);
  expect(records[0].kind==='manifest' && records[0].tables.some(t=>t.name==='calendar_feed_tokens')).toBe(false);
  expect(archiveText.includes(calendarFeed.url)).toBe(false);
  expect(archiveText.includes((await env.DB.prepare('SELECT token_hash FROM calendar_feed_tokens WHERE id=?').bind(calendarFeed.id).first<string>('token_hash'))!)).toBe(false);
@@ -231,6 +243,13 @@ it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA
  expect(await destination.ARCHIVE_TARGET_DB.prepare('SELECT revision FROM subscription_clock WHERE id=1').first<number>('revision')).toBe(subscriptionRevision);
  expect(await destination.ARCHIVE_TARGET_DB.prepare('SELECT subscription_revision FROM vector_restore_status WHERE id=1').first<number>('subscription_revision')).toBe(subscriptionRevision);
  expect((await targetCall('/api/data/restore/review-effects','POST',{},historical)).status).toBe(200);
+ const reportAfter=(await (await targetCall('/api/settings/report-exports','GET',undefined,historical)).json() as any).schedules.find((row:any)=>row.id===reportProfile.id);
+ expect(reportAfter).toMatchObject({requiresReentry:true,enabled:true,kind:'bucket',configuration:{team:f.team.id}});
+ expect((await destination.ARCHIVE_TARGET_DB.prepare('SELECT * FROM vector_report_export_runs WHERE export_id=? ORDER BY id').bind(reportProfile.id).all()).results).toEqual(reportRuns);
+ let reportSends=0;const restoredReportEdge=reportVi.spyOn(globalThis,'fetch').mockImplementation(async()=>{reportSends++;throw Error('Restored report must be inert');});
+ try{await runReportExports(targetBindings,new Date('2034-01-01T00:00:00Z'));}finally{restoredReportEdge.mockRestore();}
+ expect(reportSends).toBe(0);
+ expect(await destination.ARCHIVE_TARGET_DB.prepare('SELECT count(*) n FROM vector_report_export_rows WHERE export_id=?').bind(reportProfile.id).first<number>('n')).toBe(0);
  expect(await drainNotificationMail(targetBindings,{scheduled:true})).toEqual({processed:0});
  await dispatchWebhooks(dispatchBindings);expect(await historicalWebhooks()).toEqual(webhookHistory);expect(sent).toBe(0);
  const restoredSubscriptionInbox=await targetCall('/api/notifications?limit=50','GET',undefined,historical);expect(restoredSubscriptionInbox.status).toBe(200);expect((await restoredSubscriptionInbox.json() as {items:{identifier:string}[]}).items.some(item=>item.identifier===pendingSubscriptionIssue.identifier)).toBe(false);
