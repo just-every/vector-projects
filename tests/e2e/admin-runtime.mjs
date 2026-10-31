@@ -6,8 +6,9 @@ import {
   createAdminRequestDiagnostics,
   writeAdminFailureReceipt,
 } from "./admin-request-diagnostics.mjs";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import {tmpdir} from "node:os";
 import { chromium } from "@playwright/test";
 import { contract } from "../contract.ts";
 import { verificationDirectory } from "../../scripts/verification-paths.mjs";
@@ -42,8 +43,7 @@ import { assertDocumentReadRecovery } from "./document-read-app-journey.mjs";
 const evidence = resolve(verificationDirectory, "admin-browser");
 await mkdir(evidence, { recursive: true });
 await rm(resolve(evidence, "admin-failure-safe.json"), { force: true });
-const temporary = resolve(evidence, "temporary");
-await mkdir(temporary, { recursive: true });
+const temporary = await mkdtemp(resolve(tmpdir(), "vector-admin-"));
 process.env.TMPDIR = temporary;
 const requestDiagnostics = createAdminRequestDiagnostics();
 const results = [],
@@ -307,6 +307,7 @@ await contract(
     } finally {
       await browser?.close();
       await runtime?.stop();
+      await rm(temporary, {recursive:true,force:true});
     }
   },
 );

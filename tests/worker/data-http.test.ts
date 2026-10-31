@@ -13,6 +13,13 @@ import {createServerApp} from '../../src/core/app/server';
 import {freshTarget,targetCall,targetSignIn,httpExport,finalHash,finalBody,destination,targetBindings} from './http-archive-fixture';
 it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA-001 VIEW-006 REPORT-004 REPORT-002 PROJ-001] native archive HTTP requires current owner, origin and job identity; authenticated pristine bootstrap restores atomically and requires fresh historical owner authority',async()=>{
  const f=await populatedHttpSource();const peer=f.peerCookie;
+ const triagePath='/settings/teams/'+f.team.id+'/triage-rotation';
+ expect((await f.call('/settings/teams/'+f.team.id+'/members/'+f.peer,'PUT',{role:'member'})).status).toBe(200);
+ expect((await f.call(triagePath,'PUT',{startsLocal:'2026-01-05T09:00',operatorIds:[f.owner,f.peer]})).status).toBe(200);
+ expect((await f.call('/intake','POST',{teamId:f.team.id,title:'synthetic-vector-9131'})).status).toBe(201);
+ const triageTables=['team_triage_rotations','team_triage_rotation_members','triage_creation_receipts'];
+ let triageRows=await Promise.all(triageTables.map(async name=>(await env.DB.prepare('SELECT * FROM '+name+' ORDER BY rowid').all()).results));
+ expect(triageRows[0]).toHaveLength(1);expect(triageRows[1]).toHaveLength(2);expect(triageRows[2]).toHaveLength(1);
  const migrationDigests=inject('migrationDigests') as Record<string,string>;
  const commentSubscriptions={events:['comment.created','comment.updated','comment.deleted'],teamIds:[f.team.id]};
  expect((await f.call('/settings/integrations/destinations/'+f.webhook+'/subscriptions','PUT',commentSubscriptions)).status).toBe(200);
@@ -95,15 +102,9 @@ it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA
  expect((await f.call('/settings/operators/'+f.peer+'/role','PATCH',{role:'owner'})).status).toBe(200);
  await invite('member@http-archive.test',f.cookie);await invite('admin@http-archive.test',f.cookie,'admin');await invite('synthetic-vector-1701@vector.test',f.cookie,'viewer');
  const roles=(db:D1Database)=>db.prepare('SELECT id,email,role FROM operators ORDER BY id').all().then(rows=>rows.results);
- const triagePath='/settings/teams/'+f.team.id+'/triage-rotation';
- expect((await f.call('/settings/teams/'+f.team.id+'/members/'+f.peer,'PUT',{role:'member'})).status).toBe(200);
- expect((await f.call(triagePath,'PUT',{startsLocal:'2026-01-05T09:00',operatorIds:[f.owner,f.peer]})).status).toBe(200);
- expect((await f.call('/intake','POST',{teamId:f.team.id,title:'synthetic-vector-9131'})).status).toBe(201);
- const triageTables=['team_triage_rotations','team_triage_rotation_members','triage_creation_receipts'];
- const triageRows=await Promise.all(triageTables.map(async name=>(await env.DB.prepare('SELECT * FROM '+name+' ORDER BY rowid').all()).results));
- expect(triageRows[0]).toHaveLength(1);expect(triageRows[1]).toHaveLength(2);expect(triageRows[2]).toHaveLength(1);
  const archivedRoles=await roles(env.DB);
  expect(new Set(archivedRoles.map(row=>row.role))).toEqual(new Set(['owner','admin','member','viewer']));
+ triageRows=await Promise.all(triageTables.map(async name=>(await env.DB.prepare('SELECT * FROM '+name+' ORDER BY rowid').all()).results));
  const created=await f.call('/portability/exports','POST',{});expect(created.status).toBe(201);const id=(await created.json() as {id:string}).id;
  expect((await request('/api/portability/exports/'+id,'GET',undefined,peer)).status).toBe(404);
  let state={phase:'building'};while(state.phase==='building'){const response=await f.call('/portability/exports/'+id+'/advance','POST',{maxParts:16});expect(response.status).toBe(200);state=await response.json() as {phase:string};}
