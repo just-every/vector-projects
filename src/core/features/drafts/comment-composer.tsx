@@ -17,7 +17,6 @@ export function CommentComposer({ identifier,parentId,busy,mutate,onCancel,onPos
     {draft.body && <button disabled={busy || !draft.ready} type="button" onClick={() => void draft.discard()}>Discard comment draft</button>}
     {onCancel && <button disabled={busy} type="button" onClick={onCancel}>Cancel</button>}
     </div>
-    {draft.loadError && <p role="alert">Comment drafts unavailable. <button type="button" onClick={draft.retry}>Retry comment draft</button></p>}
     {draft.message && <p role="status">{draft.message}</p>}
   </form>;
 }

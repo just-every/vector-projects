@@ -22,13 +22,21 @@ export async function exerciseWebhookComments({ page, runtime, cookie, team, evi
     await page.getByRole('heading', { name: 'Discussion', exact: true }).waitFor();
     await settleReads(page);
     const rootText = 'synthetic-vector-9082', replyText = 'synthetic-vector-9083';
+    // A controlled textarea mirrors its text, and an unsent account draft is
+    // saved before posting: wait for each comment's own committed receipt.
+    const posted = () => page.waitForResponse(response => new URL(response.url()).pathname === '/api/issues/' + issue.identifier + '/comments'
+      && response.request().method() === 'POST');
     await page.getByRole('textbox', { name: 'Add a comment', exact: true }).fill(rootText);
+    const rootPosted = posted();
     await page.getByRole('button', { name: 'Add comment', exact: true }).click();
+    assert.equal((await rootPosted).status(), 201);
     const thread = page.getByRole('region', { name: /^Thread started by/ });
     await thread.getByText(rootText, { exact: true }).waitFor();
     await thread.getByRole('button', { name: 'Reply', exact: true }).click();
     await thread.getByRole('textbox', { name: 'Reply to thread', exact: true }).fill(replyText);
+    const replyPosted = posted();
     await thread.getByRole('button', { name: 'Post reply', exact: true }).click();
+    assert.equal((await replyPosted).status(), 201);
     await thread.getByText(replyText, { exact: true }).waitFor();
     await settleReads(page);
     await page.reload();

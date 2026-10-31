@@ -4949,7 +4949,7 @@
       "executable": false
     },
     "src/core/features/drafts/comment-composer.tsx": {
-      "sha256": "a8cfad5ff5f0a957b8159e1551a990a8188b59b429203b6d7d63bd1f738ca63b",
+      "sha256": "9cb3cf0bd7045fae67fc465ca1b142fed571dcd689a37eeedb34aadcf1de0a22",
       "executable": false
     },
     "src/core/features/drafts/comment-repository.ts": {
@@ -4981,7 +4981,7 @@
       "executable": false
     },
     "src/core/features/drafts/use-comment-draft.ts": {
-      "sha256": "060a4904eced85c199e4e8ebf2e5d3edd79f6abbbd4f94dc57faf719a810f703",
+      "sha256": "b51791255a26ad8327b98f02d0dde4a712345a5f6ef56ed942a0a746b7efe4dc",
       "executable": false
     },
     "src/core/features/drafts/use-drafts.ts": {
@@ -8073,7 +8073,7 @@
       "executable": false
     },
     "tests/e2e/integrations/webhook-comments.mjs": {
-      "sha256": "dfe3b32b4bc7ffaefeb9b3db59158e7f9744b1dfd6a6e4e8ae9f5a566867b1ac",
+      "sha256": "5441fa250d326c0e577ee4bdd3cd34930c5b0b96db0cb6d41c94da4f4c7be81e",
       "executable": false
     },
     "tests/e2e/issue-copy-runtime.mjs": {
