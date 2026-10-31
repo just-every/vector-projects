@@ -285,10 +285,12 @@ export function IssueFilters({
               "priority",
               "project",
               "cycle",
+              "milestone",
+              "parent",
               "team",
             ].map((id) => (
               <option key={id} value={id}>
-                {id[0].toUpperCase() + id.slice(1)}
+                {id === "milestone" ? "Project milestone" : id === "parent" ? "Parent issue" : id[0].toUpperCase() + id.slice(1)}
               </option>
             ))}
           </select>

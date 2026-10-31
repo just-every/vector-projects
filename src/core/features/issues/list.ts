@@ -69,7 +69,7 @@ export async function listIssues(
         .prepare(
           `SELECT i.id,i.identifier,i.title,i.description,i.version,i.priority,c.id cycleId,i.created_at createdAt,i.updated_at updatedAt,i.start_date startDate,i.due_date dueDate,
  s.id statusId,s.name statusName,s.category,t.id teamId,t.name teamName,a.id assigneeId,a.name assigneeName,p.id projectId,p.name projectName,c.name cycleName,
- i.milestone_id milestoneId,(SELECT m.name FROM project_milestones m WHERE m.id=i.milestone_id AND m.project_id=i.project_id) milestoneName,
+ m.id milestoneId,m.name milestoneName,
  parent.identifier parentIdentifier,parent.title parentTitle,${blockedSql} blocked,${group.key} groupKey,
  (SELECT json_group_array(json_object('id',id,'name',name,'color',color)) FROM (SELECT l.id,l.name,l.color FROM issue_labels il JOIN labels l ON l.id=il.label_id AND l.workspace_id=t.workspace_id WHERE il.issue_id=i.id ORDER BY l.name,l.id)) labels
  ${relation} ORDER BY ${order} LIMIT ${query.pageSize} OFFSET ?`,
@@ -101,6 +101,7 @@ export async function listIssues(
     `${access.workspace_id}:${actor}:${access.teamScope}`,
     today,
     (identity.results[0] as { revision: string }).revision,
+    groups.results as IssueListData["groups"],
   );
   if (query.offset > 0 && query.revision !== revision)
     throw new PaginationInvalidated();

@@ -61,6 +61,8 @@ export const issueListQuerySchema = z
         "priority",
         "project",
         "cycle",
+        "milestone",
+        "parent",
         "team",
       ])
       .default("none"),
