@@ -393,3 +393,88 @@ trusted at a new installation.
 A team's default issue template can supply omitted description, priority, estimate and labels during issue creation. Explicit values, including an empty description, no priority, no estimate and no labels, take precedence. New issue also prefills the default title without replacing typed content. Disabling estimates retains the configured template estimate and stored issue history; new issues omit that default estimate while the feature is off. Disabling triage sends new intake to Backlog with its evidence and retains pending triage and deferrals for re-enable.
 
 Team Settings also supports a fixed native triage person or an ordered weekly rotation anchored to a workspace calendar date. New intake notifies the currently eligible team member once in Inbox, excluding its author. Signed source replays retain their original receipt and never notify a new rotation member. Current shows the responsible person’s pending count and retained items at handover. External notification channels remain off for the new triage cause until explicitly configured. Live on-call provider bindings remain unimplemented.
+
+## TypeScript client and intake example (API-005)
+
+The source SDK is in `./sdk/`. Generate it from the currently published
+`./schema/api-v1.json`, then compile its dependency-free fetch client and example:
+
+```sh
+node sdk/generate.mjs
+node sdk/build.mjs
+```
+
+The build checks that generated code matches the schema before compiling with
+TypeScript. `./sdk/dist/` is local build output. Import `VectorClient`, `ApiError`
+and the generated `Operations` types from `./sdk/dist/client.js` in a server
+client. `operations` records the published method, path, required scopes and
+cursor mode for each operation ID. Only published operations are generated;
+API-003's missing operations remain missing.
+
+```ts
+import {VectorClient, ApiError} from './sdk/dist/client.js';
+import {intake} from './sdk/dist/examples/intake.js';
+
+const client = new VectorClient({
+  baseUrl: process.env.VECTOR_URL!, // saved installation origin, without a path
+  token: process.env.VECTOR_API_TOKEN!,
+});
+const issue = await intake(client, {
+  teamId: process.env.VECTOR_TEAM_ID!,
+  title: 'Intake from the TypeScript client',
+});
+console.log(issue.identifier, issue.title);
+```
+
+Issue intake needs `issues:write` and `issues:read`. Obtain the team ID from the
+installation's team settings, or use a separately selected `metadata:read` scope
+and the metadata operation. The example creates one issue, then reads it by its
+returned identifier and checks the exact title and stable ID. It never grants
+scopes, manages credentials or bypasses the issuing member's current authority.
+
+For the executable example, set `VECTOR_URL`, `VECTOR_API_TOKEN`,
+`VECTOR_TEAM_ID` and `VECTOR_TITLE` in your process environment, then run
+`node sdk/examples/run-intake.mjs`. For a local development token, also load that
+checkout's private key into `VECTOR_DEV_KEY` without printing it; the runner
+sends it as `x-rer-dev-key`. The runner prints only the created issue's ID,
+identifier and title. Keep tokens out of command arguments, URLs, logs and source
+files. Use HTTPS; plain HTTP is accepted only for a loopback installation.
+
+### Schema limits and error handling
+
+Types preserve declared path parameters, query parameters, bodies, required
+fields, nullable fields, enums, arrays and component references. Unspecified
+responses are `unknown`; an object with unspecified fields retains unknown
+properties. For example, the published issue-create schema currently declares
+only date fields, so it does not prove complete issue input typing. The intake
+example supplies the documented native `teamId` and `title` and validates its
+otherwise incompletely described result at runtime. Schema constraints such as
+lengths, date formats, patterns and numeric bounds are validated by the server.
+No full-API typing or additional object coverage is implied.
+
+Use `client.request(operationId, {path, query, body})` with the fields that the
+operation declares. It returns `{data, status, headers}`. For a paginated list,
+supply `limit` and then pass the returned opaque `nextCursor` in `query.cursor`,
+keeping filters and limit unchanged. A response whose schema omits pagination
+fields requires a runtime shape check before reading those fields. The client
+returns every page unchanged and makes no hidden requests.
+
+A non-success HTTP response throws `ApiError` with `status`, the original parsed
+JSON body (or text for a non-JSON response) and response `headers`. Handle 400
+input errors, 401 authority refusals, 403 permission refusals, 404 unavailable
+resources, 409 stale writes or invalidated cursors, and 429 rate limits explicitly.
+Read `error.headers.get('Retry-After')` on 429. Refresh current state before
+reviewing a 409 write; restart a list after cursor invalidation. The client does
+not retry writes: idempotency keys remain an API-003 gap. It refuses automatic
+redirects and omits cookie authority. Transport failures use a fixed message
+without request details. Never log credential-bearing client configuration or
+unreviewed error bodies.
+
+The existing integration Verify entry point checks generation and compilation
+and executes the actual intake runner against its real local Worker and D1.
+The Worker consumer journey also exercises cursor paging, typed comment reads,
+invalid input, insufficient scopes, revoked tokens and stale-write refusal;
+refused writes leave issue storage unchanged. Sync and agent examples, their
+local CI execution, complete developer documentation and release packaging and
+delivery remain API-005 gaps. API-004's independent consent and UI gate and all
+API-003 schema and object-operation gaps remain unchanged.
