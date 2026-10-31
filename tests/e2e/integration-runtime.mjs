@@ -28,6 +28,8 @@ try{
  await exerciseErrorProviders({page,runtime,cookie,team,evidence});
  await exerciseOAuthApps({page,runtime,cookie,evidence});
  await exerciseWarehouseExports({runtime,cookie});
+ const aliasPage=await openAuthenticatedPage(browser,cookie,runtime.base);
+ try{await exerciseImportAliases({page:aliasPage,runtime,cookie,evidence});}finally{await aliasPage.context().close();}
  // Each viewport exercises native administration with a recent real sign-in;
  // earlier provider journeys must not consume its step-up freshness window.
  for(const width of [1440,390]){
@@ -38,8 +40,6 @@ try{
    proof.widths.push(width);
   }finally{await widthPage.context().close();}
  }
- const aliasSession=await signIn(runtime),aliasPage=await openAuthenticatedPage(browser,aliasSession.cookie,runtime.base);
- try{await exerciseImportAliases({page:aliasPage,runtime,cookie:aliasSession.cookie,evidence});}finally{await aliasPage.context().close();}
  proof.passed=true;
 }finally{await browser?.close();await runtime.stop();await mkdir(evidence,{recursive:true});await writeFile(join(evidence,'browser-proof.json'),JSON.stringify(proof,null,2)+'\n');}
 console.log('[SLACK-003 SLACK-004 NOTIFY-007] Native channel bindings, Slack creation and delivery, Discord, member-linked Slack direct messages, per-event email choices and workspace defaults passed at 1440 and 390.');

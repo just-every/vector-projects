@@ -8010,7 +8010,7 @@
       "executable": false
     },
     "tests/e2e/integration-runtime.mjs": {
-      "sha256": "d57a22660d7d88d5f466143b4eccdebd699d8c5cdf0931fe81569a5e7a7e6412",
+      "sha256": "ba5621ffee97f775159c3a9209867e99a7af540916035dc42f65b07ec27a0d56",
       "executable": false
     },
     "tests/e2e/integration-settings-journey.mjs": {
