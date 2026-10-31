@@ -459,9 +459,17 @@
                     ],
                     "format": "date",
                     "description": "Calendar date (YYYY-MM-DD). When startDate and dueDate are both set, startDate must be on or before dueDate."
+                  },
+                  "templateId": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "templateVersion": {
+                    "type": "integer",
+                    "minimum": 1
                   }
                 },
-                "description": "Optional nullable startDate and dueDate use calendar dates. Invalid date order returns 400 without changing the issue."
+                "description": "Optional nullable startDate and dueDate use calendar dates. Invalid date order returns 400 without changing the issue. A template selection needs both templateId and templateVersion. Explicit native fields win; omitted fields receive template defaults."
               }
             }
           },
@@ -4021,9 +4029,6 @@
         "x-object": "issue-template",
         "x-operation": "list",
         "responses": {
-          "201": {
-            "description": "Native result; see docs/API.md"
-          },
           "400": {
             "description": "Invalid input"
           },
@@ -4049,6 +4054,55 @@
                 "description": "Seconds until the next minute"
               }
             }
+          },
+          "200": {
+            "description": "Current native template result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "templates",
+                    "teams",
+                    "workspaceAllowed"
+                  ],
+                  "properties": {
+                    "templates": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/IssueTemplate"
+                      }
+                    },
+                    "teams": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "name",
+                          "canManage"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "canManage": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    },
+                    "workspaceAllowed": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       },
@@ -4066,9 +4120,6 @@
         "x-object": "issue-template",
         "x-operation": "create",
         "responses": {
-          "201": {
-            "description": "Native result; see docs/API.md"
-          },
           "400": {
             "description": "Invalid input"
           },
@@ -4092,6 +4143,26 @@
                   "type": "integer"
                 },
                 "description": "Seconds until the next minute"
+              }
+            }
+          },
+          "201": {
+            "description": "Current native template result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueTemplate"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueTemplateInput"
               }
             }
           }
@@ -4113,9 +4184,6 @@
         "x-object": "issue-template",
         "x-operation": "get",
         "responses": {
-          "201": {
-            "description": "Native result; see docs/API.md"
-          },
           "400": {
             "description": "Invalid input"
           },
@@ -4139,6 +4207,16 @@
                   "type": "integer"
                 },
                 "description": "Seconds until the next minute"
+              }
+            }
+          },
+          "200": {
+            "description": "Current native template result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueTemplate"
+                }
               }
             }
           }
@@ -4170,9 +4248,6 @@
         "x-object": "issue-template",
         "x-operation": "update",
         "responses": {
-          "201": {
-            "description": "Native result; see docs/API.md"
-          },
           "400": {
             "description": "Invalid input"
           },
@@ -4198,6 +4273,16 @@
                 "description": "Seconds until the next minute"
               }
             }
+          },
+          "200": {
+            "description": "Current native template result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueTemplate"
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -4211,7 +4296,122 @@
               "maxLength": 26
             }
           }
-        ]
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "expectedVersion"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "teamId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "defaults": {
+                    "$ref": "#/components/schemas/IssueTemplateDefaults"
+                  },
+                  "subissues": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 500
+                        },
+                        "description": {
+                          "type": "string",
+                          "maxLength": 100000
+                        },
+                        "statusId": {
+                          "type": "string",
+                          "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                        },
+                        "priority": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "low",
+                            "medium",
+                            "high",
+                            "urgent"
+                          ]
+                        },
+                        "labelIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                          },
+                          "uniqueItems": true,
+                          "maxItems": 20
+                        },
+                        "assigneeOperatorId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "estimate": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 100
+                        },
+                        "projectId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "title"
+                      ]
+                    }
+                  },
+                  "expectedVersion": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        }
       },
       "delete": {
         "operationId": "issue_template_delete",
@@ -4227,9 +4427,6 @@
         "x-object": "issue-template",
         "x-operation": "delete",
         "responses": {
-          "201": {
-            "description": "Native result; see docs/API.md"
-          },
           "400": {
             "description": "Invalid input"
           },
@@ -4255,6 +4452,24 @@
                 "description": "Seconds until the next minute"
               }
             }
+          },
+          "200": {
+            "description": "Current native template result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "deleted"
+                  ],
+                  "properties": {
+                    "deleted": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "parameters": [
@@ -4268,7 +4483,27 @@
               "maxLength": 26
             }
           }
-        ]
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expectedVersion"
+                ],
+                "properties": {
+                  "expectedVersion": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -4379,6 +4614,297 @@
               "#000000",
               "#ffffff"
             ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "IssueTemplateDefaults": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 100000
+          },
+          "statusId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "none",
+              "low",
+              "medium",
+              "high",
+              "urgent"
+            ]
+          },
+          "labelIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            },
+            "uniqueItems": true,
+            "maxItems": 20
+          },
+          "assigneeOperatorId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "estimate": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100
+          },
+          "projectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "IssueTemplateInput": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "teamId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/IssueTemplateDefaults"
+          },
+          "subissues": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 100000
+                },
+                "statusId": {
+                  "type": "string",
+                  "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                },
+                "priority": {
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "low",
+                    "medium",
+                    "high",
+                    "urgent"
+                  ]
+                },
+                "labelIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "uniqueItems": true,
+                  "maxItems": 20
+                },
+                "assigneeOperatorId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "estimate": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 100
+                },
+                "projectId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "title"
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "IssueTemplate": {
+        "type": "object",
+        "required": [
+          "name",
+          "teamId",
+          "defaults",
+          "subissues",
+          "id",
+          "version",
+          "canEdit"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "teamId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/IssueTemplateDefaults"
+          },
+          "subissues": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 100000
+                },
+                "statusId": {
+                  "type": "string",
+                  "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                },
+                "priority": {
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "low",
+                    "medium",
+                    "high",
+                    "urgent"
+                  ]
+                },
+                "labelIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                  },
+                  "uniqueItems": true,
+                  "maxItems": 20
+                },
+                "assigneeOperatorId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "estimate": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 100
+                },
+                "projectId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "title"
+              ]
+            }
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "canEdit": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

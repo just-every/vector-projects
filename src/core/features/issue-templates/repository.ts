@@ -1,3 +1,4 @@
+import {propertyGuards} from './properties'
 import { createUlid } from '../../shared/ids'
 import { administrationContext,commit,guard,audit,SettingsError } from '../administration/transaction'
 import { browseActor } from '../issues/browse-access'
@@ -11,20 +12,28 @@ export async function readTemplate(db:D1Database,actor:string,id:string):Promise
   if(!row)throw new SettingsError('not_found','Template is unavailable.',404)
   let canEdit=false
   try {await managementFence(db,actor,row.team_id);canEdit=true} catch(e) {if(!(e instanceof SettingsError))throw e}
-  return {...templateInputSchema.parse({name:row.name,teamId:row.team_id,defaults:JSON.parse(row.defaults_json),subissues:JSON.parse(row.subissues_json)}),id:row.id,version:row.version,canEdit}
+  const input=templateInputSchema.parse({name:row.name,teamId:row.team_id,defaults:JSON.parse(row.defaults_json),subissues:JSON.parse(row.subissues_json)})
+  // A shared definition does not confer access to a referenced private property.
+  for(const defaults of [input.defaults,...input.subissues])for(const [key,table] of [['projectId','projects'],['statusId','workflow_statuses']] as const) {
+    const value=defaults[key]
+    if(value&&await db.prepare(`SELECT 1 FROM main.${table} WHERE id=?`).bind(value).first()&&!await db.prepare(`SELECT 1 FROM ${table} WHERE id=?`).bind(value).first())throw new SettingsError('not_found','Template is unavailable.',404)
+  }
+  return {...input,id:row.id,version:row.version,canEdit}
 }
 export async function listTemplates(db:D1Database,actor:string) {
   const a=await browseActor(db,actor)
   const rows=(await db.prepare(`SELECT t.id FROM issue_templates t JOIN operators o ON o.workspace_id=t.workspace_id AND o.id=? AND o.removed_at IS NULL WHERE ${templateVisibility} ORDER BY t.name,t.id`).bind(actor).all<{id:string}>()).results
   const teams=(await db.prepare('SELECT id,name FROM teams WHERE workspace_id=? AND archived_at IS NULL ORDER BY name,id').bind(a.workspace_id).all<{id:string;name:string}>()).results
-  return {templates:await Promise.all(rows.map(r=>readTemplate(db,actor,r.id))),teams:await Promise.all(teams.map(async t=>{let canManage=false;try{await managementFence(db,actor,t.id);canManage=true}catch(e){if(!(e instanceof SettingsError))throw e}return {...t,canManage}})),workspaceAllowed:['owner','admin'].includes(a.role)}
+  const templates=[]
+  for(const row of rows)try{templates.push(await readTemplate(db,actor,row.id))}catch(e){if(!(e instanceof SettingsError&&e.status===404))throw e}
+  return {templates,teams:await Promise.all(teams.map(async t=>{let canManage=false;try{await managementFence(db,actor,t.id);canManage=true}catch(e){if(!(e instanceof SettingsError))throw e}return {...t,canManage}})),workspaceAllowed:['owner','admin'].includes(a.role)}
 }
 export async function saveTemplate(db:D1Database,actor:string,input:TemplateInput,id?:string,version?:number) {
   const old=id?await readTemplate(db,actor,id):null
   if(old&&old.teamId!==input.teamId)throw new SettingsError('invalid_request','Save a new template to change its scope.',400)
   const fence=await managementFence(db,actor,input.teamId),ctx=await administrationContext(db,actor)
   id??=createUlid(new Date(ctx.at))
-  const writes=[guard(ctx.db,fence.sql,...fence.values)]
+  const writes=[guard(ctx.db,fence.sql,...fence.values),...await propertyGuards(ctx.db,input,ctx.workspace)]
   if(old)writes.push(guard(ctx.db,'EXISTS(SELECT 1 FROM issue_templates WHERE id=? AND version=?)',id,version!),ctx.db.prepare('UPDATE issue_templates SET name=?,defaults_json=?,subissues_json=?,version=version+1,updated_at=? WHERE id=?').bind(input.name,JSON.stringify(input.defaults),JSON.stringify(input.subissues),ctx.at,id))
   else writes.push(ctx.db.prepare('INSERT INTO issue_templates(id,workspace_id,team_id,name,defaults_json,subissues_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)').bind(id,ctx.workspace,input.teamId,input.name,JSON.stringify(input.defaults),JSON.stringify(input.subissues),ctx.at,ctx.at))
   writes.push(...audit(ctx,old?'issue_template.updated':'issue_template.created',id,input.name,old?{version:old.version}:null,{version:old?old.version+1:1}))

@@ -43,6 +43,7 @@ export function NewIssueForm() {
   const administration = useApiResource("/api/metadata", administrationSchema);
   const boardPreference = useApiResource("/api/preferences/board", preferenceSchema);
   const [values, setValues] = useState<NewIssueDraft>(emptyNewIssueDraft);
+  const [templateLoading,setTemplateLoading]=useState(false);
   const [template,setTemplate]=useState<IssueTemplate|null>(null);
   const typedTemplateFields=useRef(new Set<string>());
   const openingDefaults = useRef(emptyNewIssueDraft);
@@ -221,7 +222,7 @@ export function NewIssueForm() {
       <form
         className="new-issue-form"
         onSubmit={submit}
-        onChangeCapture={event=>{const name=(event.target as HTMLInputElement).name;if(name)typedTemplateFields.current.add(name)}}
+        onChangeCapture={event=>{const name=(event.target instanceof HTMLInputElement||event.target instanceof HTMLSelectElement||event.target instanceof HTMLTextAreaElement)?event.target.name:undefined;if(name)typedTemplateFields.current.add(name)}}
         aria-busy={submitting}
         onInvalidCapture={(event) => {
           let disclosure = (event.target as HTMLElement).closest("details");
@@ -233,7 +234,7 @@ export function NewIssueForm() {
       >
         <fieldset
           className="new-issue-controls"
-          disabled={submitting || !draftReady}
+          disabled={submitting || !draftReady || templateLoading}
           aria-label="Issue creation fields"
         >
           <header className="new-issue-header">
@@ -246,7 +247,7 @@ export function NewIssueForm() {
             <button
               className="new-issue-submit"
               type="submit"
-              disabled={submitting}
+              disabled={submitting || templateLoading}
             >
               {submitting
                 ? "Creating…"
@@ -301,7 +302,7 @@ export function NewIssueForm() {
               Intake<span>Needs a decision</span>
             </label>
           </fieldset>
-          {values.mode==='issue'&&<IssueTemplateChoice key={values.teamId} values={values} setValues={setValues} onApplied={setTemplate} typed={typedTemplateFields.current}/>}
+          {values.mode==='issue'&&<IssueTemplateChoice key={values.teamId} values={values} setValues={setValues} onApplied={setTemplate} onBusy={setTemplateLoading} typed={typedTemplateFields.current}/>}
           {template&&values.mode==='issue'&&<p role="status">{template.name} · {template.subissues.length} subissues will be created. <button type="button" onClick={()=>setTemplate(null)}>Remove template selection</button></p>}
           <section className="new-issue-section">
             <label className="new-issue-title-field">
@@ -410,7 +411,7 @@ export function NewIssueForm() {
                   <label>
                     Status<span>Optional</span>
                     <select
-                      name="statusId" value={values.statusId}
+                      aria-label="Status" name="statusId" value={values.statusId}
                       onChange={(event) =>
                         setValues({ ...values, statusId: event.target.value })
                       }
@@ -427,7 +428,7 @@ export function NewIssueForm() {
                   <label>
                     Assignee
                     <select
-                      name="assigneeOperatorId" value={values.assigneeOperatorId}
+                      aria-label="Assignee" name="assigneeOperatorId" value={values.assigneeOperatorId}
                       onChange={(event) =>
                         setValues({
                           ...values,
@@ -446,7 +447,7 @@ export function NewIssueForm() {
                   <label>
                     Project
                     <select
-                      name="projectId" value={values.projectId}
+                      aria-label="Project" name="projectId" value={values.projectId}
                       onChange={(event) =>
                         setValues({ ...values, projectId: event.target.value, milestoneId: "" })
                       }
@@ -489,7 +490,7 @@ export function NewIssueForm() {
                   <label>
                     Priority
                     <select
-                      name="priority" value={values.priority}
+                      aria-label="Priority" name="priority" value={values.priority}
                       onChange={(event) =>
                         setValues({
                           ...values,
@@ -512,7 +513,7 @@ export function NewIssueForm() {
                       min="1"
                       max="100"
                       step="1"
-                      name="estimate" value={values.estimate}
+                      aria-label="Estimate" name="estimate" value={values.estimate}
                       onChange={(event) =>
                         setValues({ ...values, estimate: event.target.value })
                       }
