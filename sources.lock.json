@@ -522,7 +522,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "fbe76c8c4e5f67eb58406e45c11be1bbdfa982c2dcbfadf832e9faebd6e44540",
+      "sha256": "92cc15f0441797985f9c14350ee1dbb6fe02441b721ae8c32d220d067325114a",
       "executable": false
     },
     "DEMO.md": {
@@ -4974,7 +4974,7 @@
       "executable": false
     },
     "src/core/features/drafts/repository.ts": {
-      "sha256": "f752b224994ad3d4560b09e9bfcf66e7f2d658f3ab91dd94f0af1869e72121a7",
+      "sha256": "bb6b92af842f106ddf8682222bdd341bb6e0d107e7351375b1f13f1dff1e5022",
       "executable": false
     },
     "src/core/features/drafts/routes.ts": {
@@ -4986,7 +4986,7 @@
       "executable": false
     },
     "src/core/features/drafts/use-drafts.ts": {
-      "sha256": "26405bcb3c5038f381564fa25a7f1f51b48f0beb1f73fd0a171798a709a75347",
+      "sha256": "586060514491403645505ca0595715664665b37c543498f67d15dc6d625b2863",
       "executable": false
     },
     "src/core/features/due-reminders/calendar.ts": {
@@ -6138,7 +6138,7 @@
       "executable": false
     },
     "src/core/features/issues/ui/new-issue-form.tsx": {
-      "sha256": "5f5dbf04ac98d28a8f1ddad64636a99814d0585fcd8734d8e026f1b17c5bee70",
+      "sha256": "ec8b38306b5cab4250a527c73d7eb255f5cb741d917b54aeb829f1ec3c84d3ca",
       "executable": false
     },
     "src/core/features/issues/ui/new-issue.css": {
@@ -7562,7 +7562,7 @@
       "executable": false
     },
     "tests/e2e/account-drafts-journey.mjs": {
-      "sha256": "a723eaf87a605ba73cd7675d12d4bec1db9b276dc5f5e7c4e75114d508299d01",
+      "sha256": "f6bab306e588f69a5c8d19b19f1dd03295c48bb2f202bc56a386721d2cd5acf1",
       "executable": false
     },
     "tests/e2e/admin-access-journey.mjs": {
@@ -8422,7 +8422,7 @@
       "executable": false
     },
     "tests/worker/account-drafts.test.ts": {
-      "sha256": "77a85b9b4871c0090a3aca31de51a8b9d6ccf8171587ce856dab821d1c098d09",
+      "sha256": "e25a59ca43d1aa7933346ecce73648702cc6ceb9517080d676fd2d2c03aecdbb",
       "executable": false
     },
     "tests/worker/administration-fixture.ts": {
@@ -9038,7 +9038,7 @@
       "executable": false
     },
     "tests/worker/role-viewer-census.ts": {
-      "sha256": "e95803bd36a2a73ea2160b8b0814405b0c110627cebeabd7f3eff3028fc482f4",
+      "sha256": "cc945fc366371c8853032104a7de030e13f6ba357a2370ac4ba20686ba2537c6",
       "executable": false
     },
     "tests/worker/role-viewer-journey.ts": {

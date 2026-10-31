@@ -8,6 +8,7 @@ export function useAccountDrafts(values: NewIssueDraft, setValues: (values: NewI
   const [drafts, setDrafts] = useState<AccountDraft[]>([]);
   const [message, setMessage] = useState('');
   const [initialized, setInitialized] = useState(false);
+  const [busy, setBusy] = useState(false);
   const selected = useRef<DraftReference | null>(null);
   const synced = useRef('');
   const latest = useRef(values); latest.current = values;
@@ -29,11 +30,13 @@ export function useAccountDrafts(values: NewIssueDraft, setValues: (values: NewI
     const next = draft?.values ?? { ...defaults };
     synced.current = JSON.stringify(next); latest.current = next; setValues(next);
     setMessage(notice);
+    if (draft) setDrafts(rows => [draft, ...rows.filter(row => row.id !== draft.id)]);
     if (!draft && key) try { localStorage.removeItem(key); } catch { /* The local form reports storage failures. */ }
   };
   async function refresh() {
+    const observed = selected.current ? { ...selected.current } : null;
     const result = await fetchJson('/api/drafts', draftsSchema);
-    if (!alive.current) return;
+    if (!alive.current || observed?.id !== selected.current?.id || observed?.revision !== selected.current?.revision) return;
     setDrafts(result.drafts);
     if (selected.current) {
       const current = result.drafts.find(row => row.id === selected.current!.id);
@@ -103,8 +106,10 @@ export function useAccountDrafts(values: NewIssueDraft, setValues: (values: NewI
   }, [ready, key, initialized]);
   useEffect(() => {
     if (!initialized || submitting) return;
-    const timer = setTimeout(() => { void flush().catch(() => undefined); }, 350);
-    return () => clearTimeout(timer);
+    const save = () => { void flush().catch(() => undefined); };
+    const timer = setTimeout(save, 350);
+    window.addEventListener('online', save);
+    return () => { clearTimeout(timer); window.removeEventListener('online', save); };
   }, [initialized, values, submitting]);
   useEffect(() => {
     if (!initialized || submitting) return;
@@ -118,12 +123,16 @@ export function useAccountDrafts(values: NewIssueDraft, setValues: (values: NewI
     window.addEventListener('focus', poll);
     return () => { clearInterval(timer); window.removeEventListener('focus', poll); };
   }, [initialized, submitting]);
-  const open = async (draft: AccountDraft) => {
+  const choose = async (action: () => Promise<void>) => {
+    setBusy(true);
+    try { await action(); } finally { setBusy(false); }
+  };
+  const open = (draft: AccountDraft) => choose(async () => {
     await flush();
     const current = await fetchJson('/api/drafts/' + draft.id, draftReceiptSchema);
     apply(current.draft);
-  };
-  const discard = async (draft: AccountDraft) => {
+  });
+  const discard = (draft: AccountDraft) => choose(async () => {
     await flush();
     // Refresh after pending saves so discard targets the latest version of this form.
     const current = (await fetchJson('/api/drafts/' + draft.id, draftReceiptSchema)).draft;
@@ -132,9 +141,9 @@ export function useAccountDrafts(values: NewIssueDraft, setValues: (values: NewI
     });
     if (selected.current?.id === draft.id) apply(null, 'Draft discarded.');
     await refresh();
-  };
-  return { drafts, message, initialized, flush, open, discard,
-    newDraft: async () => { await flush(); apply(null); },
+  });
+  return { drafts, message, initialized, busy, flush, open, discard,
+    newDraft: () => choose(async () => { await flush(); apply(null); }),
     consumed: () => { stopped.current = true; retain(null); },
     report: (error: unknown) => setMessage(error instanceof Error ? error.message : 'Unable to update this draft.') };
 }

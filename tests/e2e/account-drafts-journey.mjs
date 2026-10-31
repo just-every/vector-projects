@@ -33,7 +33,7 @@ export async function accountDraftJourney(page, context, base, record, { state, 
   const labels = options.labels.slice(0, 2); assert.equal(labels.length, 2);
   const title = 'synthetic-vector-2820-' + Date.now();
   await page.getByRole('textbox', { name: /^Title/ }).fill(title);
-  const details = page.locator('details').filter({ has: page.getByRole('group', { name: /^Labels/ }) });
+  const details = page.locator('details').filter({ has: page.locator('.new-issue-labels') });
   if (!await details.evaluate(element => element.open)) await details.locator('summary').click();
   for (const label of labels) await page.getByRole('checkbox', { name: label.name, exact: true }).check();
   const saved = await until(() => get(context.request), rows => rows.some(row => row.values.title === title && row.values.labelIds.length === 2), 'Typed title and labels reach account');
@@ -58,7 +58,7 @@ export async function accountDraftJourney(page, context, base, record, { state, 
     await beforePrivateNavigation(second, base + '/app/new-issue');
     await second.goto(base + '/app/new-issue');
     await until(() => second.getByRole('textbox', { name: /^Title/ }).inputValue(), value => value === title, 'Second browser recovers exact title');
-    const secondDetails = second.locator('details').filter({ has: second.getByRole('group', { name: /^Labels/ }) });
+    const secondDetails = second.locator('details').filter({ has: second.locator('.new-issue-labels') });
     if (!await secondDetails.evaluate(element => element.open)) await secondDetails.locator('summary').click();
     for (const label of labels) assert.equal(await second.getByRole('checkbox', { name: label.name, exact: true }).isChecked(), true);
     const list = second.getByRole('region', { name: 'Drafts', exact: true });
@@ -105,6 +105,7 @@ export async function accountDraftJourney(page, context, base, record, { state, 
       await second.screenshot({ path: evidence + '/account-drafts-' + width + '.png', fullPage: true });
     }
     await second.setViewportSize({ width: 1440, height: 1000 });
+    await page.getByRole('button', { name: 'Open draft ' + winning, exact: true }).waitFor();
     const created = second.waitForResponse(response => response.url() === base + '/api/issues' && response.request().method() === 'POST');
     await second.getByRole('button', { name: 'Create issue', exact: true }).click();
     const response = await created; assert.equal(response.status(), 201);
@@ -113,7 +114,7 @@ export async function accountDraftJourney(page, context, base, record, { state, 
     await second.waitForURL(base + '/app/issues/' + issue.identifier);
     await until(() => page.getByRole('region', { name: 'Drafts', exact: true }).innerText(), text => !text.includes(winning), 'Submission disappears from first browser');
     assert.deepEqual(await get(other.request), []);
-    assert.equal(await page.getByRole('textbox', { name: /^Title/ }).inputValue(), '');
+    await until(() => page.getByRole('textbox', { name: /^Title/ }).inputValue(), value => value === '', 'Submission clears the other browser form');
     const discarded = title + '-discard';
     await page.getByRole('textbox', { name: /^Title/ }).fill(discarded);
     await until(() => get(context.request), rows => rows.some(row => row.values.title === discarded), 'Next draft saves');
