@@ -1,3 +1,4 @@
+import { groupingJourney } from "./core-grouping-journey.mjs";
 import { withOperatorClient } from './operator-request.mjs';
 import assert from 'node:assert/strict';
 import { beforePrivateNavigation, settleReads } from './collaboration-navigation.mjs';
@@ -55,6 +56,7 @@ export async function keyboardJourney(page, context, base, record, independent =
   record('CMD-002', 'Control+k and Meta+k each open a palette that navigates with Enter and closes with Escape; c and g m/c/p navigate, while title/description typing remains editable.');
   await independent(() => booleanFilterJourney({ page, context, base, record, ...runtime }));
   await independent(() => favoritesJourney({ page, context, base, record, ...runtime }));
+  await independent(() => groupingJourney({ page, context, base, record, ...runtime }));
   await independent(() => crossTeamViewJourney({ page, context, base, record, ...runtime }));
   await independent(() => issueEditingJourney(page, context, base, record));
   await independent(() => streamPlanningJourney(page, context, base, record));
