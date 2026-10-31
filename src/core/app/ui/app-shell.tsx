@@ -249,6 +249,7 @@ function AppShellContent({ children }: AppShellProps) {
             <span>Search</span>
             <kbd>⌘K</kbd>
           </button>
+          <Link className="app-nav-link" to="/app/new-issue" hash="drafts">Drafts</Link>
           <Link className="app-new-issue-link" to="/app/new-issue">
             ＋ New issue
           </Link>

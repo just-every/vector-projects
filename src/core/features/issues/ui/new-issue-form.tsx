@@ -1,3 +1,5 @@
+import { useAccountDrafts } from '../../drafts/use-drafts';
+import { DraftList } from '../../drafts/list';
 import { preferenceSchema } from "../../views/schema";
 import { lastCreatedTeamKey, preferredTeam } from "./preferred-team";
 import { administrationSchema } from "../../administration/schema";
@@ -50,6 +52,9 @@ export function NewIssueForm() {
   const storageKey = options.data
     ? newIssueDraftKey(options.data.workspace.id, options.data.operator.id)
     : null;
+
+  const account = useAccountDrafts(values, setValues, draftReady && options.data?.operator.role !== 'viewer',
+    storageKey, openingDefaults.current, submitting);
 
   useEffect(() => {
     if (!storageKey || draftReady || !options.data || !administration.data || !boardPreference.data) return;
@@ -147,17 +152,19 @@ export function NewIssueForm() {
     setSubmitting(true);
     try {
       const isIntake = values.mode === "intake";
+      const draft = isIntake ? null : await account.flush();
       const issue = await fetchJson(
         isIntake ? "/api/intake" : "/api/issues",
         createdIssueSchema,
         {
           method: "POST",
-          headers: { "content-type": "application/json", ...(!isIntake ? { 'x-vector-page': 'issue' } : {}) },
+          headers: { "content-type": "application/json", ...(!isIntake ? { 'x-vector-page': 'issue', ...(draft ? { 'x-vector-draft-id': draft.id, 'x-vector-draft-revision': String(draft.revision) } : {}) } : {}) },
           body: JSON.stringify(
             isIntake ? createIntakePayload(values, effectiveTimezone) : createIssuePayload(values),
           ),
         },
       );
+      account.consumed();
       try {
         if (storageKey) window.localStorage.removeItem(storageKey);
       } catch {
@@ -226,7 +233,7 @@ export function NewIssueForm() {
       >
         <fieldset
           className="new-issue-controls"
-          disabled={submitting || !draftReady}
+          disabled={submitting || !draftReady || !account.initialized}
           aria-label="Issue creation fields"
         >
           <header className="new-issue-header">
@@ -248,6 +255,11 @@ export function NewIssueForm() {
                   : "Create issue"}
             </button>
           </header>
+          <DraftList drafts={account.drafts}
+            open={draft => { void account.open(draft).catch(account.report); }}
+            discard={draft => { void account.discard(draft).catch(account.report); }}
+            create={() => { void account.newDraft().catch(account.report); }} />
+          {account.message ? <p className="new-issue-message" aria-live="polite">{account.message}</p> : null}
           {notice ? (
             <p className="new-issue-message" aria-live="polite">
               {notice}
