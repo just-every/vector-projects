@@ -1,0 +1,119 @@
+.favorite-navigation {
+  padding: 12px;
+  font-size: 13px;
+  min-width: 0;
+}
+.favorite-navigation h2,
+.favorite-navigation h3 {
+  font-size: 13px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.favorite-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.favorite-navigation button,
+.favorite-navigation input,
+.favorite-navigation select {
+  font: inherit;
+  min-height: 30px;
+  border: 1px solid var(--border, #d7dce2);
+  border-radius: 5px;
+  background: var(--surface, #fff);
+  color: inherit;
+  padding: 4px 7px;
+}
+.favorite-navigation button {
+  cursor: pointer;
+}
+.favorite-navigation button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.favorite-navigation :focus-visible {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 2px;
+}
+.favorite-pin {
+  margin-top: 8px;
+}
+.favorite-list {
+  list-style: none;
+  margin: 4px 0;
+  padding: 0;
+}
+.favorite-list li {
+  min-width: 0;
+  padding: 3px 0;
+}
+.favorite-list a {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 5px 4px;
+  color: inherit;
+  border-radius: 4px;
+  text-decoration: none;
+}
+.favorite-list a:hover {
+  background: var(--surface-hover, #edf0f4);
+}
+.favorite-controls {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 2px;
+}
+.favorite-controls select {
+  max-width: 100%;
+  width: 100%;
+}
+.favorite-folder {
+  margin-top: 12px;
+}
+.favorite-folder-form {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+}
+.favorite-folder-form label {
+  display: grid;
+  gap: 4px;
+}
+.favorite-folder-form input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.favorite-empty {
+  line-height: 1.5;
+  margin: 8px 0;
+}
+.app-sidebar {
+  overflow-y: auto;
+}
+.app-mobile-favorites {
+  position: relative;
+}
+.app-mobile-favorites > summary {
+  cursor: pointer;
+  font-size: 13px;
+  padding: 8px;
+}
+.app-mobile-favorites > .favorite-navigation {
+  position: absolute;
+  z-index: 60;
+  top: 100%;
+  right: 0;
+  width: min(300px, calc(100vw - 32px));
+  max-height: 65vh;
+  overflow-y: auto;
+  background: var(--surface, white);
+  border: 1px solid var(--border, #d7dce2);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px #0002;
+}

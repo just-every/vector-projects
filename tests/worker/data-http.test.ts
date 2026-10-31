@@ -13,6 +13,9 @@ import {createServerApp} from '../../src/core/app/server';
 import {freshTarget,targetCall,targetSignIn,httpExport,finalHash,finalBody,destination,targetBindings} from './http-archive-fixture';
 it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA-001 VIEW-006 REPORT-004 REPORT-002 PROJ-001] native archive HTTP requires current owner, origin and job identity; authenticated pristine bootstrap restores atomically and requires fresh historical owner authority',async()=>{
  const f=await populatedHttpSource();const peer=f.peerCookie;
+ const favoriteViewResponse=await f.call('/views','POST',{name:'synthetic-vector-archive-favorite',query:{}});expect(favoriteViewResponse.status).toBe(201);const favoriteView=await favoriteViewResponse.json() as {id:string};
+ const favoriteInput={expectedVersion:0,folders:[{id:'delivery',name:'Delivery work'}],entries:[{kind:'project',subjectId:f.project.id,folderId:null},{kind:'issue',subjectId:f.issue.id,folderId:null},{kind:'view',subjectId:favoriteView.id,folderId:'delivery'}]};
+ const favoriteWrite=await f.call('/favorites','PUT',favoriteInput);expect(favoriteWrite.status).toBe(200);const favoriteBefore=await favoriteWrite.json();
  const migrationDigests=inject('migrationDigests') as Record<string,string>;
  const commentSubscriptions={events:['comment.created','comment.updated','comment.deleted'],teamIds:[f.team.id]};
  expect((await f.call('/settings/integrations/destinations/'+f.webhook+'/subscriptions','PUT',commentSubscriptions)).status).toBe(200);
@@ -138,6 +141,8 @@ it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA
  expect(await roles(destination.ARCHIVE_TARGET_DB)).toEqual(archivedRoles);
  expect((await targetCall('/auth/request','POST',{email:'peer@http-archive.test'})).status).toBe(409);
  const historical=await targetSignIn();
+ const favoriteRestored=await targetCall('/api/favorites','GET',undefined,historical);expect(favoriteRestored.status).toBe(200);expect(await favoriteRestored.json()).toEqual(favoriteBefore);
+
  expect(await (await targetCall('/api/settings/integrations','GET',undefined,historical)).json()).toMatchObject({destinations:expect.arrayContaining([expect.objectContaining({id:f.webhook,...commentSubscriptions,requiresReentry:1})])});
  expect((await destination.ARCHIVE_TARGET_DB.prepare("SELECT * FROM vector_webhook_events WHERE destination_id=? AND event LIKE 'comment.%' AND json_extract(body,'$.issueId')=? ORDER BY id").bind(f.webhook,f.issue.id).all()).results).toEqual(commentHistory);
  expect(await destination.ARCHIVE_TARGET_DB.prepare('SELECT parent_comment_id,body,deleted_at FROM issue_comments WHERE id=?').bind(replyComment).first()).toMatchObject({parent_comment_id:rootComment,body:null,deleted_at:expect.any(String)});

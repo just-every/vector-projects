@@ -2159,5 +2159,12 @@
   ],
   "bs_assert": [
     "value"
+  ],
+  "member_favorites": [
+    "operator_id",
+    "workspace_id",
+    "version",
+    "folders_json",
+    "entries_json"
   ]
 }
