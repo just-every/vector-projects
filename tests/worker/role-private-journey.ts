@@ -4,6 +4,7 @@ import {afterNativeStatement} from './notification-session-fixture';
 import {request,bindings,origin} from './base-auth-fixture';
 import {createServerApp} from '../../src/core/app/server';
 import {resetLimits,type roleWorkspace} from './role-fixture';
+import {resourceParityJourney} from './agent-resource-parity';
 import {agentResourceClient} from './agent-resource-journey';
 type Workspace=Awaited<ReturnType<typeof roleWorkspace>>;
 async function json<T=any>(response:Response,status=200):Promise<T>{expect(response.status,await response.clone().text()).toBe(status);return response.json() as Promise<T>;}
@@ -11,6 +12,7 @@ async function json<T=any>(response:Response,status=200):Promise<T>{expect(respo
 /** The same open sessions cross public -> private -> membership -> withdrawal.
  * Every projection is reached through its native or bearer public door. */
 export async function privateVisibilityJourney(w:Workspace) {
+ await resourceParityJourney(w);
  const owner=w.people.owner,member=w.member,admin=w.admin;
  const team=(await json(await owner.call('/settings/teams','POST',{name:'synthetic-vector-960',identifierPrefix:'SYNPVT',isPrivate:true}))).teams.find((t:any)=>t.name==='synthetic-vector-960');
  const metadata=(await json(await admin.call('/settings/administration'))).teams.find((t:any)=>t.id===team.id);

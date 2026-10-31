@@ -4,15 +4,18 @@ import {agentResponse} from '../../src/core/features/agent-door/runtime';
 import {bindings,origin} from './base-auth-fixture';
 import type {Person} from './role-fixture';
 
+/** Mounted transport, including the pre-cookie MCP admission used by the Worker. */
+export async function agentRequest(path:string,init:RequestInit) {
+  const app=createServerApp();
+  const headers=new Headers(init.headers);
+  headers.set('Host',new URL(origin).host);
+  const request=new Request(origin+path,{...init,headers});
+  return await agentResponse(bindings,request) ?? app.request(request,undefined,bindings);
+}
+
 /** The existing private-team journey also crosses the mounted MCP door. */
 export async function agentResourceClient(member:Person,owner:Person) {
-  const app=createServerApp();
-  const send=async(path:string,init:RequestInit)=>{
-    const headers=new Headers(init.headers);
-    headers.set('Host',new URL(origin).host);
-    const request=new Request(origin+path,{...init,headers});
-    return await agentResponse(bindings,request) ?? app.request(request,undefined,bindings);
-  };
+  const send=agentRequest;
   const policy=await send('/agents/api/policy',{
     method:'PUT',headers:{Origin:origin,Cookie:owner.cookie,'Content-Type':'application/json'},
     body:JSON.stringify({document:{schema:'rer-agent-policy/1',catalogue:'rer-agent-classes/1',rules:[{id:'all',class:'*',do:'autonomous'}],spend:{none:true}}}),
