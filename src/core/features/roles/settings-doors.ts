@@ -2,6 +2,7 @@
  * resolver. Source coverage enumerates the actual reachable JSX independently.
  * Keys are source modules and their enclosing component; values follow form order. */
 export const settingsFormDoors: Record<string, readonly string[]> = {
+  'issue-templates/controls.tsx#IssueTemplateSettings': ['POST /issue-templates'],
   'settings/ui/settings-page.tsx#SettingsPage': ['PATCH /settings'],
   'settings/ui/personal-time-panel.tsx#PersonalTimePanel': ['PATCH /settings/personal-time'],
   'integrations/ui/channel-settings.tsx#ChannelSettings': [

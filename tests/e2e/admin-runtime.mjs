@@ -1,3 +1,4 @@
+import {issueTemplatesJourney} from './issue-templates-journey.mjs';
 import {assertRoleDoorCoverage} from './role-door-coverage.mjs';
 import { exerciseAuditView, exerciseAuditAccess } from './admin-audit-journey.mjs';
 import { projectFieldsJourney } from './core-project-fields-journey.mjs';
@@ -191,6 +192,7 @@ await contract(
             };
           },
         });
+        await clause("ISSUE-016", "native and scoped issue templates", () => issueTemplatesJourney(shared));
         requestDiagnostics.phase("ordinary sign-out");
         await assertSignOut(shared);
         await assertSignOutReadLifecycle({
