@@ -1,4 +1,5 @@
 import { openAccountMenu } from './ui-controls-checks.mjs';
+import { readLocalD1 } from './local-d1-read.mjs';
 import { streamControlsReady } from './core-stream-controls-browser.mjs';
 import { requestLedger } from './core-request-ledger.mjs';
 import { intakePolicyJourney } from './core-intake-policy-journey.mjs';
@@ -76,6 +77,8 @@ function command(args) {
   });
 }
 function sql(query) {
+  if (/^\s*SELECT\b/i.test(query))
+    return readLocalD1(state, query).map(row => ({ ...row }));
   const text = command([
     "d1",
     "execute",
