@@ -1,3 +1,4 @@
+import { agentApprovalJourney } from './core-agent-approval-journey.mjs';
 import { openAccountMenu } from './ui-controls-checks.mjs';
 import { streamControlsReady } from './core-stream-controls-browser.mjs';
 import { requestLedger } from './core-request-ledger.mjs';
@@ -753,6 +754,7 @@ try {
   await myWorkTabsJourney(page, context, base, state, ids.flow, evidence, record);
   await withInvitedOperator(page, context, base, state, () => manualOrderJourney(page, context, base, record), 'synthetic-vector-1930');
   await withInvitedOperator(page, context, base, state, () => workloadJourney(page, context, base, record), 'synthetic-vector-1931');
+  await agentApprovalJourney(page, context, base, state, evidence, record);
   await withInvitedOperator(page, context, base, state, () => projectHealthJourney(page, context, base, record), 'synthetic-vector-1932');
   await withInvitedOperator(page, context, base, state, () => projectRiskJourney(page, context, base, record), 'synthetic-vector-1933');
   await withInvitedOperator(page, context, base, state, () => projectMembershipJourney(page, context, base, async (id, name, currentPage) => {
