@@ -7,6 +7,7 @@ export async function paginationAndRemoval({
   page,
   peer,
   runtime,
+  issue,
   operator,
   comment,
   peerCapture,
@@ -18,6 +19,19 @@ export async function paginationAndRemoval({
     "NOTIFY-003",
     "native Inbox pagination ordering and cached rows clear after actual operator removal",
     async () => {
+      const favoriteState = await peer.request.get(runtime.base + "/api/favorites");
+      assert.equal(favoriteState.status(), 200);
+      const initialFavorites = await favoriteState.json();
+      const favoriteInput = {
+        expectedVersion: initialFavorites.version,
+        folders: [],
+        entries: [{ kind: "issue", subjectId: issue.id, folderId: null }],
+      };
+      const pinned = await peer.request.put(runtime.base + "/api/favorites", {
+        headers: { Origin: runtime.base }, data: favoriteInput,
+      });
+      assert.equal(pinned.status(), 200);
+      assert.deepEqual((await pinned.json()).entries.map(entry => entry.subjectId), [issue.id]);
       for (let index = 1; index <= 31; index++)
         await comment(`Real pagination comment ${index}.`);
       const expected = runtime.sql(
@@ -41,6 +55,7 @@ export async function paginationAndRemoval({
         exact: true,
       });
       await more.waitFor();
+      await peer.locator(`[data-favorite-id="${issue.id}"]`).first().waitFor({ state: "attached" });
       await peerCapture("inbox-pagination-first-page");
       const response = peer.waitForResponse(
         (r) =>
@@ -87,6 +102,19 @@ export async function paginationAndRemoval({
         "authorization loss clears every first and cached older row",
       );
       await peer.getByRole("alert").waitFor();
+      await poll(
+        () => peer.locator("[data-favorite-id]").count(),
+        count => count === 0,
+        "revocation clears personal Favorites from every shell",
+      );
+      const deniedFavorites = await peer.request.get(runtime.base + "/api/favorites");
+      assert.equal(deniedFavorites.status(), 401);
+      assert.ok(!(await deniedFavorites.text()).includes(issue.title));
+      const replayedFavorite = await peer.request.put(runtime.base + "/api/favorites", {
+        headers: { Origin: runtime.base }, data: { ...favoriteInput, expectedVersion: 0 },
+      });
+      assert.equal(replayedFavorite.status(), 401);
+      await replayedFavorite.body();
       assert.equal(
         await peer
           .getByRole("button", { name: "Load more notifications", exact: true })
@@ -120,6 +148,7 @@ export async function paginationAndRemoval({
         "issue_notification_mutes",
         "notification_type_mutes",
         "notification_preferences",
+        "member_favorites",
       ])
         assert.equal(
           runtime.sql(

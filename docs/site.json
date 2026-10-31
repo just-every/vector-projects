@@ -523,6 +523,10 @@
     {
       "source": "ADOPTING.md",
       "reason": "Contributor instructions for dependency-key schema and private installation custody; not an installed application guide."
+    },
+    {
+      "source": "docs/FAVORITES.md",
+      "reason": "Favorites interaction, storage, concurrency and archive recovery for maintainers"
     }
   ]
 }

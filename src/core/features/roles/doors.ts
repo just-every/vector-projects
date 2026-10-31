@@ -169,6 +169,9 @@ export const doors: Door[] = [
   { method: 'POST', path: '/data/restore/operators/:id', row: 'data.restore' },
   { method: 'POST', path: '/data/restore/review-effects', row: 'data.restore' },
   { method: 'GET', path: '/data/restore', row: 'data.restore' },
+  { method: 'GET', path: '/favorites', row: null, page: 'account' },
+  { method: 'GET', path: '/favorites/subjects/:kind/:key', row: null, page: 'account' },
+  { method: 'PUT', path: '/favorites', row: null, page: 'account' },
   // Account: every role opens and changes its own records.
   ...([['PATCH', '/settings/appearance'], ['PATCH', '/settings/personal-time'], ['PATCH', '/settings/notifications'], ['GET', '/settings/appearance'], ['GET', '/settings/personal-time'], ['GET', '/settings/notifications'],
     ['POST', '/notifications/:id/read'], ['POST', '/notifications/read-all'], ['POST', '/notifications/:id/snooze'], ['POST', '/notifications/:id/unsnooze'],

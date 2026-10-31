@@ -28,7 +28,7 @@ export async function collaborationEvents({
 }) {
   const path = `/api/issues/${issue.identifier}`;
   const owner = runtime.sql(
-    "SELECT * FROM operators WHERE email='owner@admin-runtime.test'",
+    "SELECT o.* FROM operators o JOIN workspace_installation w ON w.setup_operator_id=o.id",
   )[0];
   await navigate(peer, runtime.base + "/app/inbox");
   await peer.getByText("Nothing new.", { exact: true }).waitFor();
@@ -358,6 +358,7 @@ export async function collaborationEvents({
     page,
     peer,
     runtime,
+    issue,
     operator,
     comment,
     peerCapture,

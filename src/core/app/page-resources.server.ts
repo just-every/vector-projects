@@ -58,7 +58,7 @@ export async function readPageResources(env: WorkerBindings, request: Request, o
     const base = '/api/issues/' + encodeURIComponent(identifier)
     await Promise.all([read(base), read(base + '/discussion'), read(base + '/subscription'), read(base + '/github'), read(base + '/reminders'), read(base + '/references'), read(base + '/email-intake'), read(base + '/reactions')])
   }
-  const shared = [read('/api/settings/personal-time'), read('/api/views'), read('/api/notifications/count'), read('/api/mentions/options')]
+  const shared = [read('/api/favorites'), read('/api/settings/personal-time'), read('/api/views'), read('/api/notifications/count'), read('/api/mentions/options')]
   const path = url.pathname
   const personal = path.match(/^\/app\/my-work\/(created|subscribed|activity)(?:\/([A-Z]{2,10}-[1-9][0-9]*))?$/)
   const surface = personal ? null : path === '/app' || path.startsWith('/app/current') ? 'current'
