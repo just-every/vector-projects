@@ -542,8 +542,13 @@ export async function triageResponsibilityJourney(
     ).toBe(401);
     expect(await stored()).toEqual(revoked);
     await read(
-      await f.call(path, "PUT", { ...config, operatorIds: [second.id] }),
+      await f.call(path, "PUT", {
+        ...config,
+        startsLocal: "2026-03-02T09:00",
+        operatorIds: [second.id],
+      }),
     );
+    expect((await read(await f.call(path))).responsible.id).toBe(second.id);
     await read(await f.call("/settings/operators/" + second.id, "DELETE"));
     expect((await second.call("/triage-responsibility")).status).toBe(401);
     expect((await read(await f.call(path))).responsible).toBeNull();
