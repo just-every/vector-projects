@@ -521,7 +521,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "7640bc97c1ff91456ec516c18135f27a40d148b34956294e801ad7f9ce68b8ae",
+      "sha256": "4dba4edbe7db6026b47c13ccd0c405e79600dd8c7dd70fe9a8add40ad353ece8",
       "executable": false
     },
     "DEMO.md": {
@@ -661,7 +661,7 @@
       "executable": false
     },
     "docs/INTEGRATIONS.md": {
-      "sha256": "6540bb2c75cd59beff2b45e28ad9d6fa9ed6373e6b6c63cc6db33c5e6dbc0a9c",
+      "sha256": "534076612d7b3922c415ea7fa65372dd54f0c65d07b92096ae711ac97285fa01",
       "executable": false
     },
     "docs/ISSUE-WRITING.md": {
@@ -2025,7 +2025,7 @@
       "executable": false
     },
     "management/integration/deployment-spec.json": {
-      "sha256": "a36f98e7b7f46441cd7e5ff69c9d24999c5e61f09c9dd2a6e1b7b7d9084368a3",
+      "sha256": "bf555231261ed7232bbd19ef722477834f52c1ab98cccc83df1ece4c9901595e",
       "executable": false
     },
     "migrations/core/0001_data_spine.sql": {
@@ -2506,6 +2506,10 @@
     },
     "migrations/core/0120_comment_webhook_author_labels.sql": {
       "sha256": "e9f8589ed601a32d8c693910f9778e64ebd3cb1af509735756664a39ed1ee32f",
+      "executable": false
+    },
+    "migrations/core/0121_github_reviews.sql": {
+      "sha256": "320f3aed2fb565c71112adb6e452890592a79b9d6262b36d65fec437d026f6d8",
       "executable": false
     },
     "OPERATIONS.json": {
@@ -4533,7 +4537,7 @@
       "executable": false
     },
     "src/core/features/data/archive-inventory.json": {
-      "sha256": "47016a30948cb320afe8ba9f625b53107951102bace8211a4b831e1342230302",
+      "sha256": "233f989b17cad6206a86075fa00ef1d0e6401f2bdeee88e0f193b96c8cce28d0",
       "executable": false
     },
     "src/core/features/data/archive-inventory.mjs": {
@@ -4545,7 +4549,7 @@
       "executable": false
     },
     "src/core/features/data/archive-policy.mjs": {
-      "sha256": "1b9b22e3c2da6a8959886b7f0b4130f68a8842c75691f0f3ca61d16db5daeda0",
+      "sha256": "0d0b3c28eec6fb296922c521148413d62d149633b6a6b4bc2d29bc13e295bb48",
       "executable": false
     },
     "src/core/features/data/archive-routes.ts": {
@@ -5253,7 +5257,7 @@
       "executable": false
     },
     "src/core/features/integrations/config-routes.ts": {
-      "sha256": "341b5417816f5d1658267588b4fa14a60b9b7326a792bdcc4c0fd38400a49995",
+      "sha256": "ce693ad280a33b65c518a628cf269ddd8c53bfa9a3ad8f95451ba37186c352e1",
       "executable": false
     },
     "src/core/features/integrations/config-storage.ts": {
@@ -5317,7 +5321,7 @@
       "executable": false
     },
     "src/core/features/integrations/github-read.ts": {
-      "sha256": "2d5953908201bc472010e9dc19f05ce159e6593651cf1673ac8cd0cbfab39537",
+      "sha256": "9d8fdb488838194232b0b1a37deb10e97d10fd1bccc9b54fe85a58d6008ab5b6",
       "executable": false
     },
     "src/core/features/integrations/github/branch-name.ts": {
@@ -5333,7 +5337,7 @@
       "executable": false
     },
     "src/core/features/integrations/github/input.ts": {
-      "sha256": "f697275a92a15795607e55c4ab7be6ce736424af7a5456e16831ffe7471e6ec2",
+      "sha256": "e225c25e8e8a70548e093d7b8305ed709b7f5c3ca3bdca8fa4d3f89ddbf23d21",
       "executable": false
     },
     "src/core/features/integrations/github/issue-projection.ts": {
@@ -5345,7 +5349,15 @@
       "executable": false
     },
     "src/core/features/integrations/github/receiver.ts": {
-      "sha256": "abde76e1ffb4a91ad41d584e7cd70ad07bb3dc92f3ed8edcea918b64d221158f",
+      "sha256": "8acced36aa116990549ebdcd265342c52b3d87a0d8434d2cc595d5044ddb77e8",
+      "executable": false
+    },
+    "src/core/features/integrations/github/review-head.ts": {
+      "sha256": "a1c6246c6c010fa1392c101d56610538fb0e898cecce165b87e0282cf3588a1c",
+      "executable": false
+    },
+    "src/core/features/integrations/github/reviews.ts": {
+      "sha256": "4381b376a14c0356281c0d0dd58b6af41cad074d90c47935cc6a098a8c70c1b6",
       "executable": false
     },
     "src/core/features/integrations/github/rule-routes.ts": {
@@ -5545,7 +5557,7 @@
       "executable": false
     },
     "src/core/features/integrations/ui/github-links.tsx": {
-      "sha256": "4902fa3258b50db181fe632bb6c3ef015963251d98ed0cee9625185cd34a2ed1",
+      "sha256": "c7a7bb8f86ce5c9ca5156974a5d79e56398881f0f0eaaa60168ad2bb72a3d852",
       "executable": false
     },
     "src/core/features/integrations/ui/github-receipt.tsx": {
@@ -5561,11 +5573,11 @@
       "executable": false
     },
     "src/core/features/integrations/ui/github-settings.tsx": {
-      "sha256": "3a1716a6e2b8d2a956ba5014ffdb7ef20b622064a701935492c8792903b3bbd2",
+      "sha256": "3a4879fcc37546383f055a416816ab5bbfb39b9a03fcf74b65d47acef9fee968",
       "executable": false
     },
     "src/core/features/integrations/ui/github-setup.tsx": {
-      "sha256": "6117796df371a285ab1160bb21fe5e41ee708029249936344d2da3f2f72f0b1a",
+      "sha256": "b9ab0a83401d8ac635155bf418cfb78263a344610934632d76b1362bf7b34655",
       "executable": false
     },
     "src/core/features/integrations/ui/github-test.tsx": {
@@ -7929,7 +7941,7 @@
       "executable": false
     },
     "tests/e2e/integration-runtime.mjs": {
-      "sha256": "bc4a3e5698f8f5f44dfb2d99d8012687ae80d930a89076f643eeace0969bc812",
+      "sha256": "713840afdd1d2483d3d4f99f7d6deca6385bf7dc0d382d9dfa5c578cb8f544d4",
       "executable": false
     },
     "tests/e2e/integration-settings-journey.mjs": {
@@ -7958,6 +7970,10 @@
     },
     "tests/e2e/integrations/github-receipts.mjs": {
       "sha256": "51834c512bd918dd150ae2538a9634f6c04bd2331f573c71cd11f7040281414c",
+      "executable": false
+    },
+    "tests/e2e/integrations/github-reviews.mjs": {
+      "sha256": "ce15f7801791273898cbdd44324792ccbe8a91793a6fe7d43f6a33abf1d79e0f",
       "executable": false
     },
     "tests/e2e/integrations/github-team-permissions.mjs": {
@@ -8389,7 +8405,7 @@
       "executable": false
     },
     "tests/worker/base-refresh-upgrade.test.ts": {
-      "sha256": "c670d3c200d15007f0f6cce031854e6e27842e19d4743a5aa65545018c73aace",
+      "sha256": "239b15c06adc31cf4fcab4333e32594e72631bf9862f89a47b900aa84a5e3e27",
       "executable": false
     },
     "tests/worker/boolean-filters.test.ts": {
@@ -8617,7 +8633,19 @@
       "executable": false
     },
     "tests/worker/github-links.test.ts": {
-      "sha256": "cae604a23c20f48972af2efc4fcbf0677ac539be4086616c7e64a3638e158081",
+      "sha256": "126864091b89888a08255ef89e425bd0e9943d94752ccdc9c1d4b980a99c6a96",
+      "executable": false
+    },
+    "tests/worker/github-review-archive.ts": {
+      "sha256": "726d0e6a70a5c007b9c56bb00506c6354b98d240491a68e69b8b9fb30fefef44",
+      "executable": false
+    },
+    "tests/worker/github-review-scenario.ts": {
+      "sha256": "920b645d0c9200e1241dbfe8c6b273535f6438fc78a5bfe9816689bd5f67702c",
+      "executable": false
+    },
+    "tests/worker/github-review-upgrade.ts": {
+      "sha256": "b9af9f8558bec8d2a576d6deb2dad25ac238300e469e652f38d06aa6f9977c22",
       "executable": false
     },
     "tests/worker/historical-auth-fixture.ts": {
@@ -8861,7 +8889,7 @@
       "executable": false
     },
     "tests/worker/populated-upgrade.ts": {
-      "sha256": "4cc6593c2322880baa940a7690d0ef515a50021a6cbac707868016b2ad002ba0",
+      "sha256": "92290f1f9f71df20751b5cec98fd5c192e22050e0911f4f76104d3280cbfb4fe",
       "executable": false
     },
     "tests/worker/private-channel-scenario.ts": {
