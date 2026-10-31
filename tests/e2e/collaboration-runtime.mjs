@@ -186,7 +186,7 @@ await contract(
           return reads.length > 0 && reads.every((read) => {
             const projection = new URL(read, runtime.base);
             return projection.origin === runtime.base &&
-              /^\/api\/(?:notifications(?:\/count)?|mentions\/options)$/.test(projection.pathname);
+              /^\/api\/(?:notifications(?:\/count)?|mentions\/options|favorites)$/.test(projection.pathname);
           });
         };
         const expectedHttpErrors = consoleErrors.filter(

@@ -594,7 +594,7 @@ try {
     "BASE-OPS-005",
     "Actual emitted scheduled export recovers a persisted file-removal intent; download denies removed bytes, metadata is erased, and repeated local cron produces one deletion audit.",
   );
-  browser = await chromium.launch({ headless: true, args: ["--use-mock-keychain", "--password-store=basic"] });
+  browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, args: ["--use-mock-keychain", "--password-store=basic", ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? ["--no-sandbox"] : [])] });
   // Browser reads and context.request calls can outlast workerd's 5 s idle
   // socket lifetime between journey steps; never reuse an idle connection.
   const context = await browser.newContext({
