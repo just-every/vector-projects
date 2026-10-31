@@ -7,6 +7,7 @@ export async function paginationAndRemoval({
   page,
   peer,
   runtime,
+  issue,
   operator,
   comment,
   peerCapture,
@@ -18,6 +19,22 @@ export async function paginationAndRemoval({
     "NOTIFY-003",
     "native Inbox pagination ordering and cached rows clear after actual operator removal",
     async () => {
+      const currentFavorites = await peer.request.get(runtime.base + "/api/favorites");
+      assert.equal(currentFavorites.status(), 200);
+      const favorites = await currentFavorites.json();
+      const pinned = await peer.request.put(runtime.base + "/api/favorites", {
+        headers: { Origin: runtime.base },
+        data: {
+          expectedVersion: favorites.version,
+          folders: favorites.folders,
+          entries: [
+            ...favorites.entries.filter(entry => entry.kind !== "issue" || entry.subjectId !== issue.id)
+              .map(({ kind, subjectId, folderId }) => ({ kind, subjectId, folderId })),
+            { kind: "issue", subjectId: issue.id, folderId: null },
+          ],
+        },
+      });
+      assert.equal(pinned.status(), 200);
       for (let index = 1; index <= 31; index++)
         await comment(`Real pagination comment ${index}.`);
       const expected = runtime.sql(
@@ -36,6 +53,7 @@ export async function paginationAndRemoval({
         "native first page matches D1 stable order",
       );
       await navigate(peer, runtime.base + "/app/inbox");
+      await peer.locator(`[data-favorite-id="${issue.id}"]`).first().waitFor({ state: "attached" });
       const more = peer.getByRole("button", {
         name: "Load more notifications",
         exact: true,
@@ -87,6 +105,11 @@ export async function paginationAndRemoval({
         "authorization loss clears every first and cached older row",
       );
       await peer.getByRole("alert").waitFor();
+      await poll(
+        () => peer.locator("[data-favorite-id]").count(),
+        count => count === 0,
+        "authorization loss clears personal navigation without a second global alert",
+      );
       assert.equal(
         await peer
           .getByRole("button", { name: "Load more notifications", exact: true })
@@ -120,6 +143,7 @@ export async function paginationAndRemoval({
         "issue_notification_mutes",
         "notification_type_mutes",
         "notification_preferences",
+        "member_favorites",
       ])
         assert.equal(
           runtime.sql(

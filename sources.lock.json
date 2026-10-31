@@ -7629,7 +7629,7 @@
       "executable": false
     },
     "tests/e2e/collaboration-events.mjs": {
-      "sha256": "1c81f25e3c6f20d98889a81189811d7d6136dad1438c8f1b3a8de584c783a90c",
+      "sha256": "4ce1d575602855b2ea380f078f747c1f3e60df2627041a82008288956dca512e",
       "executable": false
     },
     "tests/e2e/collaboration-issue.mjs": {
@@ -7649,7 +7649,7 @@
       "executable": false
     },
     "tests/e2e/collaboration-pagination.mjs": {
-      "sha256": "b124eb387dd254f25a8a1e98703ce604e608055ce4f518fed57eca093748089c",
+      "sha256": "983ce0da110117cd3bb0c30252e3d184b0b3bd54b49d07ace8679b9b26f41ff8",
       "executable": false
     },
     "tests/e2e/collaboration-preferences.mjs": {
@@ -8109,7 +8109,7 @@
       "executable": false
     },
     "tests/e2e/personal-time-surfaces.mjs": {
-      "sha256": "a58433de0391656a862eaa3083242145bc70c2dcfc424c84e76f94b076a845ec",
+      "sha256": "76193bdc6953488901a95f980434777d7f32580f64a57f35b9f926d43706ec32",
       "executable": false
     },
     "tests/e2e/private-team-journey.mjs": {

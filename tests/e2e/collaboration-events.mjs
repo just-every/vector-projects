@@ -358,6 +358,7 @@ export async function collaborationEvents({
     page,
     peer,
     runtime,
+    issue,
     operator,
     comment,
     peerCapture,
