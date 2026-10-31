@@ -1,3 +1,4 @@
+import { createUlid } from '../../shared/ids';
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, fetchJson } from '../../app/api-client';
 import { draftReceiptSchema, draftsSchema, type AccountDraft, type DraftReference } from './schema';
@@ -40,8 +41,8 @@ export function useAccountDrafts(values: NewIssueDraft, setValues: (values: NewI
     setDrafts(result.drafts);
     if (selected.current) {
       const current = result.drafts.find(row => row.id === selected.current!.id);
-      if (!current) apply(null, 'This draft was submitted or discarded on another device.');
-      else if (current.revision > selected.current.revision)
+      if (!current && selected.current.revision > 0) apply(null, 'This draft was submitted or discarded on another device.');
+      else if (current && current.revision > selected.current.revision)
         apply(current, 'Showing the newer draft saved on another device.');
     }
   }
@@ -50,11 +51,13 @@ export function useAccountDrafts(values: NewIssueDraft, setValues: (values: NewI
     const snapshot = latest.current, encoded = JSON.stringify(snapshot);
     if (snapshot.mode !== 'issue' || encoded === synced.current ||
       (!selected.current && !hasUnsavedDraft(snapshot, { ...defaults, mode: snapshot.mode }))) return selected.current;
-    const reference = selected.current;
+    if (!selected.current) retain({ id: createUlid(new Date()), revision: 0 });
+    const reference = selected.current!;
+    const creating = reference.revision === 0;
     try {
-      const result = await fetchJson(reference ? '/api/drafts/' + reference.id : '/api/drafts', draftReceiptSchema, {
-        method: reference ? 'PATCH' : 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ values: snapshot, ...(reference ? { revision: reference.revision } : {}) }),
+      const result = await fetchJson(creating ? '/api/drafts' : '/api/drafts/' + reference.id, draftReceiptSchema, {
+        method: creating ? 'POST' : 'PATCH', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ values: snapshot, ...(creating ? { id: reference.id } : { revision: reference.revision }) }),
       });
       if (!alive.current) return null;
       if (!result.draft) throw new Error('The draft could not be saved.');
@@ -99,7 +102,7 @@ export function useAccountDrafts(values: NewIssueDraft, setValues: (values: NewI
         synced.current = JSON.stringify(draft.values);
         setMessage('Restored this browser’s unsent changes.');
       } else if (draft) apply(draft, 'Restored your account draft.');
-      else if (selected.current) apply(null, 'This draft was submitted or discarded on another device.');
+      else if (selected.current && selected.current.revision > 0) apply(null, 'This draft was submitted or discarded on another device.');
     }).catch(() => { if (!canceled) setMessage('Account drafts unavailable. This browser keeps your unsent form.'); })
       .finally(() => { if (!canceled) setInitialized(true); });
     return () => { canceled = true; };

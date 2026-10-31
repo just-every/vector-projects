@@ -12,13 +12,13 @@ export function addDraftRoutes(app: Hono<AppEnvironment>) {
   });
   app.post('/drafts', async c => {
     const parsed = draftWriteSchema.safeParse(await readRequestJson(c.req.raw));
-    if (!parsed.success || parsed.data.revision !== undefined) return c.json({ error: 'invalid_request' }, 400);
-    const result = await saveDraft(c.env.DB, c.get('operatorId'), parsed.data.values);
-    return c.json({ draft: result.draft }, result.draft ? 201 : 400);
+    if (!parsed.success || !parsed.data.id || parsed.data.revision !== undefined) return c.json({ error: 'invalid_request' }, 400);
+    const result = await saveDraft(c.env.DB, c.get('operatorId'), parsed.data.values, { id: parsed.data.id, revision: 0 });
+    return c.json({ draft: result.draft, ...(!result.written ? { error: result.exists ? 'draft_changed' : 'invalid_request' } : {}) }, result.written ? 201 : result.exists ? 409 : 400);
   });
   app.patch('/drafts/:id', async c => {
     const parsed = draftWriteSchema.safeParse(await readRequestJson(c.req.raw));
-    if (!parsed.success || !parsed.data.revision) return c.json({ error: 'invalid_request' }, 400);
+    if (!parsed.success || !parsed.data.revision || parsed.data.id !== undefined) return c.json({ error: 'invalid_request' }, 400);
     const result = await saveDraft(c.env.DB, c.get('operatorId'), parsed.data.values,
       { id: c.req.param('id'), revision: parsed.data.revision });
     return c.json({ draft: result.draft, ...(!result.written ? { error: 'draft_changed', message: 'This draft changed on another device.' } : {}) }, result.written ? 200 : 409);

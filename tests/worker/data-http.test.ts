@@ -1,3 +1,4 @@
+import { createUlid } from '../../src/core/shared/ids';
 import { emptyNewIssueDraft } from '../../src/core/features/issues/ui/new-issue-draft';
 import { auditSchema } from '../../src/core/features/audit/schema';
 import { expectAuditArchiveHistory } from './audit-archive';
@@ -15,9 +16,9 @@ import {freshTarget,targetCall,targetSignIn,httpExport,finalHash,finalBody,desti
 it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA-001 VIEW-006 REPORT-004 REPORT-002 PROJ-001] native archive HTTP requires current owner, origin and job identity; authenticated pristine bootstrap restores atomically and requires fresh historical owner authority',async()=>{
  const f=await populatedHttpSource();const peer=f.peerCookie;
  const draftValues={...emptyNewIssueDraft,teamId:f.team.id,title:'synthetic-vector-2811'};
- const draftResponse=await f.call('/drafts','POST',{values:draftValues});expect(draftResponse.status).toBe(201);
+ const draftResponse=await f.call('/drafts','POST',{id:createUlid(new Date()),values:draftValues});expect(draftResponse.status).toBe(201);
  const portableDraft=(await draftResponse.json() as {draft:{id:string}}).draft;
- const discardedResponse=await f.call('/drafts','POST',{values:{...draftValues,title:'synthetic-vector-2812'}});expect(discardedResponse.status).toBe(201);
+ const discardedResponse=await f.call('/drafts','POST',{id:createUlid(new Date()),values:{...draftValues,title:'synthetic-vector-2812'}});expect(discardedResponse.status).toBe(201);
  const discardedDraft=(await discardedResponse.json() as {draft:{id:string}}).draft;
  expect((await f.call('/drafts/'+discardedDraft.id,'DELETE',{revision:1})).status).toBe(200);
  const draftRows=(await env.DB.prepare('SELECT * FROM issue_drafts ORDER BY id').all()).results;
