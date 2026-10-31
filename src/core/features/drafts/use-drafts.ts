@@ -96,8 +96,10 @@ export function useAccountDrafts(values: NewIssueDraft, setValues: (values: NewI
       if (canceled) return;
       setDrafts(result.drafts);
       const draft = selected.current ? result.drafts.find(row => row.id === selected.current!.id) : result.drafts[0];
-      if (draft && selected.current?.revision === draft.revision &&
-          hasUnsavedDraft(latest.current, { ...defaults, mode: latest.current.mode })) {
+      const unsent = hasUnsavedDraft(latest.current, { ...defaults, mode: latest.current.mode });
+      if (draft && unsent && !selected.current) {
+        // No reference names this draft, so the restored form is this browser's only copy: keep it.
+      } else if (draft && selected.current?.revision === draft.revision && unsent) {
         retain({ id: draft.id, revision: draft.revision });
         synced.current = JSON.stringify(draft.values);
         setMessage('Restored this browser’s unsent changes.');

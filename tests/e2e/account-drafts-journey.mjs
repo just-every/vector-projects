@@ -123,6 +123,26 @@ export async function accountDraftJourney(page, context, base, record, { state, 
     await second.getByRole('button', { name: 'Discard draft ' + discarded, exact: true }).click();
     await until(() => get(other.request), rows => rows.length === 0, 'Discard consumes account draft');
     await until(() => page.getByRole('textbox', { name: /^Title/ }).inputValue(), value => value === '', 'Discard clears other browser');
+    // An Intake request typed after "Start another draft" is this browser's only copy: reopening New issue keeps it beside the open account draft.
+    const kept = title + '-kept', request = 'synthetic-vector-2820 VPN drops every 20 minutes ' + Date.now();
+    await page.getByRole('textbox', { name: /^Title/ }).fill(kept);
+    await until(() => get(context.request), rows => rows.some(row => row.values.title === kept), 'Kept draft saves');
+    await page.getByRole('button', { name: 'Start another draft', exact: true }).click();
+    await until(() => page.getByRole('textbox', { name: /^Title/ }).inputValue(), value => value === '', 'Another draft starts empty');
+    await page.getByRole('radio', { name: /Intake/ }).check();
+    await page.getByRole('textbox', { name: /^Title/ }).fill(request);
+    await beforePrivateNavigation(page, base + '/app/new-issue'); await page.goto(base + '/app/new-issue');
+    await page.getByRole('textbox', { name: /^Title/, disabled: false }).waitFor();
+    await page.getByRole('button', { name: 'Open draft ' + kept, exact: true }).waitFor();
+    await new Promise(resolve => setTimeout(resolve, 500));
+    assert.equal(await page.getByRole('textbox', { name: /^Title/ }).inputValue(), request);
+    assert.equal(await page.getByRole('radio', { name: /Intake/ }).isChecked(), true);
+    assert.deepEqual(await page.locator('.new-issue-message').allInnerTexts(), ['Restored your unsent draft from this browser.']);
+    assert.equal((await get(context.request)).some(row => row.values.title === kept), true);
+    await page.getByRole('button', { name: 'Discard draft ' + kept, exact: true }).click();
+    await until(() => get(context.request), rows => rows.length === 0, 'Kept draft discards');
+    await page.getByRole('textbox', { name: /^Title/ }).fill('');
+    await page.getByRole('radio', { name: /^Issue/ }).check();
     await commentDraftJourney(page,context,second,other,base,issue,evidence,record,expectedAccountDraftConflicts);
     assert.deepEqual(errors, []);
     record('ISSUE-028', 'Independent native sessions restore title and two labels, show newer text, refuse a delayed save, atomically submit, and discard across browsers; keyboard, accessibility and both screen widths verified.');
