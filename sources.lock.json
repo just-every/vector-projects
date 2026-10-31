@@ -8150,7 +8150,7 @@
       "executable": false
     },
     "tests/e2e/personal-time-surfaces.mjs": {
-      "sha256": "a58433de0391656a862eaa3083242145bc70c2dcfc424c84e76f94b076a845ec",
+      "sha256": "5fe54f8b24ef6ee308d210e9eca2aaa29195a2e4a0826bb15968e11cc48de7ae",
       "executable": false
     },
     "tests/e2e/private-team-journey.mjs": {
