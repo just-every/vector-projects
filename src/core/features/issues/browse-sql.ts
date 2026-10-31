@@ -7,6 +7,7 @@ export const browseJoins = `FROM issues i JOIN teams t ON t.id=i.team_id
  LEFT JOIN operators a ON a.id=i.assignee_operator_id AND a.workspace_id=t.workspace_id AND a.removed_at IS NULL
  LEFT JOIN projects p ON p.id=i.project_id AND p.workspace_id=t.workspace_id
  LEFT JOIN cycles c ON c.id=i.cycle_id AND c.team_id=t.id
+ LEFT JOIN project_milestones m ON m.id=i.milestone_id AND m.project_id=p.id
  LEFT JOIN issue_parents link ON link.issue_id=i.id
  LEFT JOIN issues parent ON parent.id=link.parent_issue_id AND EXISTS(SELECT 1 FROM teams pt WHERE pt.id=parent.team_id AND pt.workspace_id=t.workspace_id)`;
 export const blockedSql = `EXISTS(SELECT 1 FROM issue_dependencies d
@@ -60,6 +61,18 @@ export const browseGroup: Record<
     name: "COALESCE(c.name,'No cycle')",
     order: "name,key",
     rowOrder: "COALESCE(c.name,'No cycle'),COALESCE(c.id,'none')",
+  },
+  milestone: {
+    key: "COALESCE(m.id,'none')",
+    name: "COALESCE(m.name,'No milestone')",
+    order: "name,key",
+    rowOrder: "COALESCE(m.name,'No milestone'),COALESCE(m.id,'none')",
+  },
+  parent: {
+    key: "COALESCE(parent.id,'none')",
+    name: "CASE WHEN parent.id IS NULL THEN 'No parent' ELSE parent.identifier||': '||parent.title END",
+    order: "name,key",
+    rowOrder: "CASE WHEN parent.id IS NULL THEN 'No parent' ELSE parent.identifier||': '||parent.title END,COALESCE(parent.id,'none')",
   },
   team: {
     key: "t.id",
