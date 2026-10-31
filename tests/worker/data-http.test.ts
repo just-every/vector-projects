@@ -20,6 +20,10 @@ it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA
  const triageTables=['team_triage_rotations','team_triage_rotation_members','triage_creation_receipts'];
  let triageRows=await Promise.all(triageTables.map(async name=>(await env.DB.prepare('SELECT * FROM '+name+' ORDER BY rowid').all()).results));
  expect(triageRows[0]).toHaveLength(1);expect(triageRows[1]).toHaveLength(2);expect(triageRows[2]).toHaveLength(1);
+ const fixedTeam=(await f.mutate('/settings/teams','POST',{name:'synthetic-vector-9154',identifierPrefix:'FIXED'})).teams.find(t=>t.name==='synthetic-vector-9154')!;
+ expect((await f.call('/settings/teams/'+fixedTeam.id+'/triage-rotation','PUT',{startsLocal:'2026-01-05T09:00',operatorIds:[f.owner]})).status).toBe(200);
+ const fixedIntakeResponse=await f.call('/intake','POST',{teamId:fixedTeam.id,title:'synthetic-vector-9155'});expect(fixedIntakeResponse.status).toBe(201);
+ const fixedIntake=await fixedIntakeResponse.json() as {identifier:string};
  const migrationDigests=inject('migrationDigests') as Record<string,string>;
  const commentSubscriptions={events:['comment.created','comment.updated','comment.deleted'],teamIds:[f.team.id]};
  expect((await f.call('/settings/integrations/destinations/'+f.webhook+'/subscriptions','PUT',commentSubscriptions)).status).toBe(200);
@@ -164,7 +168,10 @@ it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA
  expect((await createServerApp().request(targetBindings.APP_ORIGIN+new URL(errorConnection.receiver).pathname,{method:'POST',body:'{}'},targetBindings)).status).toBe(401);
  for(let index=0;index<triageTables.length;index++)expect((await destination.ARCHIVE_TARGET_DB.prepare('SELECT * FROM '+triageTables[index]+' ORDER BY rowid').all()).results).toEqual(triageRows[index]);
  const restoredTriage=await targetCall('/api/triage-responsibility','GET',undefined,historical);expect(restoredTriage.status).toBe(200);
- expect((await restoredTriage.json() as {teams:unknown[]}).teams).toHaveLength(1);
+ const restoredTriageTeams=(await restoredTriage.json() as {teams:{teamId:string;mode:string;responsible:{id:string}|null;nextHandoverAt:string|null;untouched:{identifier:string}[]}[]}).teams;
+ expect(restoredTriageTeams).toHaveLength(2);
+ expect(restoredTriageTeams.find(t=>t.teamId===f.team.id)?.mode).toBe('weekly');
+ expect(restoredTriageTeams.find(t=>t.teamId===fixedTeam.id)).toMatchObject({mode:'fixed',responsible:{id:f.owner},nextHandoverAt:null,untouched:expect.arrayContaining([{identifier:fixedIntake.identifier,title:'synthetic-vector-9155'}])});
  const restoredCredentials=await credentialState();
  const restoredChannels=await (await targetCall('/api/settings/integrations/channels','GET',undefined,historical)).json() as any;expect(restoredChannels.slack).toMatchObject({connected:false,needsAttention:true,signingSecret:false});
  expect((await (await targetCall('/api/settings/notifications','GET',undefined,historical)).json() as any).slack).toMatchObject({available:false,link:null,actionsEnabled:false});expect(restoredChannels.bindings).toEqual(expect.arrayContaining([expect.objectContaining({id:channelBinding.id,objectId:f.project.id,channelId:'CARCHIVE'}),expect.objectContaining({id:discordBinding.id,objectId:f.team.id,provider:'discord',needsAttention:true})]));

@@ -5,7 +5,7 @@ import {bindings,origin} from './base-auth-fixture';
 import type {Person} from './role-fixture';
 
 /** The existing private-team journey also crosses the mounted MCP door. */
-export async function agentResourceClient(member:Person,owner:Person) {
+export async function agentResourceClient(member:Pick<Person,'cookie'|'call'>,owner:Pick<Person,'cookie'>) {
   const app=createServerApp();
   const send=async(path:string,init:RequestInit)=>{
     const headers=new Headers(init.headers);
@@ -49,8 +49,8 @@ export async function agentResourceClient(member:Person,owner:Person) {
       expect(content._meta['com.runeditrun/untrusted']).toBe(true);
       expect(JSON.parse(content.text).identifier).toBe(identifier);
     },
-    async write(teamId:string) {
-      const created=await rpc('tools/call',{name:'vector.intake.intake_creation',arguments:{teamId,title:'synthetic-vector-3302',summary:'synthetic-vector-3303',idempotency_key:crypto.randomUUID()}});
+    async write(teamId:string,intakeKey=crypto.randomUUID()) {
+      const created=await rpc('tools/call',{name:'vector.intake.intake_creation',arguments:{teamId,title:'synthetic-vector-3302',summary:'synthetic-vector-3303',idempotency_key:intakeKey}});
       expect(created.status).toBe(200);
       expect(created.body.result?.isError).not.toBe(true);
       const result=created.body.result.structuredContent;

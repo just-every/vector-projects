@@ -21,6 +21,7 @@ export async function createOperatorIntake(
   input: OperatorIntakeInput,
   now = new Date(),
   onCommit?: (db: D1Database, created: { id: string; identifier: string }) => D1PreparedStatement[],
+  sourceActor?: { name: string },
 ) {
   db = mutationDatabase(db, actor);
   const orm = drizzle(db);
@@ -98,27 +99,29 @@ export async function createOperatorIntake(
     )
     .bind(
       activityId,
-      actor,
+      sourceActor ? null : actor,
       JSON.stringify({
         identifier,
         title: input.title,
         teamId: team.id,
         statusId: status.id,
         evidenceRevisionId: evidenceId,
-        originKind: "operator",
+        originKind: sourceActor ? "source" : "operator",
       }),
       at,
       at,
-      currentAgentActor()?.actor.label??null,
+      sourceActor?.name ?? currentAgentActor()?.actor.label??null,
       agentActivity().agentId,
       agentActivity().agentOperationId,
       agentActivity().agentApproversJson,
       issueId,
     );
-  const event = { id: activityId, issueId, actor, at };
+  // Source custody still uses the current configured operator's authority;
+  // notification attribution and actor exclusion name the actual source.
+  const event = { id: activityId, issueId, actor: sourceActor ? null : actor, actorName: sourceActor?.name, at };
   const triage = await triageCreationStatements(db,event,team.id);
   let result;
-  try { result = await db.batch<{ id: string }>([creationGuard(db,actor,team.workspaceId,team.id,status.id,{projectId:null,cycleId:null,labelIds:[]},status.category,allocation.prefix),issue,evidence,activity,...triage,...followStatements(db,event,[actor]),...mentionStatements(db,event,input.description),...issueReferenceStatements(db,event,input.description),...finalizeEvent(db,event),...(onCommit?.(db,{id:issueId,identifier}) ?? [])]); }
+  try { result = await db.batch<{ id: string }>([creationGuard(db,actor,team.workspaceId,team.id,status.id,{projectId:null,cycleId:null,labelIds:[]},status.category,allocation.prefix),issue,evidence,activity,...triage,...followStatements(db,event,[actor]),...mentionStatements(db,event,input.description),...issueReferenceStatements(db,{...event,actor},input.description),...finalizeEvent(db,event),...(onCommit?.(db,{id:issueId,identifier}) ?? [])]); }
   catch (error) { return creationError(db,team.id,error,true); }
   // The indexed issue insert returns its own identity independently of trigger writes.
   if (result[1].results.length !== 1 || result[1].results[0].id !== issueId)

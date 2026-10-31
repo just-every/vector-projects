@@ -16,6 +16,7 @@ export function TeamTriageRotation({
     });
   const hydrated = useHydrated();
   const [order, setOrder] = useState<string[]>(["", ""]),
+    [mode, setMode] = useState<"fixed" | "weekly">("weekly"),
     [pending, setPending] = useState(false),
     [error, setError] = useState(""),
     [saved, setSaved] = useState(false);
@@ -23,6 +24,7 @@ export function TeamTriageRotation({
   useEffect(() => {
     const current = JSON.parse(ids) as (string | null)[];
     setOrder(current.length ? current.map((id) => id ?? "") : ["", ""]);
+    setMode(current.length === 1 ? "fixed" : "weekly");
   }, [ids]);
   const people = data.operators.filter(
     (o) =>
@@ -42,7 +44,7 @@ export function TeamTriageRotation({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           startsLocal: fields.get("startsLocal"),
-          operatorIds: order,
+          operatorIds: mode === "fixed" ? order.slice(0, 1) : order,
         }),
       });
       resource.publishReceipt(() => receipt);
@@ -61,9 +63,9 @@ export function TeamTriageRotation({
     <section aria-label={`Triage rotation for ${team.name}`}>
       <h3>Triage responsibility</h3>
       <p>
-        A weekly rotation follows {data.workspace.timezone}. Each new native or
-        signed-source intake item notifies its current responsible member once
-        in Inbox, except its actor. Unavailable members receive nothing.
+        Choose a fixed person or a weekly rotation in {data.workspace.timezone}.
+        Each new intake item notifies its current responsible member once in
+        Inbox, except its actor. Unavailable members receive nothing.
       </p>
       {resource.loading && <p role="status">Loading rotation…</p>}
       {resource.error && (
@@ -76,12 +78,31 @@ export function TeamTriageRotation({
       )}
       {resource.data && (
         <form
-          aria-label={`Weekly triage rotation for ${team.name}`}
+          aria-label={`Triage responsibility for ${team.name}`}
           onSubmit={save}
         >
           <fieldset disabled={pending || !hydrated}>
             <label>
-              First handover in {data.workspace.timezone}
+              Responsibility mode
+              <select
+                aria-label="Responsibility mode"
+                value={mode}
+                onChange={(event) => {
+                  const next = event.target.value as "fixed" | "weekly";
+                  setMode(next);
+                  if (next === "weekly")
+                    setOrder((values) =>
+                      values.length < 2 ? [...values, ""] : values,
+                    );
+                }}
+              >
+                <option value="fixed">Fixed person</option>
+                <option value="weekly">Weekly rotation</option>
+              </select>
+            </label>
+            <label>
+              {mode === "fixed" ? "Responsibility starts" : "First handover"} in{" "}
+              {data.workspace.timezone}
               <input
                 name="startsLocal"
                 type="datetime-local"
@@ -90,92 +111,106 @@ export function TeamTriageRotation({
                 defaultValue={resource.data.startsLocal ?? ""}
               />
             </label>
-            <p>
-              The first member starts at this boundary. Subsequent members take
-              one calendar week each. A repeated or skipped clock minute hands
-              over at the next unambiguous minute.
-            </p>
+            {mode === "weekly" && (
+              <p>
+                The first member starts at this boundary. Subsequent members
+                take one calendar week each. A repeated or skipped clock minute
+                hands over at the next unambiguous minute.
+              </p>
+            )}
             <ol>
-              {order.map((id, index) => (
-                <li key={index}>
-                  <label>
-                    Rotation member {index + 1}
-                    <select
-                    aria-label={`Rotation member ${index + 1}`}
-                      required
-                      value={id}
-                      onChange={(event) =>
-                        setOrder((values) =>
-                          values.map((value, i) =>
-                            i === index ? event.target.value : value,
-                          ),
-                        )
-                      }
-                    >
-                      <option value="">Choose a team member</option>
-                      {people.map((person) => (
-                        <option key={person.id} value={person.id}>
-                          {person.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="admin-actions">
-                    <button
-                      type="button"
-                      disabled={index === 0}
-                      onClick={() =>
-                        setOrder((values) => {
-                          const next = [...values];
-                          [next[index - 1], next[index]] = [
-                            next[index],
-                            next[index - 1],
-                          ];
-                          return next;
-                        })
-                      }
-                    >
-                      Move member {index + 1} up
-                    </button>
-                    <button
-                      type="button"
-                      disabled={index === order.length - 1}
-                      onClick={() =>
-                        setOrder((values) => {
-                          const next = [...values];
-                          [next[index + 1], next[index]] = [
-                            next[index],
-                            next[index + 1],
-                          ];
-                          return next;
-                        })
-                      }
-                    >
-                      Move member {index + 1} down
-                    </button>
-                    <button
-                      type="button"
-                      disabled={order.length <= 2}
-                      onClick={() =>
-                        setOrder((values) =>
-                          values.filter((_, i) => i !== index),
-                        )
-                      }
-                    >
-                      Remove member {index + 1}
-                    </button>
-                  </div>
-                </li>
-              ))}
+              {(mode === "fixed" ? order.slice(0, 1) : order).map(
+                (id, index) => (
+                  <li key={index}>
+                    <label>
+                      {mode === "fixed"
+                        ? "Responsible member"
+                        : `Rotation member ${index + 1}`}
+                      <select
+                        aria-label={
+                          mode === "fixed"
+                            ? "Responsible member"
+                            : `Rotation member ${index + 1}`
+                        }
+                        required
+                        value={id}
+                        onChange={(event) =>
+                          setOrder((values) =>
+                            values.map((value, i) =>
+                              i === index ? event.target.value : value,
+                            ),
+                          )
+                        }
+                      >
+                        <option value="">Choose a team member</option>
+                        {people.map((person) => (
+                          <option key={person.id} value={person.id}>
+                            {person.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {mode === "weekly" && (
+                      <div className="admin-actions">
+                        <button
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() =>
+                            setOrder((values) => {
+                              const next = [...values];
+                              [next[index - 1], next[index]] = [
+                                next[index],
+                                next[index - 1],
+                              ];
+                              return next;
+                            })
+                          }
+                        >
+                          Move member {index + 1} up
+                        </button>
+                        <button
+                          type="button"
+                          disabled={index === order.length - 1}
+                          onClick={() =>
+                            setOrder((values) => {
+                              const next = [...values];
+                              [next[index + 1], next[index]] = [
+                                next[index],
+                                next[index + 1],
+                              ];
+                              return next;
+                            })
+                          }
+                        >
+                          Move member {index + 1} down
+                        </button>
+                        <button
+                          type="button"
+                          disabled={order.length <= 2}
+                          onClick={() =>
+                            setOrder((values) =>
+                              values.filter((_, i) => i !== index),
+                            )
+                          }
+                        >
+                          Remove member {index + 1}
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                ),
+              )}
             </ol>
-            <button
-              type="button"
-              disabled={order.length >= 50}
-              onClick={() => setOrder((values) => [...values, ""])}
-            >
-              Add rotation member
-            </button>
-            <button type="submit">Save triage rotation</button>
+            {mode === "weekly" && (
+              <button
+                type="button"
+                disabled={order.length >= 50}
+                onClick={() => setOrder((values) => [...values, ""])}
+              >
+                Add rotation member
+              </button>
+            )}
+            <button type="submit">Save triage responsibility</button>
           </fieldset>
         </form>
       )}
@@ -186,7 +221,7 @@ export function TeamTriageRotation({
           <a href="/app/triage">Open triage handover</a>
         </p>
       )}
-      {saved && <p role="status">Triage rotation saved.</p>}
+      {saved && <p role="status">Triage responsibility saved.</p>}
       {error && <p role="alert">{error}</p>}
     </section>
   );

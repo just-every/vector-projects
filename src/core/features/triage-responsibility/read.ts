@@ -45,6 +45,11 @@ export async function rotationProjection(
     teamId,
     teamName: team.name,
     timezone: timezone!,
+    mode: rotation
+      ? rotation.members.length === 1
+        ? "fixed"
+        : "weekly"
+      : null,
     startsLocal: rotation?.starts_local ?? null,
     operatorIds: rotation?.members ?? [],
     responsible,

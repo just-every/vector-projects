@@ -58,8 +58,8 @@ export function TriagePage() {
       )}
       {resource.data?.teams.length === 0 && (
         <p>
-          No weekly rotations are configured for your visible teams. Configure a
-          rotation in Settings → Teams.
+          No triage responsibility is configured for your visible teams.
+          Configure responsibility in Settings → Teams.
         </p>
       )}
       {resource.data?.teams.map((team) => (
@@ -78,6 +78,9 @@ function TeamHandover({ team }: { team: RotationView }) {
           Responsible: {team.responsible?.name ?? "No available member"}
         </strong>
       </p>
+      {team.mode === "fixed" && (
+        <p>Fixed responsibility. No scheduled handover.</p>
+      )}
       {team.nextHandoverAt && (
         <p>
           Next handover:{" "}

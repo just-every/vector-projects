@@ -1,9 +1,17 @@
 import { env } from "cloudflare:workers";
 import { expect, vi } from "vitest";
-import { actor, invite, request, bindings } from "./base-auth-fixture";
+import { actor, invite, request, bindings, signIn } from "./base-auth-fixture";
 import { setupIntegrations } from "./integration-fixture";
 import { scheduled } from "../../src/core/app/scheduled";
 import { snapshot, resetLimits } from "./role-fixture";
+import { channelEdge } from "./channel-edge-fixture";
+import {
+  seedIntakeForTeam,
+  inboundFixture,
+  mailBindings,
+} from "./email-intake-fixture";
+import worker from "./entry";
+import { agentResourceClient } from "./agent-resource-journey";
 
 /** Mounted native intake, signed source intake, real Inbox and scheduled export. */
 export async function triageResponsibilityJourney(
@@ -32,12 +40,13 @@ export async function triageResponsibilityJourney(
           role: "member",
         }),
       );
-    return {
+    const person = {
       id,
       cookie,
-      call: (p: string, m = "GET", b?: unknown) =>
-        request("/api" + p, m, b, cookie),
+      call: (p: string, m = "GET", b?: unknown): Promise<Response> =>
+        request("/api" + p, m, b, person.cookie),
     };
+    return person;
   };
   const first = await make(9101),
     second = await make(9102),
@@ -70,6 +79,10 @@ export async function triageResponsibilityJourney(
   let before = await stored();
   for (const who of [first, viewer, guest]) {
     expect((await who.call(path, "PUT", config)).status).toBe(403);
+    expect(
+      (await who.call(path, "PUT", { ...config, operatorIds: [first.id] }))
+        .status,
+    ).toBe(403);
     expect(await stored()).toEqual(before);
   }
   await read(
@@ -82,6 +95,10 @@ export async function triageResponsibilityJourney(
   vi.useFakeTimers({ toFake: ["Date"] });
   try {
     vi.setSystemTime(new Date("2026-10-31T12:00:00Z"));
+    await read(
+      await first.call(path, "PUT", { ...config, operatorIds: [first.id] }),
+    );
+    expect((await read(await f.call(path))).mode).toBe("fixed");
     await read(await first.call(path, "PUT", config));
     await read(await admin.call(path, "PUT", config));
     expect((await read(await f.call(path))).responsible.id).toBe(first.id);
@@ -247,6 +264,13 @@ export async function triageResponsibilityJourney(
     )
       .bind(second.id)
       .run();
+    // Reactivation does not revive the session invalidated by inactivation.
+    const secondEmail = await env.DB.prepare(
+      "SELECT email FROM operators WHERE id=?",
+    )
+      .bind(second.id)
+      .first<string>("email");
+    second.cookie = await signIn(secondEmail!);
     // Both ROLE-009 settings choices apply on the next request; refused storage stays exact.
     await read(
       await f.call(`/settings/teams/${team.id}/permissions`, "PUT", {
@@ -263,6 +287,177 @@ export async function triageResponsibilityJourney(
       }),
     );
     await read(await first.call(path, "PUT", config));
+    // A fixed assignment has one stable effective boundary, with no weekly
+    // handover. Every currently implemented creation door reaches its Inbox.
+    const fixed = { ...config, operatorIds: [first.id] };
+    await read(await first.call(path, "PUT", fixed));
+    expect(await read(await f.call(path))).toMatchObject({
+      mode: "fixed",
+      responsible: { id: first.id },
+      nextHandoverAt: null,
+      periodStartsAt: "2026-10-26T09:00:00.000Z",
+    });
+    const edge = channelEdge();
+    try {
+      await read(
+        await f.call("/settings/integrations/slack", "POST", {
+          botToken: edge.token,
+        }),
+      );
+      const email = await env.DB.prepare(
+        "SELECT email FROM operators WHERE id=?",
+      )
+        .bind(first.id)
+        .first<string>("email");
+      edge.users(email!, "UTRIAGE", "Triage colleague");
+      await read(
+        await first.call("/settings/notifications/slack/lookup", "POST"),
+      );
+      await read(
+        await first.call("/settings/notifications/slack/link", "POST", {
+          slackUserId: "UTRIAGE",
+        }),
+      );
+      await read(
+        await first.call("/settings/notifications", "PATCH", {
+          emailEnabled: true,
+        }),
+      );
+      await read(
+        await first.call("/settings/notifications/channels", "PUT", {
+          channels: [{ kind: "triage", emailMode: "immediate", slack: true }],
+        }),
+      );
+      const nativeFixed = await create(f, "synthetic-vector-9150");
+      expect(await notices(first, nativeFixed.identifier)).toHaveLength(1);
+      expect(await notices(second, nativeFixed.identifier)).toEqual([]);
+      const direct = () =>
+        edge.calls.filter(
+          (c) =>
+            c.method === "chat.postMessage" &&
+            c.body.blocks.some((block: any) =>
+              block.elements?.some(
+                (element: any) =>
+                  element.url ===
+                  bindings.APP_ORIGIN + "/app/issues/" + nativeFixed.identifier,
+              ),
+            ),
+        );
+      expect(direct()).toHaveLength(1);
+      expect(direct()[0].body.channel).toBe("DTRIAGE");
+      expect(direct()[0].body.text).not.toContain("synthetic-vector-9150");
+      expect(direct()[0].body.text).not.toContain("Owner");
+      expect(
+        await env.DB.prepare(
+          "SELECT count(*) n FROM notification_mail_audit WHERE subject_identifier=?",
+        )
+          .bind(nativeFixed.identifier)
+          .first<number>("n"),
+      ).toBe(1);
+      const selfFixed = await create(first, "synthetic-vector-9151");
+      expect(await notices(first, selfFixed.identifier)).toEqual([]);
+      const sourceFixed = await read(
+        await f.signed(source, {
+          ...input,
+          sourceRecordId: "synthetic-vector-9152",
+        }),
+      );
+      expect(await notices(first, sourceFixed.identifier)).toHaveLength(1);
+      // Email's configuring manager is not its sender. Even when that manager
+      // is responsible, the real email event must notify them once.
+      const mail = await seedIntakeForTeam(team.id, first.cookie);
+      expect(await notices(first, mail.identifier)).toMatchObject([
+        { actor: "Email intake" },
+      ]);
+      expect(await notices(second, mail.identifier)).toEqual([]);
+      const replay = inboundFixture(mail.address, mail.messageId);
+      expect(await worker.email(replay.message, mailBindings)).toEqual({
+        status: "duplicate",
+      });
+      f.restart();
+      vi.setSystemTime(new Date("2026-11-02T10:00:00Z"));
+      await scheduled({ scheduledTime: Date.now() }, bindings);
+      await scheduled({ scheduledTime: Date.now() }, bindings);
+      expect(await read(await f.call(path))).toMatchObject({
+        mode: "fixed",
+        responsible: { id: first.id },
+        nextHandoverAt: null,
+        periodStartsAt: "2026-10-26T09:00:00.000Z",
+      });
+      expect(await notices(first, mail.identifier)).toHaveLength(1);
+      expect(direct()).toHaveLength(1);
+      expect(
+        await env.DB.prepare(
+          "SELECT count(*) n FROM notification_mail_audit WHERE subject_identifier=?",
+        )
+          .bind(nativeFixed.identifier)
+          .first<number>("n"),
+      ).toBe(1);
+      await read(
+        await f.signed(source, {
+          ...input,
+          sourceRecordId: "synthetic-vector-9152",
+        }),
+      );
+      expect(await notices(first, sourceFixed.identifier)).toHaveLength(1);
+      // The mounted agent transport uses the same native creation door and
+      // retains its once receipt across a repeated idempotency key.
+      await read(
+        await f.call(path, "PUT", { ...config, operatorIds: [second.id] }),
+      );
+      const agent = await agentResourceClient(first, f),
+        intakeKey = crypto.randomUUID();
+      const [uri] = await agent.write(team.id, intakeKey);
+      const agentIdentifier = await env.DB.prepare(
+        "SELECT identifier FROM issues WHERE id=?",
+      )
+        .bind(uri.split("/").at(-1))
+        .first<string>("identifier");
+      expect(await notices(second, agentIdentifier!)).toHaveLength(1);
+      expect(await notices(first, agentIdentifier!)).toEqual([]);
+      await agent.write(team.id, intakeKey);
+      expect(await notices(second, agentIdentifier!)).toHaveLength(1);
+      await read(await f.call(path, "PUT", fixed));
+      await read(
+        await first.call("/settings/personal-time", "PATCH", {
+          timezone: "UTC",
+          workingHoursStart: "09:00",
+          workingHoursEnd: "17:00",
+          workingDays: [1, 2, 3, 4, 5],
+        }),
+      );
+      await read(
+        await first.call("/settings/notifications/channels", "PUT", {
+          channels: [{ kind: "triage", emailMode: "daily", slack: false }],
+        }),
+      );
+      const digestItem = await create(f, "synthetic-vector-9156");
+      const delivered = () =>
+        env.DB.prepare(
+          "SELECT count(*) n FROM notification_mail_audit WHERE subject_identifier=?",
+        )
+          .bind(digestItem.identifier)
+          .first<number>("n");
+      expect(await notices(first, digestItem.identifier)).toHaveLength(1);
+      expect(await delivered()).toBe(0);
+      vi.setSystemTime(new Date("2026-11-03T08:59:59Z"));
+      await scheduled({ scheduledTime: Date.now() }, bindings);
+      expect(await delivered()).toBe(0);
+      vi.setSystemTime(new Date("2026-11-03T09:00:00Z"));
+      await scheduled({ scheduledTime: Date.now() }, bindings);
+      await scheduled({ scheduledTime: Date.now() }, bindings);
+      expect(await delivered()).toBe(1);
+      await read(
+        await f.call(path, "PUT", {
+          ...config,
+          operatorIds: [first.id, viewer.id],
+        }),
+        409,
+      );
+    } finally {
+      await read(await f.call("/settings/integrations/slack", "DELETE"));
+      edge.restore();
+    }
     // Workspace calendar weeks are 169h in fall and 167h in spring, not fixed milliseconds.
     await read(
       await f.call("/settings", "PATCH", { timezone: "America/New_York" }),
@@ -328,6 +523,9 @@ export async function triageResponsibilityJourney(
       ).status,
     ).toBe(401);
     expect(await stored()).toEqual(revoked);
+    await read(
+      await f.call(path, "PUT", { ...config, operatorIds: [second.id] }),
+    );
     await read(await f.call("/settings/operators/" + second.id, "DELETE"));
     expect((await second.call("/triage-responsibility")).status).toBe(401);
     expect((await read(await f.call(path))).responsible).toBeNull();

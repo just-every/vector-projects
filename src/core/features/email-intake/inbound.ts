@@ -72,7 +72,7 @@ export async function receiveIntakeMail(message: CloudflareIntakeMessage, env: W
         transaction.prepare(`UPDATE intake_email_messages SET issue_id=?,updated_at=? WHERE id=? AND status='processing'`).bind(created.id,at,id),
         transaction.prepare(`UPDATE evidence_revisions SET source_name='Email intake',origin_kind='source',actor_operator_id=NULL WHERE issue_id=?`).bind(created.id),
         automationAudit(transaction,createUlid(new Date()),created.id,'email_intake.received',at),
-      ]);
+      ], {name: 'Email intake'});
       const found = await db.prepare('SELECT id,identifier FROM issues WHERE identifier=?').bind(created.identifier).first<{id:string;identifier:string}>();
       if (!found) throw new Error('issue_unavailable');
       issue = found;

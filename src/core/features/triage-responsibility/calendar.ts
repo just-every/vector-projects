@@ -25,6 +25,12 @@ export function rotationPeriod(
     day = calendarDay(at, timezone),
     first = startsLocal.slice(0, 10),
     time = startsLocal.slice(10);
+  // A single persisted slot is a fixed assignment. Its effective boundary and
+  // consumed receipts remain stable through every later calendar week.
+  if (count === 1) {
+    const start = boundary(startsLocal, timezone);
+    return start > at ? null : { position: 0, startsAt: start, nextAt: null };
+  }
   const days = Math.round(
     (Date.parse(day + "T12:00Z") - Date.parse(first + "T12:00Z")) / 86400000,
   );

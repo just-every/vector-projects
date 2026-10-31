@@ -4,7 +4,7 @@ export const rotationInput = z
     startsLocal: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
     operatorIds: z
       .array(z.string().regex(/^[0-7][0-9A-HJKMNP-TV-Z]{25}$/))
-      .min(2)
+      .min(1)
       .max(50)
       .refine(
         (ids) => new Set(ids).size === ids.length,
@@ -16,6 +16,7 @@ export const rotationView = z.object({
   teamId: z.string(),
   teamName: z.string(),
   timezone: z.string(),
+  mode: z.enum(["fixed", "weekly"]).nullable(),
   startsLocal: z.string().nullable(),
   operatorIds: z.array(z.string().nullable()),
   responsible: z.object({ id: z.string(), name: z.string() }).nullable(),

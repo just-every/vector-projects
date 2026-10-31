@@ -29,6 +29,16 @@ export async function triageResponsibilityJourney({
   const state = await send(page, "/settings/administration"),
     team = state.teams.find((t) => t.name === runtime.config.DEFAULT_TEAM_NAME),
     owner = { ...state.viewer, name: runtime.config.FIRST_OWNER_NAME };
+  const showForm = async () => {
+    await page
+      .getByRole("form", {
+        name: `Triage responsibility for ${team.name}`,
+        exact: true,
+        includeHidden: true,
+      })
+      .waitFor({ state: "attached" });
+    await openDisclosures(page);
+  };
   const email = ["synthetic-vector-9120", `triage-${Date.now()}.test`].join(
     "@",
   );
@@ -74,9 +84,9 @@ export async function triageResponsibilityJourney({
       "weekly rotation, native and signed intake, handover and once-only Inbox through mounted doors",
       async () => {
         await navigate(page, base + "/app/settings");
-        await openDisclosures(page);
+        await showForm();
         const form = page.getByRole("form", {
-          name: `Weekly triage rotation for ${team.name}`,
+          name: `Triage responsibility for ${team.name}`,
           exact: true,
         });
         await form
@@ -107,16 +117,19 @@ export async function triageResponsibilityJourney({
             r.request().method() === "PUT",
         );
         await form
-          .getByRole("button", { name: "Save triage rotation", exact: true })
+          .getByRole("button", {
+            name: "Save triage responsibility",
+            exact: true,
+          })
           .click();
         assert.equal((await saved).status(), 200);
         await expect(
           page
             .getByRole("status")
-            .filter({ hasText: "Triage rotation saved." }),
+            .filter({ hasText: "Triage responsibility saved." }),
         ).toBeVisible();
         await page.reload();
-        await openDisclosures(page);
+        await showForm();
         await expect(
           form.getByLabel("Rotation member 1", { exact: true }),
         ).toHaveValue(colleague);
@@ -276,6 +289,74 @@ export async function triageResponsibilityJourney({
             .first(),
         ).toBeVisible();
         await inspect(page, page.locator("main"), "triage-inbox-handover");
+        // Switch the same persisted configuration to a fixed member through
+        // Settings, reload it, and inspect the actual recipient's populated UI.
+        await navigate(page, base + "/app/settings");
+        await showForm();
+        await form
+          .getByLabel("Responsibility mode", { exact: true })
+          .selectOption("fixed");
+        await form
+          .getByLabel("Responsible member", { exact: true })
+          .selectOption(colleague);
+        const fixedSaved = page.waitForResponse(
+          (r) =>
+            new URL(r.url()).pathname === "/api" + path &&
+            r.request().method() === "PUT",
+        );
+        await form
+          .getByRole("button", {
+            name: "Save triage responsibility",
+            exact: true,
+          })
+          .click();
+        assert.equal((await fixedSaved).status(), 200);
+        await page.reload();
+        await showForm();
+        await expect(
+          form.getByLabel("Responsibility mode", { exact: true }),
+        ).toHaveValue("fixed");
+        await expect(
+          form.getByLabel("Responsible member", { exact: true }),
+        ).toHaveValue(colleague);
+        assert.equal((await send(page, path)).nextHandoverAt, null);
+        const fixedItem = await send(
+          page,
+          "/intake",
+          "POST",
+          {
+            teamId: team.id,
+            title: "synthetic-vector-9153",
+          },
+          201,
+        );
+        assert.equal((await notices(peer, fixedItem.identifier)).length, 1);
+        assert.equal((await notices(page, fixedItem.identifier)).length, 0);
+        await inspect(page, form, "triage-fixed-settings");
+        await navigate(peer, base + "/app/triage");
+        await expect(
+          handover.getByText("Responsible: Rotation colleague", {
+            exact: true,
+          }),
+        ).toBeVisible();
+        await expect(
+          handover.getByText("Fixed responsibility. No scheduled handover.", {
+            exact: true,
+          }),
+        ).toBeVisible();
+        await expect(
+          handover.getByRole("link", {
+            name: new RegExp(fixedItem.identifier),
+          }),
+        ).toBeVisible();
+        await inspect(peer, handover, "triage-fixed-handover");
+        await navigate(peer, base + "/app/inbox");
+        await expect(
+          peer
+            .getByRole("button", { name: new RegExp(fixedItem.identifier) })
+            .first(),
+        ).toBeVisible();
+        await inspect(peer, peer.locator("main"), "triage-fixed-inbox");
       },
     );
   } finally {

@@ -50,7 +50,7 @@ export function addTriageResponsibilityRoutes(app: Hono<AppEnvironment>) {
           {
             error: "invalid_rotation",
             message:
-              "Choose an ordered rotation of distinct active team members and a valid local start.",
+              "Choose a fixed member or an ordered rotation of distinct active team members and a valid local start.",
           },
           400,
         );

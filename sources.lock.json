@@ -522,7 +522,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "6568a9e8c79c13a877ea8fd703d0c94f5d02888bea7b5b0ca59c9e3d6bf7dca0",
+      "sha256": "4f7c07f8ba5f9ab565cb765ae2cc5bb08c97e73ed859ab19d57a258739da8744",
       "executable": false
     },
     "DEMO.md": {
@@ -634,7 +634,7 @@
       "executable": false
     },
     "docs/guide/triage.md": {
-      "sha256": "dc283b1f624dff8fb54b802fe49e734f1a81936d875083a310c820c5d213dadd",
+      "sha256": "c6cf5db06458765baf6dbf2cce05f674bda71c112f107573f601799856a37775",
       "executable": false
     },
     "docs/guide/work.md": {
@@ -5018,7 +5018,7 @@
       "executable": false
     },
     "src/core/features/email-intake/inbound.ts": {
-      "sha256": "cb3c00433ea833b858086903668d0a6f59aac4571378d1f0f6ae0c186fa70917",
+      "sha256": "a06df401a2696c48906cd27ab7a7760d6aa409e37800bf6aba8dedf4082c68f5",
       "executable": false
     },
     "src/core/features/email-intake/outbound.ts": {
@@ -6494,7 +6494,7 @@
       "executable": false
     },
     "src/core/features/operator-intake/repository.ts": {
-      "sha256": "0898dd10bb75fd0211b32141fb639d220a44b7274d2075db7420e3ffb4dad696",
+      "sha256": "189ba0d1927e6e5f491f6c2a82b02781fb975b2bd3bcad49bab25f137a77b70d",
       "executable": false
     },
     "src/core/features/operator-intake/routes.ts": {
@@ -7126,7 +7126,7 @@
       "executable": false
     },
     "src/core/features/triage-responsibility/calendar.ts": {
-      "sha256": "dbf684de382f7b7d52a65354aa3642b2c3c30dd5a20ec12f06ab4295b43f39d2",
+      "sha256": "847e677625aebd20a09fecc747407d04693da94c60c9b63a0fcbc10f8733fea6",
       "executable": false
     },
     "src/core/features/triage-responsibility/events.ts": {
@@ -7134,11 +7134,11 @@
       "executable": false
     },
     "src/core/features/triage-responsibility/panel.tsx": {
-      "sha256": "a9b4f904f7eb4f9d511aed0c64951734a0ca10f86e00136865648f474b82b7fe",
+      "sha256": "5d5781b1b70606a8a5339a86db7c58e9bcd13379f37db05698a5f36c27b4cafc",
       "executable": false
     },
     "src/core/features/triage-responsibility/read.ts": {
-      "sha256": "8914d2c44e0e968d85667de1449e3bffff0c67f9161c92598571921e15067652",
+      "sha256": "b9f2ca853fb936e4601e60c6c1a4abb123824534b3305a97dedfe432cc9473b8",
       "executable": false
     },
     "src/core/features/triage-responsibility/repository.ts": {
@@ -7150,11 +7150,11 @@
       "executable": false
     },
     "src/core/features/triage-responsibility/routes.ts": {
-      "sha256": "f101585bf847a6270c77e2e9911aace28df009bc971f8437a9ca1edf5a0624e9",
+      "sha256": "d9332964ddb75d9b19c059622e97a8722086b383084688aa7f9c0927749fca52",
       "executable": false
     },
     "src/core/features/triage-responsibility/schema.ts": {
-      "sha256": "72dbcfc6c499c04649f4167c31f88647f4bee8c407873a3b56ecb67fbf8f5ef3",
+      "sha256": "470193bff9c6d91228823acb50a90d46167ef6f1e9f97709708081ff6fd42152",
       "executable": false
     },
     "src/core/features/triage-responsibility/settings.ts": {
@@ -7166,7 +7166,7 @@
       "executable": false
     },
     "src/core/features/triage-responsibility/ui.tsx": {
-      "sha256": "1dc27b262eae3e86fa0f517855851f23bda4fd6ddc5a9291b73268a8273d4f48",
+      "sha256": "eb78cd0d767d23280b0d3047c2a0aaac10814b6ebb8e1f5350004a0b388d0f40",
       "executable": false
     },
     "src/core/features/views/guest-scope.ts": {
@@ -8290,7 +8290,7 @@
       "executable": false
     },
     "tests/e2e/triage-responsibility-journey.mjs": {
-      "sha256": "c244096d04fa26a79e2f21c220e7c0fffc0296858d30cf2a07292f82de6389f7",
+      "sha256": "aa1754099b9461246a5f37d8d36eb7706c5c4e4dc4556f3aaf836511eef9a04c",
       "executable": false
     },
     "tests/e2e/ui-administration-form.mjs": {
@@ -8454,7 +8454,7 @@
       "executable": false
     },
     "tests/worker/agent-resource-journey.ts": {
-      "sha256": "12c1f90866377a49f050b25c26e321c4a29d046a05a7ca873c91abfb6863cdfa",
+      "sha256": "d0e8100b4a294cfeb451937437d8af948df9924e57a9a41d29514c984e51635d",
       "executable": false
     },
     "tests/worker/api-rate-limit.test.ts": {
@@ -8606,7 +8606,7 @@
       "executable": false
     },
     "tests/worker/data-http.test.ts": {
-      "sha256": "b64d15e8ea98bc439544af344c6eaa3569db5194b93f31284cfc26044ef0f537",
+      "sha256": "c6fe63b3b1b4b0d5664092238305c2ef20dec298b67750cc61dc8a5b43e1b62f",
       "executable": false
     },
     "tests/worker/data-import-atomic.test.ts": {
@@ -9138,7 +9138,7 @@
       "executable": false
     },
     "tests/worker/triage-responsibility-journey.ts": {
-      "sha256": "34b0b3fd525545c009c569f3a0ef8e99e3a917d6bc61c46c2a75a65972246493",
+      "sha256": "2f83ab1648f2cbaa67597298588944567e242dd1c114b317f5f60dfc8632709e",
       "executable": false
     },
     "tests/worker/triage-upgrade.ts": {
