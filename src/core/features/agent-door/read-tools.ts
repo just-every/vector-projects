@@ -7,6 +7,7 @@ import { listIssues, issueListResponse } from '../issues/list';
 import { issueListQuerySchema } from '../issues/list-schema';
 import { nativeIssue, standard, issueUri } from './native';
 import { requireIssueAccess } from '../issues/access';
+import { githubIssueFields } from '../integrations/github/issue-projection';
 import { discussion } from '../discussion/repository';
 
 const output={type:'object',additionalProperties:true} as const;
@@ -35,7 +36,8 @@ export const issueResource:ResourceDefinition={uriTemplate:'vector://issue/{id}'
     const value=await getIssueDetail(db,issue.identifier,new Date());
     if(!value)return null;
     await requireIssueAccess(db,issue.identifier,ctx.person.id);
-    return {json:value,untrusted:true};
+    const fields=await githubIssueFields(db,ctx.person.id,value.identifier,value.title);
+    return {json:{...value,...fields},untrusted:true};
   }};
 
 /** Comments keep the UI's body, attribution and per-person action projection. */
