@@ -5090,7 +5090,7 @@
       "executable": false
     },
     "src/core/features/favorites/ui/favorites.css": {
-      "sha256": "76de9d52eea71f8d26c24e270b5f1819a32c3a8654231e2339a2234f655db87b",
+      "sha256": "a1557e5ae2de744344cee353680878119fafa90b541858fbcd115e299e776194",
       "executable": false
     },
     "src/core/features/favorites/ui/navigation.tsx": {
