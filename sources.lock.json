@@ -521,7 +521,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "cebe20f433449211872f325da2a22ef9f031105700454801faa975d315f69f47",
+      "sha256": "e98e6d4f2e97c7b7fd8d326db68af014bc94626b4392caf6c870964d69500c88",
       "executable": false
     },
     "DEMO.md": {
@@ -553,7 +553,7 @@
       "executable": false
     },
     "docs/API.md": {
-      "sha256": "f36373005bda4fe2a6701112bf7a34a2c2fc01ce452c38bd8b786c242e530520",
+      "sha256": "66d50092c819b061733fa482d3e26c1ebee01fad9396063368a0835e4344c81c",
       "executable": false
     },
     "docs/ARCHIVES.md": {
@@ -8285,7 +8285,11 @@
       "executable": false
     },
     "tests/e2e/warehouse-export-client.mjs": {
-      "sha256": "3b359e9fc07abfbb155128405f41efc5327e73555f0f5b9b7a861e28efcd8492",
+      "sha256": "a201684db47550230e548c56dda83d3e693c1551abcd68f07a63420b66652ff8",
+      "executable": false
+    },
+    "tests/e2e/warehouse-grant-client.mjs": {
+      "sha256": "22659933d9ab0707e81e40bd5b9198d24e31cdf39088bb7595a41048d47ea53d",
       "executable": false
     },
     "tests/e2e/warehouse-schedule-client.mjs": {
@@ -9117,7 +9121,11 @@
       "executable": false
     },
     "tests/worker/warehouse-export-journey.ts": {
-      "sha256": "5ef53443ff6efd8d23857b56ecb13ba442894b9730f40e6dcaa6d244064dbbf1",
+      "sha256": "938bbc7f86bdcf5f35c655c8646d8b97076dc3b9b1aec3868930e4372b02ad45",
+      "executable": false
+    },
+    "tests/worker/warehouse-grant-journey.ts": {
+      "sha256": "417037821098d8f69d9a15976ec8552108764f04fa23ef3c474f7f99ef4e36f2",
       "executable": false
     },
     "tests/worker/warehouse-schedule-journey.ts": {

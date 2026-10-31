@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { exerciseWarehouseSchedules } from './warehouse-schedule-client.mjs';
+import { warehouseGrants } from './warehouse-grant-client.mjs';
 
 /** A real warehouse consumer of the published HTTP operations. This helper is
  * reached by the existing integration runtime, without a fake transport. */
@@ -26,18 +27,20 @@ export async function exerciseWarehouseExports({runtime,cookie}) {
   await native('/issues/'+issues[0].identifier,'PATCH',{expectedVersion:issues[0].version,title:'synthetic-vector-51608'});
   const expectedHistory=(await Promise.all(issues.map(async issue=>(await native('/issues/'+issue.identifier)).activity))).flat();
   const credential=await native('/settings/integrations/tokens','POST',{name:'synthetic-vector-51609',scopes:['reports:read']},201);
+  const grants=await warehouseGrants({runtime,native});
   const api=(path,token=credential.token)=>runtime.req('/api/v1'+path,{headers:{Authorization:'Bearer '+token}});
   try {
     const schemaResponse=await runtime.req('/api/v1/schema');assert.equal(schemaResponse.status,200);
     const schema=await schemaResponse.json();
     const expected={issues:issues.map(row=>row.id).sort(),history:expectedHistory.map(row=>row.id).sort(),cycles:cycles.map(row=>row.id).sort(),projects:projects.map(row=>row.id).sort()};
-    for(const resource of ['issues','history','cycles','projects']) {
+    for(const token of [credential.token,grants.read.access_token]) {
+     for(const resource of ['issues','history','cycles','projects']) {
       const path='/report-exports/'+resource,definition=schema.paths[path].get;
       assert.deepEqual(definition['x-scopes'],['reports:read']);
       const seen=[];let cursor=null,total;
       do {
         const query=new URLSearchParams({team:team.id,limit:'1',...(cursor?{cursor}:{})});
-        const response=await api(path+'?'+query);assert.equal(response.status,200);
+        const response=await api(path+'?'+query,token);assert.equal(response.status,200);
         assert.equal(response.headers.get('cache-control'),'no-store');
         const page=await response.json();total??=page.total;assert.equal(page.total,total);
         assert.equal(page.rows.length,1);seen.push(...page.rows);cursor=page.nextCursor;
@@ -49,8 +52,26 @@ export async function exerciseWarehouseExports({runtime,cookie}) {
       }
       if(resource==='history')assert.ok(seen.some(row=>row.kind==='issue.updated'&&row.nextValue.title==='synthetic-vector-51608'));
       console.log('PROBE REPORT-005 '+resource+': real local GET '+path+' with limit=1 -> '+seen.length+' exact stable IDs, total='+total+', no duplicates.');
+     }
     }
+    const domain=()=>Object.fromEntries(['issues','issue_activity','cycles','projects'].map(table=>[table,runtime.sql('SELECT * FROM '+table+' ORDER BY id')]));
+    const before=domain();
+    for(const resource of ['issues','history','cycles','projects'])assert.equal((await api('/report-exports/'+resource,grants.insufficient.access_token)).status,403);
+    const refused=await runtime.req('/api/v1/issues',{
+      method:'POST',headers:{Authorization:'Bearer '+grants.read.access_token,'Content-Type':['application','json'].join('/')},
+      body:JSON.stringify({teamId:team.id,title:'synthetic-vector-51613'}),
+    });
+    assert.equal(refused.status,403);assert.deepEqual(domain(),before);
+    const first=await (await api('/report-exports/issues?team='+team.id+'&limit=1',grants.read.access_token)).json();
+    assert.ok(first.nextCursor);
+    await native('/settings/oauth-apps/grants/'+grants.read.grant_id,'DELETE');
+    for(const resource of ['issues','history','cycles','projects'])assert.equal((await api('/report-exports/'+resource,grants.read.access_token)).status,401);
+    assert.equal((await api('/report-exports/issues?team='+team.id+'&limit=1&cursor='+encodeURIComponent(first.nextCursor),grants.read.access_token)).status,401);
+    assert.deepEqual(domain(),before);
+    console.log('PROBE REPORT-005 oauth-client: real local consent and exchange -> read-only traversal; insufficient grant and mutation -> 403 unchanged; revoked grant and captured cursor -> 401 unchanged.');
   } finally {
+    await native('/settings/oauth-apps/grants/'+grants.read.grant_id,'DELETE');
+    await native('/settings/oauth-apps/grants/'+grants.insufficient.grant_id,'DELETE');
     await native('/settings/integrations/tokens/'+credential.credential.id,'DELETE');
   }
   assert.equal((await api('/report-exports/issues')).status,401);

@@ -422,6 +422,14 @@ or tampered cursor returns 400; a foreign cursor or changed authority returns
 also rechecks current token scope, expiry, revocation, active identity and role;
 revoked access receives 401 and a disallowed current role receives 403.
 
+A separately consented OAuth grant follows the same current Owner or Admin
+and team visibility rules. Register `reports:read` on the application and
+select that scope during consent; registering additional application scopes
+does not grant them to the warehouse client. A valid OAuth grant missing the
+required scope returns 403 `insufficient_scope`. Revoking the grant invalidates
+its captured cursors as well as fresh page reads; an old cursor never restores
+revoked access.
+
 These are live read pages, not a frozen snapshot or incremental change feed.
 Each page and its total share a database snapshot; edits between requests may
 change totals and values. Consumers should upsert by stable ID and reconcile

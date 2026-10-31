@@ -2,6 +2,7 @@ import { env } from 'cloudflare:workers';
 import { expect } from 'vitest';
 import { setupIntegrations } from './integration-fixture';
 import { actor, bindings, origin, invite, request } from './base-auth-fixture';
+import { warehouseGrants } from './warehouse-grant-journey';
 
 const address = (n: number) => ['synthetic-vector-' + n, 'vector.test'].join(String.fromCharCode(64));
 async function json(response: Response, status = 200): Promise<any> {
@@ -35,6 +36,8 @@ export async function warehouseExportJourney(f: Awaited<ReturnType<typeof setupI
   const old = await f.issueToken(['issues:read','metadata:read'],'synthetic-vector-51516');
   const adminCookie = await invite(address(51517),f.cookie,'admin'),adminId=await actor(adminCookie);
   const adminToken = (await json(await request('/api/settings/integrations/tokens','POST',{name:'synthetic-vector-51518',scopes:['reports:read']},adminCookie),201)).token;
+  const grants = await warehouseGrants(f, adminCookie);
+  const adminTokens = [adminToken, grants.read.access_token];
   const endpoint = (resource: string,teamId=team.id) => '/report-exports/'+resource+'?team='+teamId+'&limit=1';
   const call = (resource: string, token=read.token, suffix='',teamId=team.id) => f.api(token,endpoint(resource,teamId)+suffix);
   const pages = async (resource: string, token=read.token,teamId=team.id) => {
@@ -80,27 +83,34 @@ export async function warehouseExportJourney(f: Awaited<ReturnType<typeof setupI
   }
   const privateReferences=nativeHistory.filter(a=>a.kind==='issue.mentioned').map(a=>a.id);
   expect(privateReferences).toHaveLength(2);
-  expect((await pages('history',adminToken)).map(r=>r.id)).toEqual(expectedIds.history.filter(id=>!privateReferences.includes(id)));
-  for(const resource of ['issues','history','cycles','projects']) {
-    const hiddenPage=await json(await call(resource,adminToken,'',privateTeam.id));
-    expect(hiddenPage).toMatchObject({rows:[],total:0,nextCursor:null});
-    expect(JSON.stringify(hiddenPage)).not.toContain(hidden.identifier);
+  for (const token of adminTokens) {
+    for (const resource of ['issues','history','cycles','projects']) {
+      const expected = resource === 'history' ? expectedIds.history.filter(id=>!privateReferences.includes(id)) : expectedIds[resource];
+      expect((await pages(resource,token)).map(r=>r.id)).toEqual(expected);
+      const hiddenPage=await json(await call(resource,token,'',privateTeam.id));
+      expect(hiddenPage).toMatchObject({rows:[],total:0,nextCursor:null});
+      expect(JSON.stringify(hiddenPage)).not.toContain(hidden.identifier);
+    }
   }
   // Add then withdraw current private-team membership. Old cursors fail even
   // for a public-team query whose visible rows did not change.
   await json(await f.call('/settings/teams/'+privateTeam.id+'/members/'+adminId,'PUT',{role:'member'}));
   const cursors:Record<string,string>={};
-  for(const resource of ['issues','history','cycles','projects']) {
-    cursors[resource]=(await json(await call(resource,adminToken))).nextCursor;
-    expect((await json(await call(resource,adminToken,'',privateTeam.id))).total).toBeGreaterThan(0);
+  for(const token of adminTokens) {
+    for(const resource of ['issues','history','cycles','projects']) {
+      cursors[token+resource]=(await json(await call(resource,token))).nextCursor;
+      expect((await json(await call(resource,token,'',privateTeam.id))).total).toBeGreaterThan(0);
+    }
+    expect((await pages('history',token)).map(r=>r.id)).toEqual(expectedIds.history);
   }
-  expect((await pages('history',adminToken)).map(r=>r.id)).toEqual(expectedIds.history);
   await json(await f.call('/settings/teams/'+privateTeam.id+'/members/'+adminId,'DELETE'));
-  for(const resource of ['issues','history','cycles','projects']) {
-    expect((await call(resource,adminToken,'&cursor='+encodeURIComponent(cursors[resource]))).status).toBe(409);
-    expect(await pages(resource,adminToken,privateTeam.id)).toEqual([]);
+  for(const token of adminTokens) {
+    for(const resource of ['issues','history','cycles','projects']) {
+      expect((await call(resource,token,'&cursor='+encodeURIComponent(cursors[token+resource]))).status).toBe(409);
+      expect(await pages(resource,token,privateTeam.id)).toEqual([]);
+    }
+    expect((await pages('history',token)).map(r=>r.id)).toEqual(expectedIds.history.filter(id=>!privateReferences.includes(id)));
   }
-  expect((await pages('history',adminToken)).map(r=>r.id)).toEqual(expectedIds.history.filter(id=>!privateReferences.includes(id)));
   const tables=(await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT GLOB '_cf_*' AND name NOT IN ('integration_token_usage','access_rate_limits') ORDER BY name").all<{name:string}>()).results;
   const storage=async()=>Object.fromEntries(await Promise.all(tables.map(async({name})=>[name,(await env.DB.prepare('SELECT * FROM "'+name.replaceAll('"','""')+'"').all()).results.map(row=>JSON.stringify(row)).sort()])));
   // Retained credentials cannot bypass a role change. Guest and Viewer tokens
@@ -108,18 +118,25 @@ export async function warehouseExportJourney(f: Awaited<ReturnType<typeof setupI
   for(const role of ['member','guest','viewer']) {
     await json(await f.call('/settings/operators/'+adminId+'/role','PATCH',{role,...(role==='guest'?{teamIds:[team.id]}:{})}));
     const roleBefore=await storage();
-    for(const resource of ['issues','history','cycles','projects'])expect((await call(resource,adminToken)).status).toBe(403);
+    for(const resource of ['issues','history','cycles','projects']) {
+      expect((await call(resource,adminToken)).status).toBe(403);
+      expect((await call(resource,grants.read.access_token)).status).toBe(role==='member'?403:401);
+    }
     expect(await storage()).toEqual(roleBefore);
     await json(await f.call('/settings/operators/'+adminId+'/role','PATCH',{role:'admin'}));
   }
   const before = await storage();
   for(const resource of ['issues','history','cycles','projects']) {
     await pages(resource);
+    expect((await call(resource,grants.insufficient.access_token)).status).toBe(403);
     for(const query of ['?limit=0','?limit=101','?limit=1&extra=1','?team=foreign','?cursor='])expect((await f.api(read.token,'/report-exports/'+resource+query)).status).toBe(400);
     expect((await f.api(read.token,'/report-exports/'+resource,'POST',{})).status).toBe(404);
   }
   expect((await f.api(read.token,'/issues','POST',{teamId:team.id,title:'synthetic-vector-51519'})).status).toBe(401);
   expect((await f.api(read.token,'/projects','POST',{name:'synthetic-vector-51520',leadOperatorId:f.owner})).status).toBe(401);
+  expect((await f.api(grants.read.access_token,'/issues','POST',{teamId:team.id,title:'synthetic-vector-51526'})).status).toBe(403);
+  expect((await f.api(grants.read.access_token,'/projects','POST',{name:'synthetic-vector-51527',leadOperatorId:f.owner})).status).toBe(403);
+  expect((await f.api(grants.read.access_token,'/portability/exports')).status).toBe(404);
   expect((await f.api(read.token,'/portability/exports')).status).toBe(404);
   expect(await storage()).toEqual(before);
   const captured=(await json(await call('issues'))).nextCursor;
@@ -131,12 +148,21 @@ export async function warehouseExportJourney(f: Awaited<ReturnType<typeof setupI
   for(const resource of ['issues','history','cycles','projects'])expect((await call(resource)).status).toBe(401);
   expect((await call('issues',read.token,'&cursor='+encodeURIComponent(captured))).status).toBe(401);
   expect(await storage()).toEqual(revoked);
+  const grantCursor=(await json(await call('issues',grants.read.access_token))).nextCursor;
+  await json(await f.call('/settings/oauth-apps/grants/'+grants.read.grant_id,'DELETE'));
+  f.restart();
+  const grantRevoked=await storage();
+  for(const resource of ['issues','history','cycles','projects'])expect((await call(resource,grants.read.access_token)).status).toBe(401);
+  expect((await call('issues',grants.read.access_token,'&cursor='+encodeURIComponent(grantCursor))).status).toBe(401);
+  expect(await storage()).toEqual(grantRevoked);
   const capturedAdmin=(await json(await call('issues',adminToken))).nextCursor;
   await json(await f.call('/settings/operators/'+adminId,'DELETE'));
   const removed=await storage();
   for(const resource of ['issues','history','cycles','projects'])expect((await call(resource,adminToken)).status).toBe(401);
   expect((await call('issues',adminToken,'&cursor='+encodeURIComponent(capturedAdmin))).status).toBe(401);
+  expect((await f.api(grants.insufficient.access_token,'/issues')).status).toBe(401);
   expect(await storage()).toEqual(removed);
   expect((await env.DB.prepare('PRAGMA foreign_key_check').all()).results).toEqual([]);
   console.log('PROBE REPORT-005 paged-api: mounted HTTP export traversed exact issue, history, cycle and project IDs and totals; malformed and foreign cursors, changed visibility, role, scope and revocation refused; domain storage unchanged.');
+  console.log('PROBE REPORT-005 oauth-grant: separately consented read grant -> exact paged rows; private-team withdrawal invalidates cursors and omits hidden history; role loss, missing scope, writes and revoked grant refused with unchanged storage across restart.');
 }
