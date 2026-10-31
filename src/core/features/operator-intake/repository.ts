@@ -99,7 +99,7 @@ export async function createOperatorIntake(
     )
     .bind(
       activityId,
-      sourceActor ? null : actor,
+      actor,
       JSON.stringify({
         identifier,
         title: input.title,
@@ -110,7 +110,7 @@ export async function createOperatorIntake(
       }),
       at,
       at,
-      sourceActor?.name ?? currentAgentActor()?.actor.label??null,
+      currentAgentActor()?.actor.label??null,
       agentActivity().agentId,
       agentActivity().agentOperationId,
       agentActivity().agentApproversJson,

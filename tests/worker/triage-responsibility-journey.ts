@@ -365,15 +365,33 @@ export async function triageResponsibilityJourney(
       expect(await notices(first, sourceFixed.identifier)).toHaveLength(1);
       // Email's configuring manager is not its sender. Even when that manager
       // is responsible, the real email event must notify them once.
-      const mail = await seedIntakeForTeam(team.id, first.cookie);
+      const emailBody = "See " + nativeFixed.identifier;
+      const mail = await seedIntakeForTeam(
+        team.id,
+        first.cookie,
+        false,
+        emailBody,
+      );
+      const emailBacklinks = async () =>
+        (
+          await read(await f.call("/issues/" + nativeFixed.identifier))
+        ).activity.filter(
+          (a: any) =>
+            a.kind === "issue.mentioned" &&
+            a.nextValue?.identifier === mail.identifier,
+        );
+      expect(await emailBacklinks()).toHaveLength(1);
       expect(await notices(first, mail.identifier)).toMatchObject([
         { actor: "Email intake" },
       ]);
       expect(await notices(second, mail.identifier)).toEqual([]);
-      const replay = inboundFixture(mail.address, mail.messageId);
+      const replay = inboundFixture(mail.address, mail.messageId, {
+        body: emailBody,
+      });
       expect(await worker.email(replay.message, mailBindings)).toEqual({
         status: "duplicate",
       });
+      expect(await emailBacklinks()).toHaveLength(1);
       f.restart();
       vi.setSystemTime(new Date("2026-11-02T10:00:00Z"));
       await scheduled({ scheduledTime: Date.now() }, bindings);

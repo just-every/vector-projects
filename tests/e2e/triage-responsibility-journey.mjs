@@ -56,6 +56,8 @@ export async function triageResponsibilityJourney({
       viewport: { width: 1440, height: 1000 },
     }),
     peer = await context.newPage();
+  const peerErrors = [];
+  peer.on("pageerror", (error) => peerErrors.push(error.message));
   try {
     await peer.goto(link);
     await peer.getByRole("button", { name: "Confirm", exact: true }).click();
@@ -357,6 +359,38 @@ export async function triageResponsibilityJourney({
             .first(),
         ).toBeVisible();
         await inspect(peer, peer.locator("main"), "triage-fixed-inbox");
+        await navigate(page, base + "/app/settings");
+        await showForm();
+        await form
+          .getByLabel("Responsibility mode", { exact: true })
+          .selectOption("weekly");
+        await expect(
+          form.getByLabel("Rotation member 1", { exact: true }),
+        ).toHaveValue(colleague);
+        await form
+          .getByLabel("Rotation member 2", { exact: true })
+          .selectOption(owner.id);
+        const weeklySaved = page.waitForResponse(
+          (r) =>
+            new URL(r.url()).pathname === "/api" + path &&
+            r.request().method() === "PUT",
+        );
+        await form
+          .getByRole("button", {
+            name: "Save triage responsibility",
+            exact: true,
+          })
+          .click();
+        assert.equal((await weeklySaved).status(), 200);
+        const weeklyAgain = await send(page, path);
+        assert.equal(weeklyAgain.mode, "weekly");
+        assert.deepEqual(weeklyAgain.operatorIds, [colleague, owner.id]);
+        assert.ok(weeklyAgain.nextHandoverAt);
+        assert.deepEqual(
+          peerErrors,
+          [],
+          "peer browser page and hydration errors",
+        );
       },
     );
   } finally {
