@@ -27,7 +27,7 @@ export async function receiveReview(raw:unknown,context:GithubDelivery){
   const conflict=previous&&previous.state!==review.state&&input.action!=='dismissed'&&previous.state!=='dismissed';
   const state=previous?.state==='dismissed'||input.action==='dismissed'?'dismissed':conflict?'conflicted':review.state;
   const observedAt=new Date(pr.updated_at).toISOString(),observed=reviewHead(db,id,pr.number,observedAt,pr.head.sha,current);
-  const matching=!observed.conflicted&&observed.head===pr.head.sha&&review.commit_id===pr.head.sha&&observedAt>=observed.previousAt&&submitted>=(observed.changedAt??current.updated_at);
+  const matching=!observed.conflicted&&observed.head===pr.head.sha&&review.commit_id===pr.head.sha&&observedAt>=observed.changedAt&&submitted>=(observed.changedAt??current.updated_at);
   const fence=gitGuard(db,'EXISTS(SELECT 1 FROM vector_github_pull_requests WHERE repository_id=? AND number=? AND head_version=? AND head_conflicted=? AND updated_at=? AND head_observed_at IS ?)',id,pr.number,current.head_version,current.head_conflicted,current.updated_at,current.head_observed_at);
   if(!previous&&!matching&&input.action!=='dismissed')return {statements:[fence,...observed.statements],linked:0,diagnostic:'review_head_unproven'};
   const statements=[fence,

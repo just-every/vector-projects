@@ -80,6 +80,27 @@ export async function exerciseGithubReviews(f:Awaited<ReturnType<typeof setupInt
  expect((await send(pr(a,20,'synchronize'),'pull_request')).status).toBe(200);expect((await read()).reviews).toEqual([]);
  expect((await send(review(101))).status).toBe(200);expect((await read()).reviews).toEqual([]);
  expect((await send(review(117,'approved',21,a))).status).toBe(200);expect(await states()).toEqual([[11,'approved']]);
+ // A later observation by another reviewer cannot discard a same-head decision.
+ expect((await send(pr(b,22,'synchronize'),'pull_request')).status).toBe(200);
+ expect((await send(pr(a,23,'synchronize'),'pull_request')).status).toBe(200);
+ expect((await send(review(119,'approved',24,a,11))).status).toBe(200);
+ expect((await send(review(120,'approved',26,a,12))).status).toBe(200);
+ const delayedDecision=review(121,'changes_requested',25,a,11),delayedDelivery=crypto.randomUUID();
+ expect((await send(delayedDecision,'pull_request_review',delayedDelivery)).status).toBe(200);
+ f.restart();expect((await send(delayedDecision,'pull_request_review',delayedDelivery)).status).toBe(200);
+ const delayedStates=await states();
+ console.log('PROBE GITHUB-005 delayed-review: signed receiver then issue GitHub read -> '+JSON.stringify(delayedStates));
+ expect.soft(delayedStates).toEqual([[11,'changes_requested'],[12,'approved']]);
+ // A late intervening head retires old decisions while preserving a fresh return-head review.
+ expect((await send(pr(b,27,'synchronize'),'pull_request')).status).toBe(200);
+ expect((await send(pr(a,28,'synchronize'),'pull_request')).status).toBe(200);
+ expect((await send(review(122,'approved',29,a,11))).status).toBe(200);
+ expect((await send(review(123,'approved',32,a,12))).status).toBe(200);
+ expect((await send(pr(b,30,'synchronize'),'pull_request')).status).toBe(200);
+ expect((await send(pr(a,31,'synchronize'),'pull_request')).status).toBe(200);
+ const returningStates=await states();
+ console.log('PROBE GITHUB-005 delayed-head: signed receiver then issue GitHub read -> '+JSON.stringify(returningStates));
+ expect.soft(returningStates).toEqual([[12,'approved']]);
  const outsider=await invite('synthetic-vector-5304'+bindings.FIRST_OWNER_EMAIL!.slice(bindings.FIRST_OWNER_EMAIL!.indexOf('@')),f.cookie);
  expect((await request('/api/issues/'+issue.identifier+'/github','GET',undefined,outsider)).status).toBe(200);
  expect((await f.call('/settings/teams/'+f.initial.teams[0]!.id+'/privacy','PUT',{isPrivate:true})).status).toBe(200);
@@ -87,8 +108,8 @@ export async function exerciseGithubReviews(f:Awaited<ReturnType<typeof setupInt
  expect(refused.status).toBe(404);expect(await refused.text()).not.toContain('synthetic-vector-11');expect(await snapshot()).toEqual(privateSnapshot);
  expect((await request('/api/issues/'+issue.identifier+'/github')).status).toBe(401);
  // A review and a merge may share GitHub's second-resolution timestamp.
- expect((await send(review(118,'approved',22,a))).status).toBe(200);
- const merged={...pr(a,22,'closed'),pull_request:{...pr(a,22).pull_request,state:'closed',merged:true,merge_commit_sha:'d'.repeat(40)}};
+ expect((await send(review(118,'approved',33,a))).status).toBe(200);
+ const merged={...pr(a,33,'closed'),pull_request:{...pr(a,33).pull_request,state:'closed',merged:true,merge_commit_sha:'d'.repeat(40)}};
  expect((await send(merged,'pull_request')).status).toBe(200);expect((await read()).state).toBe('merged');
  await proveGithubReviewArchive(f,config,approval,issue.identifier);
  const beforeRevoke=await snapshot();expect((await f.call('/settings/integrations/github/'+config.id,'DELETE')).status).toBe(200);
