@@ -10,7 +10,9 @@ export function FavoriteNavigation() {
   const [organizing, setOrganizing] = useState(false),
     [name, setName] = useState("");
   const path = useLocation({ select: (location) => location.pathname });
-  const match = path.match(/^\/app\/(issues|projects|views)\/([^/]+)$/);
+  // Collection modes and creation routes are not persisted subjects.
+  const match = path.match(/^\/app\/(issues)\/([A-Z]{2,10}-[1-9][0-9]*)$/)
+    ?? path.match(/^\/app\/(projects|views)\/([0-9A-HJKMNP-TV-Z]{26})$/);
   const current = match
     ? {
         kind:

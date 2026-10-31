@@ -36,6 +36,20 @@ export async function favoritesJourney({ page, context, base, state, sql, eviden
     await nav(member.page).locator(`[data-favorite-id="${id}"]`).waitFor();
   };
   try {
+    const reservedSubjectReads = [];
+    const trackReserved = request => {
+      if (new URL(request.url()).pathname.startsWith('/api/favorites/subjects/'))
+        reservedSubjectReads.push(new URL(request.url()).pathname);
+    };
+    member.page.on('request', trackReserved);
+    for (const path of ['/app/issues/backlog', '/app/projects/new']) {
+      await navigate(member.page, base + path);
+      await ready(member.page);
+      assert.equal(await nav(member.page).getByRole('button', { name: /^Pin this / }).count(), 0,
+        'Collection modes and creation pages offer no subject pin');
+    }
+    member.page.off('request', trackReserved);
+    assert.deepEqual(reservedSubjectReads, [], 'Reserved pages never request a favorite subject');
     await pin('/app/issues/' + issue.identifier, 'issue', issue.id);
     await pin('/app/projects/' + project.id, 'project', project.id);
     await pin('/app/views/' + view.id, 'view', view.id);
