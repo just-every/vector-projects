@@ -522,7 +522,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "adabb82c21b48fb2834d44c332b61b5ef02e286c43ff50e6cf9b9e9c34973088",
+      "sha256": "a8b4febd187b80f53a66fbdfc5a1ef731e15134b63d0f0cdc54315e464d75848",
       "executable": false
     },
     "DEMO.md": {
@@ -8594,7 +8594,7 @@
       "executable": false
     },
     "tests/worker/data-http.test.ts": {
-      "sha256": "fc9c377505afaf34ecdd41c085e261f110f7855a75404941db0996ca6559322a",
+      "sha256": "8c3833d3901fe595e9af6145a6b441c8c62232885e7d878a5e9d2bcd6801ce9f",
       "executable": false
     },
     "tests/worker/data-import-atomic.test.ts": {
