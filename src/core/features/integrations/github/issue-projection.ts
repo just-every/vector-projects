@@ -17,10 +17,8 @@ export function addGithubIssueProjection(app:Hono<AppEnvironment>,versioned=fals
    if(!value||typeof value!=='object'||Array.isArray(value))return value;
    const issue=value as Record<string,unknown>;
    if(typeof issue.id!=='string'||typeof issue.identifier!=='string'||typeof issue.title!=='string'||!Array.isArray(issue.activity))return value;
-   const admitted=await requireIssueAccess(c.env.DB,issue.identifier,actor);
-   const github=await githubIssueProjection(c.env.DB,admitted.id);
-   await requireIssueAccess(c.env.DB,issue.identifier,actor);changed=true;
-   return {...issue,branchName:githubBranchName(issue.identifier,issue.title),deployments:github.deployments};
+   const fields=await githubIssueFields(c.env.DB,actor,issue.identifier,issue.title);changed=true;
+   return {...issue,...fields};
   };
   try{
    let result=await enrich(payload);
@@ -37,4 +35,12 @@ export function addGithubIssueProjection(app:Hono<AppEnvironment>,versioned=fals
    throw error;
   }
  });
+}
+
+/** Native and agent issue reads derive the same fields behind current access. */
+export async function githubIssueFields(db:D1Database,actor:string,identifier:string,title:string){
+ const admitted=await requireIssueAccess(db,identifier,actor);
+ const github=await githubIssueProjection(db,admitted.id);
+ await requireIssueAccess(db,identifier,actor);
+ return {branchName:githubBranchName(identifier,title),deployments:github.deployments};
 }

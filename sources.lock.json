@@ -486,7 +486,7 @@
       "executable": false
     },
     "ACCEPTANCE.md": {
-      "sha256": "788b9ba65ff3db5919018cc93770b3319ad02bed2780c48fd6eb9e87815f9564",
+      "sha256": "3b8f0687963c0c58454ad2e953416f65ace2ce3f515586ec4d78badfe2da431d",
       "executable": false
     },
     "ADOPTING.md": {
@@ -522,7 +522,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "6ad29bf4c6745fec3001131298da2bf60962b5358ef01f403667b0ef5cd4581c",
+      "sha256": "45f9297930fd2e6f279fc484bd433bdaa483d6ce064896face7bc231ffaf81fe",
       "executable": false
     },
     "DEMO.md": {
@@ -578,7 +578,7 @@
       "executable": false
     },
     "docs/CLAIMS.md": {
-      "sha256": "1ee6ac947d26159bec53c4f62a1d97469a6f9d038b1f6778d92c5bc0d10dc1b5",
+      "sha256": "bcf8d1ffd8ac934a41da099b68f978a161650009892e6584991823e89a39de38",
       "executable": false
     },
     "docs/DATA-OWNERSHIP.md": {
@@ -4198,7 +4198,7 @@
       "executable": false
     },
     "src/core/features/agent-door/read-tools.ts": {
-      "sha256": "7d2ae8eaca51a647f92a6ec9c979af15b11a3a5983a59c4fa0405be51a3781c7",
+      "sha256": "0348f4896a2112b065753b578810986731a7097f7ff830f6a80526223271ed1c",
       "executable": false
     },
     "src/core/features/agent-door/runtime.ts": {
@@ -5370,7 +5370,7 @@
       "executable": false
     },
     "src/core/features/integrations/github/issue-projection.ts": {
-      "sha256": "7b98250212d2c0211d17edc5033b34617d1f0f83919ac442809fa89f76738944",
+      "sha256": "b6921a4c82a801d3b3ff56f23f55e7fc4ce3f54d98fe6c441015a6d6920fe48b",
       "executable": false
     },
     "src/core/features/integrations/github/push.ts": {
@@ -7721,6 +7721,10 @@
       "sha256": "8d36210c129ac7ca11e44b6dd562491ffae7ba4ac8015aab3d7b10aa4eea9fea",
       "executable": false
     },
+    "tests/e2e/core-agent-resource-parity.mjs": {
+      "sha256": "75f0cb7f3a67c52bd88c8cf40ba2d151cbd7a22f08cea7acab474cc79a31402b",
+      "executable": false
+    },
     "tests/e2e/core-board-journey.mjs": {
       "sha256": "5def8bd706f060669622150700e853aa43a6314228c7b632bcd7e2dfd6cc3a66",
       "executable": false
@@ -7834,7 +7838,7 @@
       "executable": false
     },
     "tests/e2e/core-runtime.mjs": {
-      "sha256": "b38ec83d454de048fb652e2f526966c8c62356bbfb31006abbcf2797f39855a9",
+      "sha256": "a27780a920455b96af613aec4b94d87fea7aec0041de48afe329110f62800e85",
       "executable": false
     },
     "tests/e2e/core-stream-controls-browser.mjs": {
@@ -8462,7 +8466,11 @@
       "executable": false
     },
     "tests/worker/agent-resource-journey.ts": {
-      "sha256": "12c1f90866377a49f050b25c26e321c4a29d046a05a7ca873c91abfb6863cdfa",
+      "sha256": "69d1c23904d5e0ad7795900b303f987038baa64ee6dee109dad02491ba72e9b3",
+      "executable": false
+    },
+    "tests/worker/agent-resource-parity.ts": {
+      "sha256": "b05cd9e0da02e5d2ffab94d119a754af664f9489c4f7889f54badd43db65ea1e",
       "executable": false
     },
     "tests/worker/api-rate-limit.test.ts": {
@@ -9058,7 +9066,7 @@
       "executable": false
     },
     "tests/worker/role-private-journey.ts": {
-      "sha256": "e27a12fc0967f3cf6ccd9d32e388103be3759c0427f253b2654e92f4f1c4919b",
+      "sha256": "b9bd0f32c1e09d13c4c8c3972995f540a24104d6d04bbb68e137778db577e3cc",
       "executable": false
     },
     "tests/worker/role-probes.ts": {
