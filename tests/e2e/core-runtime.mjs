@@ -41,6 +41,7 @@ import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createRequire } from "node:module";
 import { chromium } from "@playwright/test";
+import { freePort } from "@runeditrun/rer/adapter-settings";
 // Resolve the serializer from the pinned Start package, with its actual plugins.
 // This public no-input JSON decoder needs no fabricated Start request context.
 const startRequire = createRequire(
@@ -51,8 +52,10 @@ const transportRequire = createRequire(
 );
 const { fromCrossJSON } = transportRequire("seroval");
 const { defaultSerovalPlugins } = transportRequire("@tanstack/router-core");
+// Use Base's free-port allocator, retaining this run's origin across restarts.
+const port = await freePort();
 const root = process.cwd(),
-  base = "http://127.0.0.1:15924",
+  base = `http://127.0.0.1:${port}`,
   state = `.wrangler/vector-e2e/runs/${new Date().toISOString().replace(/[:.]/g, "-")}-${process.pid}`,
   evidence = resolve(verificationDirectory);
 // CI partitions the independent invited-operator journeys; the public command
@@ -117,7 +120,7 @@ function start(origin = base) {
       "--ip",
       "127.0.0.1",
       "--port",
-      "15924",
+      String(port),
       "--inspector-port",
       "0",
       "--persist-to",
@@ -183,7 +186,7 @@ function record(id, detail) {
   results.push({ clause: id, passed: true, detail });
   console.info("[Vector runtime] Passed " + id);
 }
-let browser, browserPage;
+let browser, browserPage, testError;
 try {
   start();
   await ready();
@@ -209,7 +212,7 @@ try {
       assert.equal((await req(path, { headers })).status, 404, path);
   }
   await stop();
-  start("http://canonical-owner.test:15924");
+  start(`http://canonical-owner.test:${port}`);
   let denied;
   for (let i = 0; i < 100; i++) {
     try {
@@ -1652,6 +1655,7 @@ try {
     JSON.stringify({ passed: true, checks: results.length, evidence }, null, 2),
   );
 } catch (error) {
+  testError = error;
   if (browserPage && !browserPage.isClosed()) {
     await writeFile(
       evidence + "/runtime-failure-dom.html",
@@ -1668,9 +1672,20 @@ try {
   await writeFile(
     evidence + "/runtime-failure.log",
     String(error.stack) + "\n" + workerLog,
-  );
+  ).catch((diagnosticError) => { error.diagnosticError = diagnosticError; });
   throw error;
 } finally {
-  if (browser) await browser.close();
-  await stop();
+  const cleanupErrors = [];
+  for (const cleanup of [() => browser?.close(), stop]) {
+    try {
+      await cleanup();
+    } catch (error) {
+      cleanupErrors.push(error);
+    }
+  }
+  if (cleanupErrors.length) {
+    // Node reports the original stack first, then these attached failures.
+    if (testError) testError.cleanupErrors = cleanupErrors;
+    else throw new AggregateError(cleanupErrors, "Core runtime cleanup failed");
+  }
 }
