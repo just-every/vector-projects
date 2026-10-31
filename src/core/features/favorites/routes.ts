@@ -10,6 +10,15 @@ import {
   writeFavorites,
 } from "./repository";
 
+function currentSelection(c: import("hono").Context<AppEnvironment>) {
+  const kind = c.req.query("currentKind"),
+    key = c.req.query("currentKey");
+  if (kind === undefined && key === undefined) return undefined;
+  return z
+    .object({ kind: favoriteKindSchema, key: z.string().min(1).max(128) })
+    .parse({ kind, key });
+}
+
 export function addFavoriteRoutes(app: Hono<AppEnvironment>) {
   const handle =
     (run: (c: import("hono").Context<AppEnvironment>) => Promise<Response>) =>
@@ -36,7 +45,9 @@ export function addFavoriteRoutes(app: Hono<AppEnvironment>) {
   app.get(
     "/favorites",
     handle(async (c) =>
-      c.json(await readFavorites(c.env.DB, c.get("operatorId"))),
+      c.json(
+        await readFavorites(c.env.DB, c.get("operatorId"), currentSelection(c)),
+      ),
     ),
   );
   app.get(
@@ -60,6 +71,7 @@ export function addFavoriteRoutes(app: Hono<AppEnvironment>) {
           c.env.DB,
           c.get("operatorId"),
           favoriteWriteSchema.parse(await readRequestJson(c.req.raw)),
+          currentSelection(c),
         ),
       ),
     ),

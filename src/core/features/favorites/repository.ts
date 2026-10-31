@@ -1,6 +1,11 @@
 import { browseActor } from "../issues/browse-access";
 import { visibilityDatabase } from "../roles/visibility-database";
-import type { FavoriteSubject, FavoriteWrite, Favorites } from "./schema";
+import type {
+  FavoriteSelection,
+  FavoriteSubject,
+  FavoriteWrite,
+  Favorites,
+} from "./schema";
 
 export class FavoriteError extends Error {
   constructor(
@@ -43,6 +48,7 @@ export async function favoriteSubject(
 export async function readFavorites(
   source: D1Database,
   actor: string,
+  current?: FavoriteSelection,
 ): Promise<Favorites> {
   const db = visibilityDatabase(source, actor);
   await browseActor(db, actor);
@@ -50,31 +56,52 @@ export async function readFavorites(
   // title, including after a project loses its last visible team contribution.
   const row = await db
     .prepare(
-      `SELECT COALESCE(f.version,0) AS version,
+      `WITH favorite_subjects AS (${subjects})
+    SELECT COALESCE(f.version,0) AS version,
     COALESCE(f.folders_json,'[]') AS folders,
     COALESCE((SELECT json_group_array(json(item)) FROM (
       SELECT json_object('kind',s.kind,'subjectId',s.subjectId,'title',s.title,'href',s.href,
         'folderId',json_extract(e.value,'$.folderId')) AS item
-      FROM json_each(f.entries_json) e JOIN (${subjects}) s
+      FROM json_each(f.entries_json) e JOIN favorite_subjects s
         ON s.kind=json_extract(e.value,'$.kind') AND s.subjectId=json_extract(e.value,'$.subjectId')
-      ORDER BY CAST(e.key AS INTEGER))), '[]') AS entries
+      ORDER BY CAST(e.key AS INTEGER))), '[]') AS entries,
+    (SELECT json_object('kind',kind,'subjectId',subjectId,'title',title,'href',href)
+      FROM favorite_subjects WHERE kind=? AND
+        (subjectId=? OR (kind='issue' AND href='/app/issues/'||?))) AS current
     FROM operators actor LEFT JOIN member_favorites f ON f.operator_id=actor.id AND f.workspace_id=actor.workspace_id
     WHERE actor.id=? AND actor.removed_at IS NULL`,
     )
-    .bind(actor, actor, actor, actor)
-    .first<{ version: number; folders: string; entries: string }>();
+    .bind(
+      actor,
+      actor,
+      actor,
+      current?.kind ?? null,
+      current?.key ?? null,
+      current?.key ?? null,
+      actor,
+    )
+    .first<{
+      version: number;
+      folders: string;
+      entries: string;
+      current: string | null;
+    }>();
   if (!row)
     throw new FavoriteError(404, "not_found", "Favorites are unavailable.");
   return {
     version: row.version,
     folders: JSON.parse(row.folders),
     entries: JSON.parse(row.entries),
+    ...(current
+      ? { current: row.current ? JSON.parse(row.current) : null }
+      : {}),
   };
 }
 export async function writeFavorites(
   source: D1Database,
   actor: string,
   input: FavoriteWrite,
+  current?: FavoriteSelection,
 ): Promise<Favorites> {
   const db = visibilityDatabase(source, actor);
   const access = await browseActor(db, actor);
@@ -123,5 +150,5 @@ export async function writeFavorites(
       "A favorite is no longer available.",
     );
   }
-  return readFavorites(db, actor);
+  return readFavorites(db, actor, current);
 }

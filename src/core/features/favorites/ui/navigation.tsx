@@ -1,7 +1,6 @@
-import { Link, useLocation, useMatches } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useApiResource } from "../../../app/api-client";
-import { favoriteSubjectSchema } from "../schema";
+import type { FavoriteSubject } from "../schema";
 import { favoriteInput, useFavorites } from "./context";
 import "./favorites.css";
 
@@ -9,28 +8,6 @@ export function FavoriteNavigation() {
   const { data, error, errorRole, busy, save } = useFavorites();
   const [organizing, setOrganizing] = useState(false),
     [name, setName] = useState("");
-  const path = useLocation({ select: (location) => location.pathname });
-  const route = useMatches({ select: (matches) => matches.at(-1)?.routeId });
-  // Static list and creation routes can share the subject URL prefix.
-  // Only a matched subject route may start the current-subject read.
-  const match = [
-    "/app/issues/$identifier",
-    "/app/projects/$projectId",
-    "/app/views/$viewId",
-  ].includes(route ?? "")
-    ? path.match(/^\/app\/(issues|projects|views)\/([^/]+)\/?$/)
-    : null;
-  const current = match
-    ? {
-        kind:
-          match[1] === "issues"
-            ? "issue"
-            : match[1] === "projects"
-              ? "project"
-              : "view",
-        subjectKey: match[2]!,
-      }
-    : null;
   const entries = data?.entries ?? [];
   const folders = data?.folders ?? [];
   function move(index: number, direction: number) {
@@ -136,9 +113,7 @@ export function FavoriteNavigation() {
           {organizing ? "Done" : "Organize"}
         </button>
       </div>
-      {current && (
-        <CurrentFavorite key={current.kind + current.subjectKey} {...current} />
-      )}
+      {data?.current && <CurrentFavorite value={data.current} />}
       {error && <p role={errorRole}>{error}</p>}
       {data && entries.length === 0 && (
         <p className="favorite-empty">
@@ -209,20 +184,8 @@ export function FavoriteNavigation() {
     </nav>
   );
 }
-function CurrentFavorite({
-  kind,
-  subjectKey,
-}: {
-  kind: string;
-  subjectKey: string;
-}) {
-  const subject = useApiResource(
-    `/api/favorites/subjects/${kind}/${encodeURIComponent(subjectKey)}`,
-    favoriteSubjectSchema,
-  );
+function CurrentFavorite({ value }: { value: FavoriteSubject }) {
   const { data, busy, save } = useFavorites();
-  if (!subject.data || subject.error) return null;
-  const value = subject.data;
   const pinned = data?.entries.some(
     (entry) => entry.kind === value.kind && entry.subjectId === value.subjectId,
   );
@@ -248,7 +211,7 @@ function CurrentFavorite({
         void save(next);
       }}
     >
-      {pinned ? "Unpin" : "Pin"} this {kind === "view" ? "view" : kind}
+      {pinned ? "Unpin" : "Pin"} this {value.kind}
     </button>
   );
 }

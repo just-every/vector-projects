@@ -83,15 +83,23 @@ it(
       folders: [],
       entries: [],
     });
+    const selection = (kind: string, key: string) =>
+      "/favorites?" +
+      new URLSearchParams({ currentKind: kind, currentKey: key });
     const subjects = [];
     for (const [kind, key] of [
       ["issue", issue.identifier],
       ["project", project.id],
       ["view", view.id],
-    ])
-      subjects.push(
-        await read(await call(`/favorites/subjects/${kind}/${key}`)),
+    ]) {
+      const subject = await read(
+        await call(`/favorites/subjects/${kind}/${key}`),
       );
+      subjects.push(subject);
+      expect((await read(await call(selection(kind, key)))).current).toEqual(
+        subject,
+      );
+    }
     expect(subjects.map((s) => s.subjectId)).toEqual([
       issue.id,
       project.id,
@@ -246,8 +254,20 @@ it(
       ["issue", issue.identifier],
       ["project", project.id],
       ["view", view.id],
-    ])
+    ]) {
       await read(await call(`/favorites/subjects/${kind}/${key}`), 404);
+      const navigation = await read(await call(selection(kind, key)));
+      expect(navigation.current).toBeNull();
+      expect(navigation.entries).toEqual([]);
+      for (const title of [issue.title, project.name, view.name])
+        expect(JSON.stringify(navigation)).not.toContain(title);
+    }
+    const missing = await read(
+      await call(selection("issue", createUlid(new Date()))),
+    );
+    expect(missing.current).toBeNull();
+    await read(await call("/favorites?currentKind=issue"), 400);
+    await read(await call(selection("team", team.id)), 400);
     const withdrawnSnapshot = await snapshot(tables);
     await read(
       await call("/favorites", "PUT", { ...organized, expectedVersion: 3 }),

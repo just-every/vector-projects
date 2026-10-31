@@ -53,7 +53,12 @@ export const favoritesSchema = z.object({
   entries: z.array(
     favoriteSubjectSchema.extend({ folderId: folderId.nullable() }),
   ),
+  current: favoriteSubjectSchema.nullable().optional(),
 });
+export type FavoriteSelection = {
+  kind: z.output<typeof favoriteKindSchema>;
+  key: string;
+};
 export type FavoriteWrite = z.output<typeof favoriteWriteSchema>;
 export type Favorites = z.output<typeof favoritesSchema>;
 export type FavoriteSubject = z.output<typeof favoriteSubjectSchema>;

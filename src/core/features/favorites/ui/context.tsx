@@ -2,10 +2,11 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import { useLocation } from "@tanstack/react-router";
+import { useLocation, useMatches } from "@tanstack/react-router";
 import { fetchJson, useApiResource } from "../../../app/api-client";
 import { favoritesSchema, type Favorites, type FavoriteWrite } from "../schema";
 
@@ -28,10 +29,38 @@ export const favoriteInput = (
   })),
 });
 export function FavoriteProvider({ children }: { children: ReactNode }) {
-  const resource = useApiResource("/api/favorites", favoritesSchema, 30000);
+  const path = useLocation({ select: (location) => location.pathname });
+  const route = useMatches({ select: (matches) => matches.at(-1)?.routeId });
+  // Resolve the optional current pin in the collection's visibility snapshot.
+  // Static list/creation routes never select a subject. Both shell copies use
+  // this one response, including an explicit null after access withdrawal.
+  const match = [
+    "/app/issues/$identifier",
+    "/app/projects/$projectId",
+    "/app/views/$viewId",
+  ].includes(route ?? "")
+    ? path.match(/^\/app\/(issues|projects|views)\/([^/]+)\/?$/)
+    : null;
+  const url = match
+    ? "/api/favorites?" +
+      new URLSearchParams({
+        currentKind:
+          match[1] === "issues"
+            ? "issue"
+            : match[1] === "projects"
+              ? "project"
+              : "view",
+        currentKey: decodeURIComponent(match[2]!),
+      })
+    : "/api/favorites";
+  // A route transition retires its receipt while the admitted transport drains.
+  const resource = useApiResource(url, favoritesSchema, 30000, {
+    abortPendingOnDispose: false,
+  });
+  const activeUrl = useRef(url);
+  activeUrl.current = url;
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const path = useLocation({ select: (location) => location.pathname });
   useEffect(() => {
     resource.reload();
   }, [path, resource.reload]);
@@ -40,7 +69,7 @@ export function FavoriteProvider({ children }: { children: ReactNode }) {
     setBusy(true);
     setError("");
     try {
-      const receipt = await fetchJson("/api/favorites", favoritesSchema, {
+      const receipt = await fetchJson(url, favoritesSchema, {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -48,7 +77,8 @@ export function FavoriteProvider({ children }: { children: ReactNode }) {
           expectedVersion: resource.data.version,
         }),
       });
-      resource.publishReceipt(() => receipt);
+      if (activeUrl.current === url) resource.publishReceipt(() => receipt);
+      else resource.reload();
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : "Could not save favorites.",

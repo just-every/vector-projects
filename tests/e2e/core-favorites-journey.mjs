@@ -42,7 +42,11 @@ export async function favoritesJourney({ page, context, base, state, sql, eviden
   let secondBrowser, secondContext, secondPage;
   const errors = [];
   member.page.on('pageerror', error => errors.push(error.message));
-  const subjectReads = [];
+  const subjectReads = [], favoriteFailures = [];
+  const checkFavorites = response => {
+    if (new URL(response.url()).pathname.startsWith("/api/favorites") && response.status() === 404) favoriteFailures.push(new URL(response.url()).pathname);
+  };
+  member.page.on("response", checkFavorites);
   member.page.on('request', request => {
     if (new URL(request.url()).pathname.startsWith('/api/favorites/subjects/'))
       subjectReads.push(new URL(request.url()).pathname);
@@ -53,10 +57,12 @@ export async function favoritesJourney({ page, context, base, state, sql, eviden
   const pin = async (path, kind, id) => {
     await navigate(member.page, base + path);
     await nav(member.page).getByRole('button', { name: 'Pin this ' + kind, exact: true }).waitFor();
-    const saved = member.page.waitForResponse(r => r.url() === base + '/api/favorites' && r.request().method() === 'PUT');
+    const saved = member.page.waitForResponse(r => new URL(r.url()).origin === base && new URL(r.url()).pathname === '/api/favorites' && r.request().method() === 'PUT');
     await nav(member.page).getByRole('button', { name: 'Pin this ' + kind, exact: true }).focus();
     await member.page.keyboard.press('Enter');
-    assert.equal((await saved).status(), 200);
+    const receipt = await saved;
+    assert.equal(receipt.status(), 200);
+    assert.equal((await receipt.json()).current.subjectId, id, 'Pin receipt retains the currently admitted subject');
     await nav(member.page).locator(`[data-favorite-id="${id}"]`).waitFor();
   };
   try {
@@ -71,17 +77,17 @@ export async function favoritesJourney({ page, context, base, state, sql, eviden
     await pin('/app/views/' + view.id, 'view', view.id);
     await nav(member.page).getByRole('button', { name: 'Organize', exact: true }).click();
     await nav(member.page).getByLabel('Folder name', { exact: true }).fill('Delivery work');
-    const folderSaved = member.page.waitForResponse(r => r.url() === base + '/api/favorites' && r.request().method() === 'PUT');
+    const folderSaved = member.page.waitForResponse(r => new URL(r.url()).origin === base && new URL(r.url()).pathname === '/api/favorites' && r.request().method() === 'PUT');
     await nav(member.page).getByRole('button', { name: 'Create folder', exact: true }).focus();
     await member.page.keyboard.press('Enter');
     assert.equal((await folderSaved).status(), 200);
     const collection = await member.api('/favorites');
     const folderId = collection.folders.find(f => f.name === 'Delivery work').id;
-    const moved = member.page.waitForResponse(r => r.url() === base + '/api/favorites' && r.request().method() === 'PUT');
+    const moved = member.page.waitForResponse(r => new URL(r.url()).origin === base && new URL(r.url()).pathname === '/api/favorites' && r.request().method() === 'PUT');
     await nav(member.page).getByRole('combobox', { name: 'Folder for ' + view.name, exact: true }).selectOption(folderId);
     assert.equal((await moved).status(), 200);
     await nav(member.page).getByRole('region', { name: 'Delivery work', exact: true }).getByRole('link', { name: view.name, exact: true }).waitFor();
-    const reordered = member.page.waitForResponse(r => r.url() === base + '/api/favorites' && r.request().method() === 'PUT');
+    const reordered = member.page.waitForResponse(r => new URL(r.url()).origin === base && new URL(r.url()).pathname === '/api/favorites' && r.request().method() === 'PUT');
     await nav(member.page).getByRole('button', { name: 'Move ' + project.name + ' up', exact: true }).focus();
     await member.page.keyboard.press('Enter');
     assert.equal((await reordered).status(), 200);
@@ -94,12 +100,16 @@ export async function favoritesJourney({ page, context, base, state, sql, eviden
     assert.deepEqual(await member.api('/views/' + view.id), definition, 'Pinning and organization never mutate the saved definition');
     assert.deepEqual((await owner('/favorites')).entries, [], 'Another member does not receive this collection');
 
-    secondBrowser = await firstBrowser.browserType().launch({ headless: true, args: ['--use-mock-keychain', '--password-store=basic'] });
+    secondBrowser = await firstBrowser.browserType().launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, args: ['--use-mock-keychain', '--password-store=basic', ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? ['--no-sandbox'] : [])] });
     secondContext = await secondBrowser.newContext({ viewport: { width: 1440, height: 1000 } });
     secondPage = await secondContext.newPage();
     secondPage.setDefaultTimeout(20000);
     secondPage.on('pageerror', error => errors.push(error.message));
     trackRequests(secondPage);
+    secondPage.on("response", checkFavorites);
+    secondPage.on('request', request => {
+      if (new URL(request.url()).pathname.startsWith('/api/favorites/subjects/')) subjectReads.push(new URL(request.url()).pathname);
+    });
     await secondPage.goto(base + '/signin');
     await secondPage.getByLabel('Email', { exact: true }).fill(email);
     const requested = secondPage.waitForResponse(r => new URL(r.url()).pathname === '/auth/request' && r.request().method() === 'POST');
@@ -136,7 +146,23 @@ export async function favoritesJourney({ page, context, base, state, sql, eviden
     await insideViewport(secondPage, nav(secondPage));
     await secondPage.screenshot({ path: evidence + '/favorites-navigation-1440.png' });
 
+    // Keep the project page mounted through withdrawal: the shared Favorites
+    // refresh must remove its link and pin together without a subject request.
+    await navigate(secondPage, base + '/app/projects/' + project.id);
+    await ready(secondPage);
+    await nav(secondPage).getByRole('button', { name: 'Unpin this project', exact: true }).waitFor();
     await owner(`/settings/teams/${team.id}/members/${member.id}`, 'DELETE');
+    const selection = await secondApi('/favorites?' + new URLSearchParams({ currentKind: 'project', currentKey: project.id }));
+    assert.equal(selection.current, null);
+    assert.ok(!JSON.stringify(selection).includes(project.name));
+    await nav(secondPage).getByRole('link', { name: project.name, exact: true }).waitFor({ state: 'detached' });
+    assert.equal(await nav(secondPage).locator('.favorite-pin').count(), 0);
+    await secondPage.setViewportSize({ width: 390, height: 844 });
+    await secondPage.locator('.app-mobile-favorites > summary').click();
+    const inspectWithdrawal = roleScreens(evidence);
+    await inspectWithdrawal(secondPage, nav(secondPage), 'favorites-after-private-withdrawal');
+    await secondPage.setViewportSize({ width: 1440, height: 1000 });
+
     const withdrawn = await secondApi('/favorites');
     assert.deepEqual(withdrawn.entries.map(e => e.subjectId), [issue.id, view.id]);
     assert.ok(!JSON.stringify(withdrawn).includes(project.name));
@@ -160,10 +186,13 @@ export async function favoritesJourney({ page, context, base, state, sql, eviden
     assert.ok(!(await nav(secondPage).innerText()).includes(issue.title));
     await secondApi('/favorites', 'PUT', { expectedVersion: 0, folders: [], entries: [{ kind: 'issue', subjectId: issue.id, folderId: null }] }, 401);
     assert.equal(sql(`SELECT count(*) n FROM member_favorites WHERE operator_id='${member.id}'`)[0].n, 0);
+    assert.deepEqual(favoriteFailures, [], "No Favorites 404 reaches either browser");
+    assert.deepEqual(subjectReads, [], 'Favorites resolves list and current pin together; no independent subject requests occur');
     assert.deepEqual(errors, []);
     assert.deepEqual(member.errors, []);
     record('VIEW-010', 'A Member pins issue, project and saved view by keyboard, folders the view and reorders the project; a separate Chromium and independent native sign-in reload the same exact order and folder. Saved definitions are unchanged, another member is isolated, private-project withdrawal and view deletion remove titles from HTTP and navigation. Both widths pass accessibility, keyboard, overflow and hydration proof.');
     console.log('PROBE VIEW-010 pins-and-sync: native Member pages and second independently authenticated Chromium -> issue, project, view, Delivery work folder and exact project then issue then view order retained');
+    console.log('PROBE VIEW-010 shared-read: current pin and list share one visibility snapshot, admitted navigation reads drain without aborting, and neither shell starts subject requests');
     console.log('PROBE VIEW-010 current-visibility: private-project membership withdrawal and view deletion -> subject and former title absent in HTTP and rendered Favorites');
     console.log('PROBE VIEW-010 subject-admission: Backlog and New project -> no pin control and no favorite subject lookup; actual issue, project and view pages remain pinnable');
     console.log('PROBE VIEW-010 session-loss: native member removal -> cached pins cleared, polite navigation status, and delayed old-session write refused 401 without recreating the collection');
