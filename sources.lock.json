@@ -8090,7 +8090,7 @@
       "executable": false
     },
     "tests/e2e/issue-templates-journey.mjs": {
-      "sha256": "6d90f996572b7931563324c4b8dda863fb954b8ff5b269f8146cd1c5db4c3817",
+      "sha256": "add460913df83fa0782712a3817ca0fa131562291cc9f213ba6ce3bdfc66a352",
       "executable": false
     },
     "tests/e2e/jira-capture-support.mjs": {
@@ -8809,6 +8809,10 @@
       "sha256": "6d1afe1d3843f3a2725263a5fb470f1ce54830d827d8fc1d6bc5518828136ed7",
       "executable": false
     },
+    "tests/worker/issue-template-upgrade.ts": {
+      "sha256": "f91e772dd050087d66511c65f1d788d936bbd06f7d879c322224adc582fb82ca",
+      "executable": false
+    },
     "tests/worker/issue-templates.test.ts": {
       "sha256": "b504277699fb5c185f8c05a1b65f28a0d9b71b60d63b73db55baae05000d8ae7",
       "executable": false
@@ -8942,7 +8946,7 @@
       "executable": false
     },
     "tests/worker/populated-upgrade.ts": {
-      "sha256": "4cc6593c2322880baa940a7690d0ef515a50021a6cbac707868016b2ad002ba0",
+      "sha256": "9e17bbe6be9fe1160371a6498d87434d9aff738e828790b0f430d6c18ae1b9ce",
       "executable": false
     },
     "tests/worker/private-channel-scenario.ts": {
@@ -8950,7 +8954,7 @@
       "executable": false
     },
     "tests/worker/project-fields-upgrade.test.ts": {
-      "sha256": "ec9b3ea6daef90345df242b65d4b0d5dc90a97ca52d4fe97cb964216f550614b",
+      "sha256": "c3722a85b09b4bedc0e19a7092ff5c33f9993ff5dbc5eeb6631964d59a6e8c0d",
       "executable": false
     },
     "tests/worker/project-fields.test.ts": {

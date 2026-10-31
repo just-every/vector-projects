@@ -92,4 +92,5 @@ export async function provePopulatedUpgrade(boundaryName:string,schema?:{added:s
  while((await archive.exports.advance(id,{maxParts:16})).phase==='building'){}
  expect((await archive.exports.status(id)).phase).toBe('complete');await archive.exports.abort(id);
  expect(await (await env.FILES.get('upgrade-file'))!.text()).toBe('old');
+ return {cookie};
 }

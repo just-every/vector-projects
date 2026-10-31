@@ -2,8 +2,11 @@ import assert from 'node:assert/strict'
 import { expect } from '@playwright/test'
 import { withOperatorClient } from './operator-request.mjs'
 import { beforePrivateNavigation } from './collaboration-navigation.mjs'
+import { mkdir } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import { verificationDirectory } from '../../scripts/verification-paths.mjs'
 
-/** Reached by the existing administration Verify journey; assertions use its one phone width. */
+/** Reached by the existing administration Verify journey; one phone flow with both screen sizes. */
 export async function issueTemplatesJourney({page,runtime,capture,expectedTemplateConflicts=new Set()}) {
   const base=runtime.base,context=page.context(),errors=[]
   const onError=e=>errors.push(e.message)
@@ -13,6 +16,17 @@ export async function issueTemplatesJourney({page,runtime,capture,expectedTempla
     assert(response.ok(),method+' '+path+' '+response.status());return response.json()
   })
   const go=async path=>{await beforePrivateNavigation(page,base+path);await page.goto(base+path)}
+  const screens=async(name,subject)=>{
+    const viewport=page.viewportSize(),folder=resolve(verificationDirectory,'issue-templates')
+    await mkdir(folder,{recursive:true})
+    try {
+      for(const width of [1440,390]) {
+        await page.setViewportSize({width,height:1000})
+        await capture(name+'-'+width)
+        await subject.screenshot({path:resolve(folder,name+'-'+width+'.png')})
+      }
+    }finally{await page.setViewportSize(viewport)}
+  }
   try {
     const options=await api('/options'),team=options.teams[0],status=options.statuses.find(s=>s.teamId===team.id&&s.category==='unstarted')
     assert(team&&status,'a native team and unstarted status are available')
@@ -43,7 +57,7 @@ export async function issueTemplatesJourney({page,runtime,capture,expectedTempla
     }
     const bold=description.locator('..').getByRole('button',{name:'Bold text',exact:true})
     await bold.focus();await page.getByRole('tooltip',{name:'Bold text',exact:true}).waitFor();await description.focus()
-    await capture('issue-template-management',page)
+    await screens('issue-template-management',library)
     await form.getByRole('button',{name:'Save issue template',exact:true}).click()
     await library.getByRole('status').filter({hasText:'Saved synthetic-vector-1622.'}).waitFor()
     const template=(await api('/issue-templates')).templates.find(t=>t.name==='synthetic-vector-1622')
@@ -80,7 +94,7 @@ export async function issueTemplatesJourney({page,runtime,capture,expectedTempla
     assert.equal(await issueForm.getByLabel('Priority',{exact:true}).inputValue(),'none','a deliberate no-priority selection survives')
     assert.equal(await issueForm.getByLabel('Estimate',{exact:false}).inputValue(),'5')
     assert.equal(await issueForm.getByLabel('Project',{exact:true}).inputValue(),project.id)
-    await capture('issue-template-application',page)
+    await screens('issue-template-application',issueForm)
     const created=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/issues'&&r.request().method()==='POST')
     await issueForm.getByRole('button',{name:'Create issue',exact:true}).click()
     const response=await created;assert.equal(response.status(),201);const parent=await response.json()
@@ -92,7 +106,7 @@ export async function issueTemplatesJourney({page,runtime,capture,expectedTempla
     const stored=await api('/issues/'+parent.identifier)
     assert.equal(stored.title,'synthetic-vector-1626');assert.equal(stored.description,'Already typed description');assert.equal(stored.priority,'none')
     assert.deepEqual(stored.labels.map(l=>l.id),[label.id]);assert.equal(stored.status.id,status.id)
-    await capture('issue-template-linked-children',page)
+    await screens('issue-template-linked-children',page.locator('main:visible'))
     const token=await api('/settings/integrations/tokens','POST',{name:'synthetic-vector-1627',scopes:['issues:write','issues:read']})
     const apiResponse=await page.request.post(base+'/api/v1/issues',{headers:{Authorization:'Bearer '+token.token,Origin:base},data:{teamId:team.id,templateId:template.id,templateVersion:template.version}})
     assert.equal(apiResponse.status(),201);const second=await apiResponse.json();assert.equal(second.title,'synthetic-vector-1623');assert.equal(second.description,markdown)
