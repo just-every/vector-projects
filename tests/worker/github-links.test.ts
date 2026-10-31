@@ -1,3 +1,4 @@
+import {exerciseGithubReviews} from './github-review-scenario';
 import {env} from 'cloudflare:workers';
 import {it,expect,vi} from 'vitest';
 import {setupIntegrations} from './integration-fixture';
@@ -52,6 +53,7 @@ it('[GITHUB-001 GITHUB-002 GITHUB-003 GITHUB-004 RELEASE-002] signed deliveries 
  await exerciseGithubAutomation(f,send);
  await exerciseGithubCommits(f,send);
  await exerciseGithubDeployments(f,send);
+ await exerciseGithubReviews(f);
  await exerciseGithubHealthAccess(f,config.id);
  const lastReceipt=await receiptTime();
  expect((await f.call('/settings/integrations/github/'+config.id,'DELETE')).status).toBe(200);expect((await send(payload())).status).toBe(401);expect(await receiptTime()).toBe(lastReceipt);expect(await receiptTime(other.id)).toBeNull();

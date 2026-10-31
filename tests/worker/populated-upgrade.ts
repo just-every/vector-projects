@@ -43,7 +43,7 @@ export async function provePopulatedUpgrade(boundaryName:string,schema?:{added:s
  return confirmed.cookie.split(';')[0];
  };
  let cookie=schema?.signIn==='after'?'':await signIn();
- if(cookie)await populate?.(cookie);
+ await populate?.(cookie);
  const tables=(await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name!='d1_migrations' ORDER BY name").all<{name:string}>()).results;
  const selectedColumns=new Map<string,string>();
  const read=async(name:string)=>{
