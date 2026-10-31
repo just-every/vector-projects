@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { expect } from '@playwright/test';
 export async function prepareTimeSurfaces(context,runtime,issue,team) {
  const api=context.request,base=runtime.base,headers={Origin:base};
  const owner=(await(await api.get(base+'/api/session')).json()).operatorId;
@@ -44,6 +45,7 @@ export async function inspectTimeSurfaces(page,context,runtime,issue,records,wid
  await page.goto(runtime.base+'/app/cycles/'+records.closedCycle.id);await page.getByRole('heading',{name:'Snapshot at close',exact:true}).scrollIntoViewIfNeeded();await capture('closed-cycle');
  await page.goto(runtime.base+'/app/issues/'+issue.identifier);await page.getByRole('heading',{name:issue.title,exact:true}).waitFor();await page.getByText('Description history',{exact:false}).click();await page.getByLabel('Compare from revision').waitFor();await page.getByLabel('Compare from revision').scrollIntoViewIfNeeded();await capture('description-history');
  await page.goto(runtime.base+'/app/issues/'+records.intake.identifier);await page.getByRole('heading',{name:records.intake.title,exact:true}).waitFor();
+ await expect(page.getByRole('button',{name:'Accept and route work',exact:true})).toBeEnabled();
  const decisions=page.getByRole('button',{name:'Show all decisions',exact:true});if(await decisions.isVisible())await decisions.click();
  await page.getByRole('tab',{name:'Defer',exact:true}).click();await page.getByLabel('Return for decision (America/Los_Angeles)').scrollIntoViewIfNeeded();await capture('deferral');await page.getByLabel('Return for decision (America/Los_Angeles)').fill(local);const deferred=page.waitForResponse(r=>r.url().endsWith('/defer')&&r.request().method()==='POST');await page.getByRole('button',{name:'Defer decision',exact:true}).click();assert.equal((await deferred).status(),200);await page.getByRole('status',{name:'Saved triage decision'}).scrollIntoViewIfNeeded();await capture('deferred-confirmation');
  await page.goto(runtime.base+'/app/new');await page.getByRole('heading',{name:'New issue',exact:true}).waitFor();await page.getByRole('radio',{name:/Intake/}).check();await page.getByLabel('Observed time (America/Los_Angeles)').scrollIntoViewIfNeeded();await capture('new-intake');await page.getByRole('radio',{name:/Issue.*Ready for work/}).check();
