@@ -53,6 +53,15 @@ type IntakeDecisionRecordInput = {
 }
 
 export async function createIssueRecord(binding: D1Database, request: CreateIssueRecordInput): Promise<{ identifier: string }> {
+  const plan = await planIssueRecord(binding, request)
+  try { await mutationDatabase(binding, request.actorOperatorId).batch(plan.writes) }
+  catch (error) { return creationError(binding, request.input.teamId, error) }
+  return { identifier: plan.identifier }
+}
+
+/** Plans native creation, including notifications and references, for one atomic graph write.
+ * Sequence reservations remain durable even when persistence is refused. */
+export async function planIssueRecord(binding: D1Database, request: CreateIssueRecordInput) {
   binding = mutationDatabase(binding, request.actorOperatorId)
   const db = drizzle(binding)
   const now = request.now.toISOString()
@@ -133,14 +142,13 @@ export async function createIssueRecord(binding: D1Database, request: CreateIssu
   const labelWrites = request.input.labelIds.length === 0
     ? []
     : [db.insert(issueLabels).values(request.input.labelIds.map((labelId) => ({ issueId, labelId, createdAt: now })))]
-  try { await commitWithAssignee(binding, request.input.assigneeOperatorId, team.workspaceId,
-    [creationGuard(binding, request.actorOperatorId, team.workspaceId, team.id, status.id, request.input, status.category, allocation.prefix), ...[issueWrite, ...labelWrites, activityWrite].map(query => {
+  const writes = [creationGuard(binding, request.actorOperatorId, team.workspaceId, team.id, status.id, request.input, status.category, allocation.prefix), ...[issueWrite, ...labelWrites, activityWrite].map(query => {
       const { sql, params } = query.toSQL()
       return binding.prepare(sql).bind(...params)
-    }), ...followStatements(binding,event,[request.actorOperatorId]), ...assignmentStatements(binding,event,request.input.assigneeOperatorId), ...mentionStatements(binding,event,request.input.description), ...issueReferenceStatements(binding,event,request.input.description), ...finalizeEvent(binding,event), ...(request.commitStatements?.(binding,identifier) ?? [])]) } catch (error) { return creationError(binding, team.id, error) }
-  return { identifier }
+    }), ...followStatements(binding,event,[request.actorOperatorId]), ...assignmentStatements(binding,event,request.input.assigneeOperatorId), ...mentionStatements(binding,event,request.input.description), ...issueReferenceStatements(binding,event,request.input.description), ...finalizeEvent(binding,event), ...(request.commitStatements?.(binding,identifier) ?? [])]
+  if (request.input.assigneeOperatorId) writes.unshift(binding.prepare("SELECT CASE WHEN EXISTS(SELECT 1 FROM operators WHERE id=? AND workspace_id=? AND removed_at IS NULL) THEN 1 ELSE json('assignee unavailable') END").bind(request.input.assigneeOperatorId,team.workspaceId))
+  return { identifier, issueId, writes }
 }
-
 export async function writeIntakeDecision(binding: D1Database, request: IntakeDecisionRecordInput): Promise<WriteOutcome> {
   binding = mutationDatabase(binding, request.actorOperatorId)
   const db = drizzle(binding)
