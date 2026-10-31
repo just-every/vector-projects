@@ -20,7 +20,7 @@ import { expectedBoardConflicts } from './core-board-support.mjs';
 import { expectedUndoConflicts } from './core-undo-properties.mjs';
 import { followerJourney } from './core-follower-journey.mjs';
 import { keyboardJourney } from './core-keyboard-journey.mjs';
-import { draftJourney, expectedDraftFailures } from './core-draft-journey.mjs';
+import { draftJourney, expectedDraftFailures, expectedAccountDraftConflicts } from './core-draft-journey.mjs';
 import { currentJourney } from './core-current-journey.mjs';
 import { threadsJourney } from './core-threads-journey.mjs';
 import { myWorkTabsJourney } from './core-my-work-tabs-journey.mjs';
@@ -642,6 +642,11 @@ try {
       classifiedDraftConsole.push({ url: m.location().url, text: m.text(), expected: "Deliberate metadata GET500 with visible error and recovery asserted" });
       return;
     }
+    if (expectedAccountDraftConflicts.has(m.location().url) &&
+        /^Failed to load resource: the server responded with a status of 409(?: \([^)]*\))?$/.test(m.text())) {
+      classifiedDraftConsole.push({ url: m.location().url, text: m.text(), expected: 'Deliberate delayed draft save with newer text retained' });
+      return;
+    }
     if (expectedUndoConflicts.has(m.location().url) &&
         /^Failed to load resource: the server responded with a status of 409(?: \([^)]*\))?$/.test(m.text())) {
       classifiedUndoConsole.push({ url: m.location().url, text: m.text(), expected: "Deliberate stale Undo POST409, with unchanged issue and activity asserted" });
@@ -739,7 +744,7 @@ try {
       streamControlsJourney(page, context, base, record, undefined, [width]), `synthetic-vector-${1921 + Number(width === 390)}`);
   }
   if (journeyGroup !== 'current') {
-  await draftJourney(page, context, base, ids.flow, ids.sarah, record);
+  await draftJourney(page, context, base, ids.flow, ids.sarah, record, { state, evidence });
   await threadsJourney(page, context, base, state, ids.flow, evidence, record);
   const followerContext = await browser.newContext({ storageState: await context.storageState(), viewport: page.viewportSize() });
   const followerPage = await followerContext.newPage();

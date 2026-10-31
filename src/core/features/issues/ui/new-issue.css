@@ -295,3 +295,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+.account-drafts { margin: 1rem 0; font-size: 0.875rem; }
+.account-drafts h2 { font-size: 1rem; margin: 0 0 0.5rem; }
+.account-drafts ul { list-style: none; padding: 0; margin: 0; }
+.account-drafts li { padding: 0.5rem 0; overflow-wrap: anywhere; }
+.account-drafts button { font: inherit; color: var(--app-cobalt-ink); cursor: pointer; }

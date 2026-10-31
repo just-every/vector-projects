@@ -97,7 +97,18 @@ async function memberRole(db: D1Database, id: string) {
   return (await db.prepare('SELECT role FROM operators WHERE id=? AND removed_at IS NULL').bind(id).first<{ role: string }>())?.role
 }
 
+const draftTeam: Resolve<string[] | null> = async request => {
+  const values = await field(request, 'values');
+  const target = values && typeof values === 'object' ? text((values as { teamId?: unknown }).teamId) : undefined;
+  const stored = request.params.id ? await request.db.prepare(`SELECT team_id team FROM issue_drafts WHERE id=? AND author_operator_id=? AND state='open'`)
+    .bind(request.params.id,request.actor).first<{team:string}>() : null;
+  return teamsOf(request.db,request.actor,[...new Set([target,stored?.team].filter((id): id is string => !!id))]);
+};
 export const doors: Door[] = [
+  { method: 'POST', path: '/drafts', row: 'issues.write', teams: draftTeam },
+  { method: 'PATCH', path: '/drafts/:id', row: 'issues.write', teams: draftTeam },
+  { method: 'DELETE', path: '/drafts/:id', row: 'issues.write', teams: draftTeam },
+
   ...([
     ['POST','/documents'],['PATCH','/documents/:documentId'],['POST','/documents/:documentId/comments'],
     ['PUT','/issues/:identifier/specification'],['DELETE','/issues/:identifier/specification'],

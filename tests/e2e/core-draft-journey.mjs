@@ -1,9 +1,11 @@
+import { accountDraftJourney } from './account-drafts-journey.mjs';
+export { expectedAccountDraftConflicts } from './account-drafts-journey.mjs';
 import assert from 'node:assert/strict';
 import { beforePrivateNavigation } from './collaboration-navigation.mjs';
 
 export const expectedDraftFailures = new Set();
 
-export async function draftJourney(page, context, base, teamId, operatorId, record) {
+export async function draftJourney(page, context, base, teamId, operatorId, record, proof) {
   const target = base + '/app/new-issue';
   await beforePrivateNavigation(page, target);
   expectedDraftFailures.add(base + '/api/metadata');
@@ -58,4 +60,5 @@ export async function draftJourney(page, context, base, teamId, operatorId, reco
   await page.getByLabel(/^Assignee/).selectOption('');
   await page.getByLabel(/^Priority/).selectOption('none');
   record('ISSUE-015', 'Typed unique unsent title, multiline description, team, assignee, priority, estimate, date, outcome and impact survive reload in the same context; authenticated search/list contain no created record.');
+  if (proof) await accountDraftJourney(page, context, base, record, proof);
 }

@@ -1,3 +1,4 @@
+import { readDraft, consumeDraftStatements } from '../drafts/repository'
 import { requireIssueProjection } from "./projection-access"
 import { IssueAccessError } from "./access"
 import { readRequestJson } from '../../app/input'
@@ -17,6 +18,14 @@ const issueParamPattern = /^[A-Z]{2,10}-[1-9][0-9]*$/
 export async function createIssueRoute(context: Context<AppEnvironment>) {
   const parsed = createIssueInputSchema.safeParse(await requestBody(context))
   if (!parsed.success) return invalidRequest(context, parsed.error.issues)
+  const draftId = context.req.header('x-vector-draft-id');
+  const revision = Number(context.req.header('x-vector-draft-revision'));
+  const reference = draftId ? { id: draftId, revision } : undefined;
+  if (reference) {
+    const draft = await readDraft(context.env.DB, context.get('operatorId'), reference.id);
+    if (!Number.isSafeInteger(revision) || !draft || draft.revision !== revision || draft.values.teamId !== parsed.data.teamId)
+      return context.json({ error: 'draft_changed', message: 'This draft changed or was removed. Reopen it before submitting.', draft }, 409);
+  }
   return respondToMutation(
     context,
     async () => ({
@@ -26,6 +35,7 @@ export async function createIssueRoute(context: Context<AppEnvironment>) {
         parsed.data,
         new Date(),
         context.get('drainNotifications'),
+        reference ? db => consumeDraftStatements(db, context.get('operatorId'), parsed.data.teamId, reference) : undefined,
       ),
       outcome: 'written' as const,
     }),

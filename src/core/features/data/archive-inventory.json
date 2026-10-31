@@ -2159,5 +2159,16 @@
   ],
   "bs_assert": [
     "value"
+  ],
+  "issue_drafts": [
+    "id",
+    "workspace_id",
+    "author_operator_id",
+    "team_id",
+    "body_json",
+    "revision",
+    "state",
+    "created_at",
+    "updated_at"
   ]
 }
