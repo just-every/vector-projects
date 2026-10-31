@@ -36,6 +36,7 @@ import { ImportError } from '../features/data/import/types';
 import { requireIssueSourceAccess } from '../features/data/import/issue-source';
 import { PaginationInvalidated } from "../features/issues/list-revision";
 import { addNotificationRoutes } from '../features/notifications/routes';
+import { addFavoriteRoutes } from '../features/favorites/routes';
 import { addViewRoutes } from '../features/views/routes';
 import { addPreferenceRoutes } from '../features/views/preferences-routes';
 import { addBulkIssueRoutes } from '../features/bulk-edit/routes';
@@ -390,6 +391,7 @@ export function createApiApp(document?: { operator: AppEnvironment['Variables'][
   addIssueReferenceRoutes(app);
 
   addNotificationRoutes(app);
+  addFavoriteRoutes(app);
   addViewRoutes(app);
   addPreferenceRoutes(app);
   addAdministrationRoutes(app);

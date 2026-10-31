@@ -19,6 +19,7 @@ export async function populateRoundtrip(installation,cookie){
  const privateView=await api('/api/views','POST',{name:'Owner private view',isShared:false,query:{}},201),sharedView=await api('/api/views','POST',{name:'Shared restored view',isShared:true,query:{}},201);
  const archived=await api('/api/settings/teams','POST',{name:'Archived history',identifierPrefix:'HST'});const historyTeam=archived.teams.find(row=>row.identifierPrefix==='HST');await api('/api/settings/teams/'+historyTeam.id,'PATCH',{archived:true});
  const project=admin.projects.find(row=>row.lifecycle==='completed')??admin.projects[0];await api('/api/settings/projects/'+project.id,'PATCH',{archived:true});
+ await api('/api/favorites','PUT',{expectedVersion:0,folders:[{id:'archive',name:'Restored work'}],entries:[{kind:'issue',subjectId:root.id,folderId:null},{kind:'project',subjectId:project.id,folderId:null},{kind:'view',subjectId:privateView.id,folderId:'archive'}]});
  const input={format:'json',source:'archive-import',name:'retained.json',base64:Buffer.from(JSON.stringify([{id:'archive-record',title:'Imported source history',team:team.name}])).toString('base64'),mapping:{sourceId:'id',title:'title',team:'team'},defaults:{status:status.id}};
  const publish=async(value,key)=>{const review=await api('/api/data/import/preview','POST',value);assert.equal(review.ready,true);let run=await api('/api/data/import/apply','POST',{input:{...value,effectiveAt:review.effectiveAt},reviewedFingerprint:review.fingerprint,operationKey:key,acknowledgeOmissions:true});while(run.progress.unfinished)run=await api('/api/data/import/runs/'+run.id+'/resume','POST',{});return run;};
  const retained=await publish(input,'archive-completed');assert.equal(retained.state,'completed');
@@ -37,10 +38,10 @@ export async function populateRoundtrip(installation,cookie){
  populateDeliveryHistory(installation,{issue:root,owner,peer});
  const removed=installation.sql("SELECT id FROM operators WHERE email='alex@vector.test'")[0].id;await api('/api/settings/operators/'+removed,'DELETE');
  assert.equal(installation.sql('SELECT count(*) AS n FROM operators WHERE removed_at IS NOT NULL')[0].n,1);
- return {referenceSource:child.identifier,referenceTarget:root.identifier,identifier:root.identifier,peer,privateView:privateView.id,sharedView:sharedView.id};
+ return {referenceSource:child.identifier,referenceTarget:root.identifier,identifier:root.identifier,favoriteIds:[root.id,project.id,privateView.id],peer,privateView:privateView.id,sharedView:sharedView.id};
 }
 export function verifyRoundtripCategories(records){
- const manifest=records[0],required=['operators','teams','workflow_statuses','issues','issue_comments','issue_reactions','issue_reference_subjects','issue_files','issue_links','issue_dependencies','issue_parents','evidence_revisions','intake_decisions','issue_activity','projects','cycles','labels','saved_views','list_preferences','notifications','notification_deliveries','notification_delivery_attempts','workspace_settings','audit_records','operator_removals','ik_jobs','ik_sources','ik_originals'];
+ const manifest=records[0],required=['operators','teams','workflow_statuses','issues','issue_comments','issue_reactions','issue_reference_subjects','issue_files','issue_links','issue_dependencies','issue_parents','evidence_revisions','intake_decisions','issue_activity','projects','cycles','labels','saved_views','member_favorites','list_preferences','notifications','notification_deliveries','notification_delivery_attempts','workspace_settings','audit_records','operator_removals','ik_jobs','ik_sources','ik_originals'];
  for(const name of required)assert(manifest.tables.find(row=>row.name===name)?.count>0,'Complete archive category: '+name);
  const items=records.filter(row=>row.kind==='part').flatMap(row=>row.items),text=canonicalRecords(items);
  assert(text.includes('Removed comment history')===false,'Tombstoned comment content is absent');assert(text.includes('"rolled_back"'));assert(text.includes('"failed"'));

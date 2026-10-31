@@ -37,6 +37,7 @@ try{
  assert.equal((await destination.req('/api/issues/'+fixture.identifier,'GET',undefined,restored)).status,200);
  const references=await destination.req('/api/issues/'+fixture.referenceSource+'/references','GET',undefined,restored);assert.equal(references.status,200);assert.equal((await references.json()).references.some(row=>row.identifier===fixture.referenceTarget),true);
  console.log('ISSUE-027 portable archive restores reference subjects through native public doors.');
+ const favorites=await destination.req('/api/favorites','GET',undefined,restored);assert.equal(favorites.status,200);const favoriteState=await favorites.json();assert.deepEqual(favoriteState.entries.map(entry=>entry.subjectId),fixture.favoriteIds);assert.deepEqual(favoriteState.folders,[{id:'archive',name:'Restored work'}]);assert.equal(favoriteState.version,1);
  const search=await destination.req('/api/search?q=searchable','GET',undefined,restored);assert.equal(search.status,200);assert((await search.json()).issues.some(row=>row.identifier===fixture.identifier),'Restored comments resolve to their native issue');
  const exact=await destination.req('/api/search?q='+encodeURIComponent(fixture.identifier),'GET',undefined,restored);assert.equal(exact.status,200);assert((await exact.json()).issues.some(row=>row.identifier===fixture.identifier),'Restored immutable identifiers remain searchable');
  assert.equal((await destination.req('/auth/request','POST',{email:'maya@vector.test'})).status,409);
