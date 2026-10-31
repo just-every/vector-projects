@@ -28,6 +28,9 @@ export async function favoritesJourney({ page, context, base, state, sql, eviden
   const email = [marker, 'vector.test'].join(String.fromCharCode(64));
   const team = (await owner('/settings/teams', 'POST', { name: marker + ' private', identifierPrefix: 'FAV' + marker.slice(-6).replaceAll(/\d/g, n => String.fromCharCode(65 + Number(n))), isPrivate: true })).teams.find(t => t.name === marker + ' private');
   const ownerId = (await owner('/session')).operatorId;
+  // The independent invited-Owner workspace needs an installation owner for
+  // native member removal, just like the configured production workspace.
+  sql(`INSERT INTO workspace_installation(workspace_id,setup_operator_id,created_at,updated_at) SELECT workspace_id,id,strftime('%Y-%m-%dT%H:%M:%fZ','now'),strftime('%Y-%m-%dT%H:%M:%fZ','now') FROM operators WHERE id='${ownerId}' ON CONFLICT(workspace_id) DO NOTHING`);
   const project = (await owner('/settings/projects', 'POST', { name: marker + ' project', leadOperatorId: ownerId })).projects.find(p => p.name === marker + ' project');
   await owner('/issues', 'POST', { teamId: team.id, projectId: project.id, title: marker + ' private work' }, 201);
   const publicTeam = (await owner('/options')).teams.find(t => !t.isPrivate && !t.archivedAt);
