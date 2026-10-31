@@ -91,6 +91,7 @@ export function useInbox(snoozed: boolean) {
     failure: string;
     body?: SnoozeChoice;
     identifier?: string;
+    documentId?: string | null;
   }) {
     if (mutation.current) return false;
     mutation.current = true;
@@ -117,7 +118,8 @@ export function useInbox(snoozed: boolean) {
       setCursor(null);
       setState({ data: null, error: null, loading: true });
       setRevision((value) => value + 1);
-      if (command.identifier)
+      if (command.documentId) await navigate({to:"/app/documents/$documentId",params:{documentId:command.documentId}});
+      else if (command.identifier)
         await navigate({
           to: "/app/issues/$identifier",
           params: { identifier: command.identifier },
@@ -209,7 +211,7 @@ export function useInbox(snoozed: boolean) {
       setRevision((value) => value + 1);
       notifications.refresh();
     },
-    read(id?: string, identifier?: string) {
+    read(id?: string, identifier?: string, documentId?: string | null) {
       return mutate({
         key: id ?? "all",
         url: id
@@ -217,7 +219,7 @@ export function useInbox(snoozed: boolean) {
           : "/api/notifications/read-all",
         label: "Opening…",
         failure: "Unable to mark notifications read.",
-        identifier,
+        identifier,documentId,
       });
     },
     snooze(id: string, body: SnoozeChoice) {

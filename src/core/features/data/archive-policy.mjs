@@ -1,3 +1,5 @@
+// Document mentions, followers, Inbox history and consumed revision receipts are portable domain data.
+// Restore retains history without scanning text, scheduling channels or replaying deliveries.
 // Document issue references retain live and removed backlinks as portable domain data.
 // Webhook event selections and team filters are portable configuration. Restored
 // event history remains held and destination secrets still require re-entry.
