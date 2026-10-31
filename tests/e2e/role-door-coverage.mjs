@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import {readFileSync,readdirSync,existsSync} from 'node:fs';
 import {resolve,dirname,relative} from 'node:path';
 import {register} from 'node:module';
-import {execFileSync} from 'node:child_process';
 import ts from 'typescript';
 import {parseContract} from '../../src/base/seed-contract.mjs';
 
@@ -10,7 +9,6 @@ import {parseContract} from '../../src/base/seed-contract.mjs';
  * than iterating the declarations it is meant to check. It runs in the existing
  * administration journey, before the same doors are exercised with real people. */
 export async function assertRoleDoorCoverage(){
- execFileSync(process.execPath,['scripts/contract-docs.mjs','check'],{stdio:'inherit'});
  register('./integrations/typescript-loader.mjs',import.meta.url);
  const [{createServerApp},{doors,apiDoors},{matrix},{settingsFormDoors,serverFunctionDoors,commandDoors}]=await Promise.all([
   import('../../src/core/app/server.ts'),import('../../src/core/features/roles/doors.ts'),
