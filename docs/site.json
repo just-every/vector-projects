@@ -101,6 +101,10 @@
   ],
   "githubOnly": [
     {
+      "source": "sdk/README.md",
+      "reason": "Developer SDK installation and example reference, also shipped in the public release archive"
+    },
+    {
       "source": "ACCEPTANCE.md",
       "reason": "Evidence gates for the contract clauses"
     },

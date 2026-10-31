@@ -522,7 +522,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "5166b5f52357ff427719553fd00f8d9a9d31739d586beb82dfbfda123e2a89f5",
+      "sha256": "30e994b7654f84989d6e8e9ce3e933349921a3553d2b5c5ef5434a2a70373a48",
       "executable": false
     },
     "DEMO.md": {
@@ -554,7 +554,7 @@
       "executable": false
     },
     "docs/API.md": {
-      "sha256": "4fdba2dd7a5c16ed17942e42c8bfaa72bf7891f6df84b7e4373ca0533a748425",
+      "sha256": "b767ce3c78c312aed843aa46fb3a6c0853be95756aa460a05d4b4f180efa7107",
       "executable": false
     },
     "docs/ARCHIVES.md": {
@@ -722,7 +722,7 @@
       "executable": false
     },
     "docs/site.json": {
-      "sha256": "100a46fa820787ca980ae440e84587a93dad3cdac832cbbb907a72721aeeafb7",
+      "sha256": "ce68c4cfdac782e14ac21f1fbefc405ef9bbc56a78b27f2afe858bfeca3582ad",
       "executable": false
     },
     "docs/VERIFICATION.md": {
@@ -2518,7 +2518,7 @@
       "executable": false
     },
     "package.json": {
-      "sha256": "117d3eb8eca5741a61377872219037986b03d174438bbf7ce4910feb87c4cc07",
+      "sha256": "34eb8a910398277555fc6b5ca34ef67cd0faba4b281784242696049acf97564a",
       "executable": false
     },
     "pnpm-lock.yaml": {
@@ -3514,19 +3514,43 @@
       "executable": false
     },
     "sdk/build.mjs": {
-      "sha256": "572049d5b7404c5247d08ce52f4ed6fabe91633df719ae9cca26159badda1716",
+      "sha256": "fee9eac44a905ee5c03b4ba48faf6ee3095153ff0f3841187b95d1758fcb2166",
       "executable": false
     },
     "sdk/client.ts": {
       "sha256": "16064c74621998d4f3310c931e60c8dd5f55a0121bb1ec2f86f82eaf9bc664c2",
       "executable": false
     },
+    "sdk/examples/agent.ts": {
+      "sha256": "953cad4e0a3e31c66bcb225ba1fb2f04ca10dff265740ed0a19327adb771feca",
+      "executable": false
+    },
+    "sdk/examples/environment.mjs": {
+      "sha256": "410e694986e95c340e943ac548a98856d9846e1371592bdf40c24ee68c4612ee",
+      "executable": false
+    },
     "sdk/examples/intake.ts": {
-      "sha256": "0f78fc4753b298ac73ee5c80f80ab95d440066629f70683e5cc8b87f9d92a811",
+      "sha256": "8057582d626f6ba4a246d45243d2e2b1e517049c0d23e04f6b09555a3b34c904",
+      "executable": false
+    },
+    "sdk/examples/reads.ts": {
+      "sha256": "481e0b299005a62685d7983c5feb51c3cf834b05eefd9bf6dd77dfea4fe88dda",
+      "executable": false
+    },
+    "sdk/examples/run-agent.mjs": {
+      "sha256": "b7fb4aa17cdec26329564a83665b9746050708ca8ec1ad6f637f95c939727d7a",
       "executable": false
     },
     "sdk/examples/run-intake.mjs": {
-      "sha256": "78477f326c002630032575b961f0a6b8fe455e7871cdeee110654a25490f0c89",
+      "sha256": "075b4f2a6606283364ec8be6c00468bf70ceb47f0ee9c404fb50e1d25841fc90",
+      "executable": false
+    },
+    "sdk/examples/run-sync.mjs": {
+      "sha256": "2f1aec50fb194c64d12d974740fee284298c4863719021255ba511ff36f4ea4b",
+      "executable": false
+    },
+    "sdk/examples/sync.ts": {
+      "sha256": "9cae8990511ea74d314504b2bcbd400925f95c9a5365439dd240deb82e0b8e47",
       "executable": false
     },
     "sdk/generate.mjs": {
@@ -3535,6 +3559,14 @@
     },
     "sdk/generated.ts": {
       "sha256": "27c17f3a2ca7b9d4fa16b0a424b4cc905c89dbb8c5c808a60e1e3cae50c9a927",
+      "executable": false
+    },
+    "sdk/package.mjs": {
+      "sha256": "2e1398d533b3fc7da0161895339ffd820b2f8fdb22eee376618a9b907a58c929",
+      "executable": false
+    },
+    "sdk/README.md": {
+      "sha256": "e225a38f183e9b31a7e18ec9b811ade4bd8144e1b0e76f0644e1b7774a83103c",
       "executable": false
     },
     "sdk/tsconfig.json": {
@@ -8022,7 +8054,11 @@
       "executable": false
     },
     "tests/e2e/integrations/sdk-intake.mjs": {
-      "sha256": "a81eccf624ec65222671fbda5cd3afa388424bf5b9e9af897c7dc8b35341dd19",
+      "sha256": "bb29c5e415038b61489ff7be10546f1e248e804a9312224e0669ddf2466870c9",
+      "executable": false
+    },
+    "tests/e2e/integrations/sdk-package.mjs": {
+      "sha256": "b8fc53ebf93dc2aa113ab2a88284f1425d54e653c29151e7e8f8aae894328dce",
       "executable": false
     },
     "tests/e2e/integrations/slack-app-archive.mjs": {
@@ -9014,7 +9050,7 @@
       "executable": false
     },
     "tests/worker/sdk-intake-journey.ts": {
-      "sha256": "ded41c54924fb8bb43a5aeec34596f2b534a075b5d369bcfb96fa5c0ac0a4a56",
+      "sha256": "644958fa88275f49051e500436db76709c985dc7442b816770280a224e6fa447",
       "executable": false
     },
     "tests/worker/search-access.test.ts": {

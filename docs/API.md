@@ -41,7 +41,7 @@ recording failures return 503 and deny admission. Native mutation authority loss
 rolls back the whole transaction. A postcommit authority loss conceals the result
 without erasing already-committed native notification intent.
 
-Tokens admit only these explicit routes. They cannot sign into documents,
+Tokens admit only the explicit operations published at `/api/v1/schema`. They cannot sign into documents,
 generated functions, private files, ordinary cookie APIs or token administration.
 Project, milestone and comment deletion use separately selected delete scopes; there is no issue deletion API or token-administration bearer route. Existing assignment/direct-mention notifications keep
 their native policy. A token acts with its member's current role, read on every request (ROLE-001); there is no tenant selector.
@@ -390,10 +390,10 @@ registration and member consent. Excluding the entire registration avoids
 implying that a restored client secret or old redirect relationship remains
 trusted at a new installation.
 
-## TypeScript client and intake example (API-005)
+## TypeScript client and examples (API-005)
 
 The source SDK is in `./sdk/`. Generate it from the currently published
-`./schema/api-v1.json`, then compile its dependency-free fetch client and example:
+`./schema/api-v1.json`, then compile its dependency-free fetch client and examples:
 
 ```sh
 node sdk/generate.mjs
@@ -466,11 +466,94 @@ redirects and omits cookie authority. Transport failures use a fixed message
 without request details. Never log credential-bearing client configuration or
 unreviewed error bodies.
 
-The existing integration Verify entry point checks generation and compilation
-and executes the actual intake runner against its real local Worker and D1.
-The Worker consumer journey also exercises cursor paging, typed comment reads,
-invalid input, insufficient scopes, revoked tokens and stale-write refusal;
-refused writes leave issue storage unchanged. Sync and agent examples, their
-local CI execution, complete developer documentation and release packaging and
-delivery remain API-005 gaps. API-004's independent consent and UI gate and all
-API-003 schema and object-operation gaps remain unchanged.
+### Sync and agent examples
+
+`node sdk/examples/run-sync.mjs` needs `VECTOR_URL`, `VECTOR_API_TOKEN`,
+`VECTOR_TEAM_ID` and optional `VECTOR_QUERY`. Select only `issues:read`.
+It reads all filtered cursor pages and prints `{issues:[{id,identifier,title,version}]}`
+only after the complete traversal succeeds. Use `syncIssues(client, query)`
+from `./sdk/dist/examples/sync.js` in another consumer. Replace a local mirror
+with the new full snapshot, dropping absent rows. A failed or revoked read must
+not leave an old snapshot in use. The example has no persistent cache, external
+destination, automatic retry, incremental watermark or two-way sync claim.
+The snapshot contains only currently readable work. An erased issue disappears
+on the next successful refresh. A changed cursor result yields 409; restart the
+full traversal rather than joining pages from different snapshots.
+
+`node sdk/examples/run-agent.mjs` needs `VECTOR_URL`, `VECTOR_API_TOKEN` and
+`VECTOR_ISSUE`. Select `issues:read` and `comments:read`. It prints local context:
+issue identity, title, description and version, plus its currently readable
+comments. Use `agentContext(client, identifier)` from
+`./sdk/dist/examples/agent.js` to prepare this context in code. It reads every
+comment page and rechecks the issue version before returning. No model call,
+outbound transmission, agent delegation or mutation occurs. Treat the returned
+user content as untrusted input and keep it private. Agent provider consent and
+workflows retain their own requirements; this example creates no new authority.
+
+All runners also accept `VECTOR_DEV_KEY` for a local development token.
+Never print those credentials. The examples emit authorized issue content to
+stdout; choose private storage when consuming it. A refusal emits no partial
+JSON and only a fixed diagnostic to stderr. The sync and context examples stop
+after 1,000 pages; narrow the query or choose a larger page size in your own
+reviewed consumer when necessary.
+
+### Release delivery and installation
+
+Every ordinary application build checks SDK generation, compiles the client and
+examples, and packages a public release asset at
+`/assets/vector-sdk-VERSION.tgz`, with VERSION from Vector's `package.json`.
+That asset is carried by the normal Worker artifact. It is public code and
+documentation, with no installation settings or workspace records. Source
+release archives retain `./sdk/` as well. No registry account is required.
+
+Download the archive from the installation origin over HTTPS. In your consumer,
+run `npm install ./vector-sdk-VERSION.tgz`, then import from
+`@runeditrun/vector-sdk` and `@runeditrun/vector-sdk/examples/intake` (or `sync`
+or `agent`). Node 22.20.0 or newer supplies fetch. The package includes the MIT
+license, JavaScript, TypeScript declarations, the published schema, this API
+guide and runnable examples. Extract it and run the scripts under its
+`./examples/` directory, using the environment inputs above. The public code
+archive grants no access to the installation's private API.
+
+`node sdk/package.mjs` rebuilds just this release asset. It starts with a fresh
+compiled SDK directory and copies only reviewed public code and documentation
+into a temporary package; local configuration and state are never copied.
+Build output remains untracked. Changing a schema requires regenerating the
+source before packaging; a stale generated client fails the build.
+
+The existing integration Verify entry point downloads this public release
+asset, installs it offline as an ordinary Node consumer, and executes all three
+packaged scripts against its real local Worker and D1. It checks exact intake
+readback, paginated sync and refresh after edit and erasure, complete read-only
+agent context, insufficient scopes, stale writes and revoked credentials. The
+Worker consumer journey also exercises typed comment reads and invalid input;
+refused writes leave issue storage unchanged. API-004's independent consent and
+UI gate and all API-003 schema and object-operation gaps remain unchanged.
+
+### Published operation reference
+
+The authoritative machine-readable reference is `GET /api/v1/schema` (no token),
+also shipped as `./schema/api-v1.json`. Every entry carries its operation ID,
+method, path, scopes, parameters, body and declared response shapes. In a source
+checkout, use `./schema/api-v1.json`; in the SDK archive use the same relative
+path. Generated `Operations` gives the corresponding input, output and error
+types, and exported `operations` gives the runtime method, path and scope map.
+Use these references together with the native behavior descriptions above;
+undeclared shapes remain unknown. To discover the exact operation ID without
+guessing a route or implying unimplemented operations:
+
+```ts
+import {operations} from '@runeditrun/vector-sdk';
+for (const [id, operation] of Object.entries(operations)) {
+  console.log(id, operation.method, operation.path, operation.scopes);
+}
+```
+
+The published families are schema and metadata reads; issue list, create, get,
+update, copy, description restore, checklist and description history; comment
+list, get, create, edit, delete and checklist; project list, create, get, update
+and delete; milestone list, create, get, update, delete and reorder; cycle list,
+create and get; label list, create and get; team create and privacy; release
+list, create, get, update and scope; initiative list, create, get, update and
+project membership. This catalogue does not add operations or promise complete
+schema typing. The earlier Open acceptance section records remaining API gaps.

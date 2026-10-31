@@ -2,6 +2,8 @@ import {env} from 'cloudflare:workers';
 import {expect} from 'vitest';
 import {ApiError, VectorClient} from '../../sdk/client';
 import {intake} from '../../sdk/examples/intake';
+import {syncIssues} from '../../sdk/examples/sync';
+import {agentContext} from '../../sdk/examples/agent';
 import {bindings, origin} from './base-auth-fixture';
 import type {setupIntegrations} from './integration-fixture';
 
@@ -27,7 +29,7 @@ export async function sdkIntakeJourney(f: Awaited<ReturnType<typeof setupIntegra
   expect(projection.body).toBe('synthetic-vector-5135');
   expect(projection.issueIdentifier).toBe(issue.identifier);
 
-  await intake(client, {...input, title:'synthetic-vector-5136'});
+  const second = await intake(client, {...input, title:'synthetic-vector-5136'});
   const ids: string[] = [];
   let cursor: string | undefined;
   do {
@@ -40,6 +42,15 @@ export async function sdkIntakeJourney(f: Awaited<ReturnType<typeof setupIntegra
   } while (cursor);
   expect(new Set(ids).size).toBe(2);
   expect(ids).toContain(issue.identifier);
+  const mirror = await syncIssues(client, {q:'synthetic-vector-513', team:input.teamId, limit:1});
+  expect(mirror.map(row => row.id).sort()).toEqual([issue.id, second.id].sort());
+  expect(mirror.find(row => row.id === issue.id)?.title).toBe(title);
+  await client.request('comments_create_10', {path:{identifier:issue.identifier}, body:{body:'synthetic-vector-5139'}});
+  const context = await agentContext(client, issue.identifier);
+  expect(context.issue).toMatchObject({...issue, version:persisted.version});
+  expect(context.comments.map(row => row.body).sort()).toEqual(['synthetic-vector-5135','synthetic-vector-5139']);
+  expect((await f.call('/issues/' + second.identifier, 'DELETE', {expectedVersion:1, confirmed:true})).status).toBe(200);
+  expect((await syncIssues(client, {q:'synthetic-vector-513', team:input.teamId, limit:1})).map(row => row.id)).toEqual([issue.id]);
   const before = (await env.DB.prepare('SELECT * FROM issues ORDER BY id').all()).results;
   const refused = async (run: () => Promise<unknown>, status: number, code: string) => {
     const error = await run().then(() => null, error => error);
@@ -50,9 +61,13 @@ export async function sdkIntakeJourney(f: Awaited<ReturnType<typeof setupIntegra
     expect((await env.DB.prepare('SELECT * FROM issues ORDER BY id').all()).results).toEqual(before);
   };
   const reader = new VectorClient({baseUrl:origin, token:read.token, fetch:transport});
+  await refused(() => agentContext(reader, issue.identifier), 401, 'token_scope_or_authority_refused');
+  await refused(() => agentContext(client, second.identifier), 404, 'not_found');
   await refused(() => intake(reader, {...input, title:'synthetic-vector-5137'}), 401, 'token_scope_or_authority_refused');
   await refused(() => client.request('issues_update_5', {path:{identifier:issue.identifier}, body:{expectedVersion:Number(persisted.version) + 1, title:'synthetic-vector-5138'}}), 409, 'stale_version');
   await refused(() => client.request('issues_list_2', {query:{limit:0}}), 400, 'invalid_request');
   expect((await f.call('/settings/integrations/tokens/' + issued.credential.id, 'DELETE')).status).toBe(200);
   await refused(() => client.request('issues_get_4', {path:{identifier:issue.identifier}}), 401, 'token_scope_or_authority_refused');
+  await refused(() => syncIssues(client, {team:input.teamId, limit:1}), 401, 'token_scope_or_authority_refused');
+  await refused(() => agentContext(client, issue.identifier), 401, 'token_scope_or_authority_refused');
 }

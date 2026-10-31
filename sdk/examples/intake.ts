@@ -1,13 +1,5 @@
 import {VectorClient} from '../client.js';
-
-function issueIdentity(value: unknown): {id: string; identifier: string; title: string} {
-  if (!value || typeof value !== 'object' || !('id' in value) || typeof value.id !== 'string' ||
-      !('identifier' in value) || typeof value.identifier !== 'string' ||
-      !('title' in value) || typeof value.title !== 'string') {
-    throw new Error('Intake response is missing its issue identity or title');
-  }
-  return {id:value.id, identifier:value.identifier, title:value.title};
-}
+import {issueIdentity} from './reads.js';
 
 /** Creates once and confirms the persisted result through the public read door. */
 export async function intake(client: VectorClient, input: {teamId: string; title: string}) {

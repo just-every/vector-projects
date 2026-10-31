@@ -27,7 +27,7 @@
     "test:base-auth": "node tests/e2e/base-auth-runtime.mjs",
     "test:admin": "node --experimental-strip-types tests/e2e/admin-runtime.mjs",
     "test:collaboration": "node --experimental-strip-types tests/e2e/collaboration-runtime.mjs",
-    "build:source": "pnpm typecheck && vite build",
+    "build:source": "pnpm typecheck && vite build && node sdk/package.mjs",
     "artifact:setup": "node scripts/deployment/controller.mjs setup",
     "artifact:deploy": "node scripts/deployment/controller.mjs deploy",
     "artifact:health": "node scripts/deployment/controller.mjs health",
