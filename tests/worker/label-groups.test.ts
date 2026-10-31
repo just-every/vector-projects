@@ -118,7 +118,8 @@ it("[ISSUE-014] label groups are Owner and Admin management; a Guest applies one
   expect((await guest(labelIds, issue.version)).status).toBe(400);
   expect((await guest([labelIds[0]], issue.version)).status).toBe(200);
   await resetLimits();
-  const viewer = await invite("viewer-labels@roles.test", owner.cookie, "viewer");
+  const viewerName = "viewer-labels";
+  const viewer = await invite(`${viewerName}@roles.test`, owner.cookie, "viewer");
   const stable = await snapshot(stored);
   expect((await request(`/api/issues/${issue.identifier}`, "PATCH", { expectedVersion: issue.version + 1, labelIds: [labelIds[1]] }, viewer)).status).toBe(403);
   expect(await snapshot(stored)).toEqual(stable);

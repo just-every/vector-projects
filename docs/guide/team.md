@@ -18,6 +18,8 @@ Each team has its own identifier prefix (like `FLW`) and its own workflow. A new
 
 Owners and Admins create, rename, recolour and delete labels in **Settings → Labels**. Merging a workspace label into another rewrites issues, projects and saved-view filters in one transaction. A destination used by projects must have project use enabled. Deleting a label removes it from issues and from saved views.
 
+Owners and Admins can also create **Label groups** in Settings → Labels, for example Area or Type, and choose a group in each label's editor. An issue carries at most one label from a group: the issue Labels picker offers no second label once one is chosen, and creating, editing, bulk editing, copying, undoing or importing an issue with two labels of one group is refused with nothing changed. Putting labels in a group, or merging a label, is refused while an issue would end up with two labels of the group. Deleting a group keeps its labels, ungrouped. Guests apply existing labels in their invited teams, Members and Viewers cannot manage groups, and team-scoped labels and groups are not available yet.
+
 Members can open **Settings → Labels** to read workspace label names and colours. This read-only list offers no creation, rename, recolour or deletion controls; workspace label management remains with Owners and Admins. Members create labels from an issue’s Labels picker instead. Owners and Admins can change **Who may create labels** in Settings → Labels to restrict creation to themselves; the next browser, session or scoped API creation request follows that permission.
 
 ## Notifications

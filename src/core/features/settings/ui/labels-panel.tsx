@@ -1,5 +1,5 @@
 import { useHydrated } from "../../../app/initial-resources";
-import { useRef, useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import type { Administration } from "../../administration/schema";
 import { LabelChip } from "../../../app/ui/label-chip";
 import { useAdministrationAction } from "./administration-action";
@@ -81,14 +81,15 @@ export function LabelsPanel({
   );
 }
 function GroupSelect({ groups, value = "" }: { groups: Administration["labelGroups"]; value?: string }) {
+  const id = useId();
   return (
-    <label>
-      Label group
-      <select name="groupId" defaultValue={value}>
+    <>
+      <label htmlFor={id}>Label group</label>
+      <select id={id} name="groupId" defaultValue={value}>
         <option value="">No group</option>
         {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
       </select>
-    </label>
+    </>
   );
 }
 function LabelEditor({

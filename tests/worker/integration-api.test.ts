@@ -299,7 +299,7 @@ async function labelReadJourney(f:Awaited<ReturnType<typeof setupIntegrations>>)
   const input={name:'synthetic-vector-1132 '+suffix,projectsEnabled,color};
   const created=await call(legacy.token,'/labels','POST',input,201);
   expect(created).toEqual({id:expect.any(String),...input});
-  labels.push({...created,textColor:color==='#ffffff'?'#000000':'#ffffff'});
+  labels.push({...created,groupId:null,textColor:color==='#ffffff'?'#000000':'#ffffff'});
  }
  await call(legacy.token,'/labels','POST',{name:'synthetic-vector-1133',color:'#ffffff'},201);
  expect((await f.state()).labels.filter(row=>row.name.startsWith('synthetic-vector-1132'))).toEqual(labels);

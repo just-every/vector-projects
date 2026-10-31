@@ -90,6 +90,8 @@ export async function prepareViewerCensus(w:Workspace,seed:{issue:any;comment:an
  const release=await call(owner,'/releases','POST',{name:'synthetic-vector-31022',teamId:w.team.id});
  const otherLabelState=await call(owner,'/settings/labels','POST',{name:'synthetic-vector-31023',color:'#3355aa'});
  const otherLabel=otherLabelState.labels.find((row:any)=>row.name==='synthetic-vector-31023');
+ const labelGroupState=await call(owner,'/settings/label-groups','POST',{name:'synthetic-vector-31062'});
+ const labelGroup=labelGroupState.labelGroups.find((row:any)=>row.name==='synthetic-vector-31062');
  const milestoneState=await call(owner,'/settings/projects/'+project.id+'/milestones','POST',{name:'synthetic-vector-31024'});
  const milestone=milestoneState.milestones.find((row:any)=>row.name==='synthetic-vector-31024');
  const workflowState=await call(owner,'/settings/teams/'+w.team.id+'/statuses','POST',{name:'synthetic-vector-31025',category:'unstarted'});
@@ -194,7 +196,7 @@ export async function prepareViewerCensus(w:Workspace,seed:{issue:any;comment:an
   add('bearer','PATCH','/comments/:id',{expectedVersion:commentDetail.version,body:'synthetic-vector-31054'},{id:comment.id});add('bearer','DELETE','/comments/:id',{expectedVersion:commentDetail.version},{id:comment.id});
   native('POST','/issues/:identifier/files',undefined,ip);plans.native.get('POST /issues/:identifier/files')!.send=()=>app.request(origin+'/api/issues/'+issue.identifier+'/files',{method:'POST',headers:{cookie:member.cookie,host:new URL(origin).host,Origin:origin,'content-type':'text/plain','x-file-name':'synthetic-vector-31055.txt'},body:'synthetic-vector-31055'},bindings);
   native('DELETE','/issues/:identifier/files/:itemId',undefined,{...ip,itemId:file.id});both('POST','/issues/:identifier/copy','/issues/:identifier/copy',{expectedVersion:current.version,teamId:w.team.id},ip);native('DELETE','/issues/:identifier',{expectedVersion:current.version,confirmed:true},ip);
-  native('PUT','/settings/labels/creation',{membersMayCreate:false});both('POST','/settings/labels','/labels',{name:'synthetic-vector-31056',color:'#3355aa'});native('POST','/settings/labels/:id/merge',{destinationLabelId:otherLabel.id},{id:label.id});native('PATCH','/settings/labels/:id',{name:'synthetic-vector-31057'},{id:label.id});native('DELETE','/settings/labels/:id',undefined,{id:label.id});
+  native('PUT','/settings/labels/creation',{membersMayCreate:false});both('POST','/settings/labels','/labels',{name:'synthetic-vector-31056',color:'#3355aa'});native('POST','/settings/labels/:id/merge',{destinationLabelId:otherLabel.id},{id:label.id});native('PATCH','/settings/labels/:id',{name:'synthetic-vector-31057'},{id:label.id});native('DELETE','/settings/labels/:id',undefined,{id:label.id});native('POST','/settings/label-groups',{name:'synthetic-vector-31063'});native('PATCH','/settings/label-groups/:id',{name:'synthetic-vector-31064'},{id:labelGroup.id});native('DELETE','/settings/label-groups/:id',undefined,{id:labelGroup.id});
   native('POST','/intake',{title:'synthetic-vector-31058',teamId:w.team.id});for(const action of ['accept','defer','decline','return'] as const){const target=action==='return'?deferredNow:pending;const body=action==='defer'?{expectedVersion:target.version,returnAt}:action==='decline'?{expectedVersion:target.version,reason:'synthetic-vector-31059'}:{expectedVersion:target.version};native('POST','/issues/:identifier/'+action,body,{identifier:target.identifier});}
   native('POST','/settings/integrations/errors',errorConnectionInput);native('DELETE','/settings/integrations/errors/:id',undefined,{id:errorConnection.id});native('POST','/settings/integrations/errors/:id/link',{identifier:issue.identifier,recordId:'8121'},{id:errorConnection.id});native('POST','/settings/integrations/errors/:id/resolve',{identifier:issue.identifier,recordId:'8121'},{id:errorConnection.id});
   native('POST','/settings/integrations/sources',{sourceId:'synthetic-vector-31060',name:'synthetic-vector-31060',teamId:w.team.id});native('POST','/settings/integrations/sources/:id/rotate',{overlapHours:1},{id:source.id});native('POST','/settings/integrations/sources/:id/webhook-url',undefined,{id:source.id});native('DELETE','/settings/integrations/sources/:id',undefined,{id:source.id});
@@ -234,6 +236,8 @@ export async function prepareViewerCensus(w:Workspace,seed:{issue:any;comment:an
    'POST /settings/labels':administrationInput.labelCreateSchema,
    'PATCH /settings/labels/:id':administrationInput.labelUpdateSchema,
    'POST /settings/labels/:id/merge':administrationInput.labelMergeSchema,
+   'POST /settings/label-groups':administrationInput.labelGroupSchema,
+   'PATCH /settings/label-groups/:id':administrationInput.labelGroupSchema,
    'POST /settings/projects':administrationInput.projectCreateSchema,
    'PATCH /settings/projects/:id':administrationInput.projectUpdateSchema,
    'POST /settings/projects/:id/milestones':administrationInput.projectMilestoneCreateSchema,
