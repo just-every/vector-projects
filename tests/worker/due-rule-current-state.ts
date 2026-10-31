@@ -102,7 +102,14 @@ export async function proveCurrentDueRuleState(
   );
   expect(await runCount(paused.id)).toBe(0);
   expect((await f.detail(paused.identifier)).cycle).toBeNull();
+  // Settings shows the stored enabled rule as paused until an Owner or Admin takes it over.
+  expect((await f.history()).rule).toMatchObject({
+    enabled: true,
+    ownerId: member,
+    ownerActive: false,
+  });
   await f.save();
+  expect((await f.history()).rule.ownerActive).toBe(true);
   // A failure midway through both effects rolls them all back, then leaves a visible failure.
   const atomic = await f.create({ dueDate: "2026-03-10" });
   await env.DB.prepare(
@@ -153,6 +160,18 @@ export async function proveCurrentDueRuleState(
   expect(
     (await f.notifications()).some((n) => n.identifier === muted.identifier),
   ).toBe(false);
+  // A competing scheduler commits between this tick's discovery and claim. Work
+  // already in the active cycle keeps that claim's fence current, so only the
+  // durable receipt prevents a second notice.
+  const raced = await f.create({
+    dueDate: "2026-03-10",
+    cycleId: (await f.detail(muted.identifier)).cycle!.id,
+  });
+  await tick(at, beforeDueClaim(() => tick(at)));
+  expect(await runCount(raced.id)).toBe(1);
+  expect(
+    (await f.notifications()).filter((n) => n.identifier === raced.identifier),
+  ).toHaveLength(1);
   // Closing or expiring the selected cycle before the atomic action leaves both actions pending.
   const closed = await f.create({ dueDate: "2026-03-10" });
   await tick(

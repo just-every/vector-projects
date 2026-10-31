@@ -196,6 +196,13 @@ export async function proveDueRuleAuthority() {
   ]);
   expect(await f.notifications()).toHaveLength(0);
   expect((await f.detail(issue.identifier)).cycle).toBeNull();
+  // A planned cycle that has not started is not the team's active cycle.
+  await f.cycle("April delivery", "2026-04-01T00:00", "2026-04-15T00:00");
+  await tick("2026-03-08T07:30:00Z");
+  expect((await f.history()).runs).toMatchObject([
+    { outcome: "failed", reason: "No active open cycle" },
+  ]);
+  expect((await f.detail(issue.identifier)).cycle).toBeNull();
   const cycle = await f.cycle();
   await tick("2026-03-08T08:00:00Z");
   expect((await f.history()).runs).toMatchObject([

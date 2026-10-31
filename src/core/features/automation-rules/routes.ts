@@ -9,6 +9,7 @@ import {
   SettingsError,
 } from "../administration/transaction";
 import { settingsActor } from "../settings/repository";
+import { activeRecipient } from "../notifications/events";
 import { createUlid } from "../../shared/ids";
 import { dueRuleInput, type DueRule } from "./schema";
 
@@ -22,11 +23,17 @@ async function read(db: D1Database, actor: string) {
     );
   const row = await db
     .prepare(
-      `SELECT r.id,r.name,r.owner_operator_id AS ownerId,o.name AS ownerName,r.enabled,r.version
+      `SELECT r.id,r.name,r.owner_operator_id AS ownerId,o.name AS ownerName,r.enabled,r.version,
+      (o.id IS NOT NULL AND o.role IN ('owner','admin') AND ${activeRecipient}) AS ownerActive
     FROM workspace_due_rules r LEFT JOIN operators o ON o.id=r.owner_operator_id AND o.removed_at IS NULL WHERE r.workspace_id=?`,
     )
     .bind(access.workspace_id)
-    .first<Omit<DueRule, "enabled"> & { enabled: number }>();
+    .first<
+      Omit<DueRule, "enabled" | "ownerActive"> & {
+        enabled: number;
+        ownerActive: number;
+      }
+    >();
   // The scoped issues and cycles projections apply current private-team visibility.
   const runs = (
     await db
@@ -40,7 +47,9 @@ async function read(db: D1Database, actor: string) {
       .all<{ notified: number }>()
   ).results;
   return {
-    rule: row ? { ...row, enabled: row.enabled === 1 } : null,
+    rule: row
+      ? { ...row, enabled: row.enabled === 1, ownerActive: row.ownerActive === 1 }
+      : null,
     runs: runs.map((x) => ({ ...x, notified: x.notified === 1 })),
   };
 }

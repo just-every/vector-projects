@@ -11,6 +11,8 @@ export const dueRuleSchema = z.object({
   name: z.string(),
   ownerId: z.string().nullable(),
   ownerName: z.string().nullable(),
+  // Admission requires the owner to remain an active Owner or Admin.
+  ownerActive: z.boolean(),
   enabled: z.boolean(),
   version: z.number(),
 });

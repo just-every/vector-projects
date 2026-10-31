@@ -521,7 +521,7 @@
       "executable": false
     },
     "CONTRACT.md": {
-      "sha256": "c29ef0cddb6e49b8eb2ed3523f309f0ec89d7b4664b4726282bde2724e568cc8",
+      "sha256": "238d954176de403aeba2befa0bcf8642e9780b80ad21f058d508a5d752acb51b",
       "executable": false
     },
     "DEMO.md": {
@@ -4281,15 +4281,15 @@
       "executable": false
     },
     "src/core/features/automation-rules/panel.tsx": {
-      "sha256": "2ed123fcbb96995d7d64328f0370264860616e9aa7f9b5ce9a30ec3f42c1324c",
+      "sha256": "73b4e8d46f6df6714896863fff2e2d833f9212e8bc0a833ed8f0b31ba79b3c3b",
       "executable": false
     },
     "src/core/features/automation-rules/routes.ts": {
-      "sha256": "cc0e05a8db5ed0ba31d291d5fa4163ff0051fd73707bfe964caeaf2ef6df9a4e",
+      "sha256": "a754ddfaeaa141ae7ba98514af28e986828e3751007ec0e243b55e7a42b4b150",
       "executable": false
     },
     "src/core/features/automation-rules/schema.ts": {
-      "sha256": "641028b6f0ba7f6f08e97b6daec4aef0b19c3da95846989895018672020dcd0f",
+      "sha256": "a954d93da6d38563924b47d5300e98e4383df8b431c6cd321b0f0e9ac3ef2d46",
       "executable": false
     },
     "src/core/features/automation-rules/service.ts": {
@@ -8609,11 +8609,11 @@
       "executable": false
     },
     "tests/worker/due-rule-current-state.ts": {
-      "sha256": "5cbcd56b90d05209c624d2faac57fea7243544c3858b52d2cd0a99f93406b186",
+      "sha256": "300be1ec64acd1cc44c39230fe8b9ce31884e30122e3e0737bbc9ca056087bb3",
       "executable": false
     },
     "tests/worker/due-rule-proof.ts": {
-      "sha256": "61c40f4eeae61f13e5f20f4b439af1e970fc40f925f22b9bb9eb00c996592b7a",
+      "sha256": "0f709145d42bd932a233b3cdd6da70dbd5404d63ba6479a6ad1dba7724ab6c3b",
       "executable": false
     },
     "tests/worker/due-rule-upgrade.ts": {

@@ -142,10 +142,17 @@ function DueRuleForm({
           Enable due-soon rule
         </label>
         <p>
-          Owner: {rule?.ownerName ?? "You, when saved"}. Saving assigns
-          responsibility to you. Rules pause if their owner loses workspace rule
-          authority.
+          Owner:{" "}
+          {rule ? (rule.ownerName ?? "No current owner") : "You, when saved"}.
+          Saving assigns responsibility to you. Rules pause if their owner loses
+          workspace rule authority.
         </p>
+        {rule?.enabled && !rule.ownerActive && (
+          <p role="status">
+            Paused: its owner no longer has workspace rule authority. Save the
+            rule to take responsibility and resume it.
+          </p>
+        )}
         <button type="submit">
           {rule ? "Save due-soon rule" : "Create due-soon rule"}
         </button>
