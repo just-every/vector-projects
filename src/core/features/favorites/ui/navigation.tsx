@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useMatch } from "@tanstack/react-router";
 import { useState } from "react";
 import { useApiResource } from "../../../app/api-client";
 import { favoriteSubjectSchema } from "../schema";
@@ -9,19 +9,20 @@ export function FavoriteNavigation() {
   const { data, error, busy, save } = useFavorites();
   const [organizing, setOrganizing] = useState(false),
     [name, setName] = useState("");
-  const path = useLocation({ select: (location) => location.pathname });
-  const match = path.match(/^\/app\/(issues|projects|views)\/([^/]+)$/);
-  const current = match
-    ? {
-        kind:
-          match[1] === "issues"
-            ? "issue"
-            : match[1] === "projects"
-              ? "project"
-              : "view",
-        subjectKey: match[2]!,
-      }
-    : null;
+  const issue = useMatch({ from: "/app/issues/$identifier", shouldThrow: false }),
+    project = useMatch({ from: "/app/projects/$projectId", shouldThrow: false }),
+    view = useMatch({ from: "/app/views/$viewId", shouldThrow: false }),
+    viewIssue = useMatch({
+      from: "/app/views/$viewId/$identifier",
+      shouldThrow: false,
+    });
+  const current = issue
+    ? { kind: "issue", subjectKey: issue.params.identifier }
+    : project
+      ? { kind: "project", subjectKey: project.params.projectId }
+      : view && !viewIssue
+        ? { kind: "view", subjectKey: view.params.viewId }
+        : null;
   const entries = data?.entries ?? [];
   const folders = data?.folders ?? [];
   function move(index: number, direction: number) {

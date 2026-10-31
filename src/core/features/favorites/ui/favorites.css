@@ -97,7 +97,7 @@
   overflow-y: auto;
 }
 .app-mobile-favorites {
-  position: relative;
+  position: static;
 }
 .app-mobile-favorites > summary {
   cursor: pointer;
@@ -108,8 +108,9 @@
   position: absolute;
   z-index: 60;
   top: 100%;
-  right: 0;
-  width: min(300px, calc(100vw - 32px));
+  left: 1rem;
+  right: 1rem;
+  width: auto;
   max-height: 65vh;
   overflow-y: auto;
   background: var(--app-paper);

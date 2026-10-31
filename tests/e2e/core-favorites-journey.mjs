@@ -4,6 +4,21 @@ import { inviteReader, readerApi } from './role-reader-support.mjs';
 import { readDevelopmentLink } from './outbox-session.mjs';
 import { roleScreens } from './role-ui-support.mjs';
 
+// Every control of the open Favorites popup lies inside the viewport, whatever
+// the account name does to the header, and the page never scrolls sideways.
+async function insideViewport(page, popup) {
+  const layout = await popup.evaluate(el => ({
+    width: innerWidth,
+    scroll: document.documentElement.scrollWidth,
+    rects: [el, ...el.querySelectorAll('a, button, input, select, label, h2, h3')].map(node => {
+      const { left, right } = node.getBoundingClientRect();
+      return { node: node.tagName + ' ' + (node.getAttribute('aria-label') ?? node.textContent.slice(0, 30)), left, right };
+    }),
+  }));
+  assert.equal(layout.scroll, layout.width);
+  for (const rect of layout.rects) assert.ok(rect.left >= 0 && rect.right <= layout.width, 'Favorites control outside the viewport: ' + JSON.stringify(rect));
+}
+
 // Independent native sign-ins, never a copied profile or session. The same
 // helper is reached by the ordinary core keyboard journey in push Verify.
 export async function favoritesJourney({ page, context, base, state, sql, evidence, record }) {
@@ -97,9 +112,10 @@ export async function favoritesJourney({ page, context, base, state, sql, eviden
     await nav(secondPage).getByRole('button', { name: 'Organize', exact: true }).click();
     await nav(secondPage).getByRole('combobox', { name: 'Folder for ' + view.name, exact: true }).focus();
     assert.ok(await nav(secondPage).getByRole('combobox', { name: 'Folder for ' + view.name, exact: true }).evaluate(el => el === document.activeElement));
-    assert.ok(await secondPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await insideViewport(secondPage, nav(secondPage));
     await secondPage.screenshot({ path: evidence + '/favorites-navigation-390.png' });
     await secondPage.setViewportSize({ width: 1440, height: 1000 });
+    await insideViewport(secondPage, nav(secondPage));
     await secondPage.screenshot({ path: evidence + '/favorites-navigation-1440.png' });
 
     await owner(`/settings/teams/${team.id}/members/${member.id}`, 'DELETE');
