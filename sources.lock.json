@@ -8178,7 +8178,7 @@
       "executable": false
     },
     "tests/e2e/role-door-coverage.mjs": {
-      "sha256": "21d6259aaa192270c60895b4c9472d00839545257ee6738aa3ecb1f2729618f2",
+      "sha256": "b8441c63dc1cd297c4f63d038d4d82692b1b707a0269c7937f2f7e6adedc1249",
       "executable": false
     },
     "tests/e2e/role-private-cells.mjs": {
