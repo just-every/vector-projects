@@ -9,6 +9,7 @@ export function notificationRemovalStatements(
     ...[
       "issue_reminders",
       "notifications",
+      "document_notifications",
       "notification_candidates",
       "notification_deliveries",
     ].map((table) =>
@@ -18,6 +19,8 @@ export function notificationRemovalStatements(
     ),
     ...[
       "issue_followers",
+      "document_followers",
+      "document_mentions",
       "issue_mentions",
       "issue_notification_mutes",
       "notification_preferences",
@@ -31,6 +34,7 @@ export function notificationRemovalStatements(
     ),
     ...[
       "notifications",
+      "document_notifications",
       "notification_candidates",
       "notification_deliveries",
     ].map((table) =>

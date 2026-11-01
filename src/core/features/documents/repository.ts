@@ -1,3 +1,4 @@
+import {documentMentionStatements} from './mentions';
 import {createUlid} from '../../shared/ids';
 import {settingsActor} from '../settings/repository';
 import {IntegrationError} from '../integrations/errors';
@@ -62,6 +63,7 @@ export async function createDocument(db:D1Database,actor:string,input:z.infer<ty
   db.prepare('INSERT INTO documents(id,workspace_id,parent_kind,parent_id,title,body,author_operator_id,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)').bind(id,subject.workspace,subject.kind,subject.id,input.title,input.body,actor,at,at),
   db.prepare('INSERT INTO document_revisions(id,document_id,version,title,body,author_operator_id,created_at) VALUES(?,?,1,?,?,?,?)').bind(createUlid(now),id,input.title,input.body,actor,at),
   ...documentReferenceStatements(db,{documentId:id,actor,version:1,at},input.body),
+  ...documentMentionStatements(db,{documentId:id,actor,version:1,at},input.body),
  ]);
  return readDocument(db,actor,id);
 }
@@ -73,6 +75,7 @@ export async function editDocument(db:D1Database,actor:string,id:string,input:z.
   db.prepare('INSERT INTO document_revisions(id,document_id,version,title,body,author_operator_id,created_at) VALUES(?,?,?,?,?,?,?)').bind(createUlid(now),id,old.version+1,title,body,actor,at),
   db.prepare('UPDATE documents SET title=?,body=?,version=version+1,updated_at=? WHERE id=? AND version=?').bind(title,body,at,id,old.version),
   ...documentReferenceStatements(db,{documentId:id,actor,version:old.version+1,at},body),
+  ...documentMentionStatements(db,{documentId:id,actor,version:old.version+1,at},body,old.body),
  ]);
  return readDocument(db,actor,id);
 }

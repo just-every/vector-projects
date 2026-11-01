@@ -1,3 +1,4 @@
+import {inboxSubjects} from './subjects';
 import { settingsActor } from "../settings/repository";
 import { requireIssueAccess } from "../issues/access";
 import type {
@@ -11,9 +12,9 @@ export async function unreadCount(db: D1Database, actor: string) {
   await settingsActor(db, actor);
   return (await db
     .prepare(
-      "SELECT count(*) n FROM notifications n JOIN issues i ON i.id=n.issue_id JOIN teams t ON t.id=i.team_id JOIN operators o ON o.id=n.recipient_id AND o.workspace_id=t.workspace_id WHERE n.recipient_id=? AND n.read_at IS NULL AND NOT EXISTS(SELECT 1 FROM notification_snoozes s WHERE s.notification_id=n.id AND s.returned_at IS NULL)",
+      `SELECT count(*) n FROM (${inboxSubjects}) WHERE readAt IS NULL AND snoozed=0`,
     )
-    .bind(actor)
+    .bind(actor,actor)
     .first<number>("n"))!;
 }
 export async function inbox(
@@ -27,14 +28,13 @@ export async function inbox(
   const rows = (
     await db
       .prepare(
-        `SELECT n.id,n.event_id eventId,i.identifier,i.title,n.actor_name actor,(SELECT kind FROM issue_activity WHERE id=n.event_id) sourceEventKind,n.causes_json causesJson,n.created_at createdAt,n.read_at readAt,s.until_at snoozedUntil,s.until_change snoozeOnChange,COALESCE(s.returned_at,n.created_at) visibleAt
-    FROM notifications n JOIN issues i ON i.id=n.issue_id JOIN teams t ON t.id=i.team_id JOIN operators o ON o.id=n.recipient_id AND o.workspace_id=t.workspace_id
-    LEFT JOIN notification_snoozes s ON s.notification_id=n.id
-    WHERE n.recipient_id=? AND ${snoozed ? 's.notification_id IS NOT NULL AND s.returned_at IS NULL' : '(s.notification_id IS NULL OR s.returned_at IS NOT NULL)'} ${cursor ? "AND (COALESCE(s.returned_at,n.created_at)<? OR (COALESCE(s.returned_at,n.created_at)=? AND n.id<?))" : ""}
-    ORDER BY COALESCE(s.returned_at,n.created_at) DESC,n.id DESC LIMIT ?`,
+        `SELECT id,eventId,identifier,title,documentId,actor,sourceEventKind,causesJson,createdAt,readAt,snoozedUntil,snoozeOnChange,visibleAt
+     FROM (${inboxSubjects}) WHERE snoozed=${snoozed ? 1 : 0}
+     ${cursor ? "AND (visibleAt<? OR (visibleAt=? AND id<?))" : ""}
+     ORDER BY visibleAt DESC,id DESC LIMIT ?`,
       )
       .bind(
-        actor,
+        actor,actor,
         ...(cursor ? [cursor.at, cursor.at, cursor.id] : []),
         limit + 1,
       )
