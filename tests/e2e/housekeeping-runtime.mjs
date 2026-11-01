@@ -48,7 +48,7 @@ try {
   ]);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
-    await go('/app/settings#housekeeping');
+    await go('/app/settings/teams');
     const form = page.getByRole('form', { name: `Auto-close and auto-archive ${team.name}` });
     await form.getByLabel('Auto-close after (days without activity)').fill('30');
     await form.getByLabel('Auto-archive after (days since closed)').fill('90');

@@ -50,6 +50,14 @@ import { Route as AppProjectsProjectIdRouteImport } from './routes/app.projects.
 import { Route as AppProjectsNewRouteImport } from './routes/app.projects.new'
 import { Route as AppReleasesIndexRouteImport } from './routes/app.releases.index'
 import { Route as AppReleasesReleaseIdRouteImport } from './routes/app.releases.$releaseId'
+import { Route as AppSettingsIndexRouteImport } from './routes/app.settings.index'
+import { Route as AppSettingsHousekeepingRouteImport } from './routes/app.settings.housekeeping'
+import { Route as AppSettingsLabelsRouteImport } from './routes/app.settings.labels'
+import { Route as AppSettingsMoveInRouteImport } from './routes/app.settings.move-in'
+import { Route as AppSettingsNotificationsRouteImport } from './routes/app.settings.notifications'
+import { Route as AppSettingsProfileRouteImport } from './routes/app.settings.profile'
+import { Route as AppSettingsRestoreRouteImport } from './routes/app.settings.restore'
+import { Route as AppSettingsWorkspaceRouteImport } from './routes/app.settings.workspace'
 import { Route as AppSettingsSectionRouteImport } from './routes/app.settings_.$section'
 import { Route as AppSettingsAuditRouteImport } from './routes/app.settings_.audit'
 import { Route as AppTeamsTeamIdRouteImport } from './routes/app.teams.$teamId'
@@ -57,7 +65,16 @@ import { Route as AppViewsIndexRouteImport } from './routes/app.views.index'
 import { Route as AppViewsViewIdRouteImport } from './routes/app.views.$viewId'
 import { Route as AppMyWorkCreatedIdentifierRouteImport } from './routes/app.my-work.created.$identifier'
 import { Route as AppMyWorkSubscribedIdentifierRouteImport } from './routes/app.my-work.subscribed.$identifier'
+import { Route as AppSettingsConnectionsIndexRouteImport } from './routes/app.settings.connections.index'
+import { Route as AppSettingsConnectionsKindRouteImport } from './routes/app.settings.connections.$kind'
+import { Route as AppSettingsDevelopersIndexRouteImport } from './routes/app.settings.developers.index'
+import { Route as AppSettingsDevelopersTabRouteImport } from './routes/app.settings.developers.$tab'
+import { Route as AppSettingsPeopleIndexRouteImport } from './routes/app.settings.people.index'
+import { Route as AppSettingsPeopleOperatorIdRouteImport } from './routes/app.settings.people.$operatorId'
+import { Route as AppSettingsTeamsIndexRouteImport } from './routes/app.settings.teams.index'
 import { Route as AppViewsViewIdIdentifierRouteImport } from './routes/app.views.$viewId.$identifier'
+import { Route as AppSettingsTeamsTeamIdIndexRouteImport } from './routes/app.settings.teams.$teamId.index'
+import { Route as AppSettingsTeamsTeamIdTabRouteImport } from './routes/app.settings.teams.$teamId.$tab'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -265,6 +282,47 @@ const AppReleasesReleaseIdRoute = AppReleasesReleaseIdRouteImport.update({
   path: '/releases/$releaseId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsHousekeepingRoute = AppSettingsHousekeepingRouteImport.update({
+  id: '/housekeeping',
+  path: '/housekeeping',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsLabelsRoute = AppSettingsLabelsRouteImport.update({
+  id: '/labels',
+  path: '/labels',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsMoveInRoute = AppSettingsMoveInRouteImport.update({
+  id: '/move-in',
+  path: '/move-in',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsNotificationsRoute =
+  AppSettingsNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
+const AppSettingsProfileRoute = AppSettingsProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsRestoreRoute = AppSettingsRestoreRouteImport.update({
+  id: '/restore',
+  path: '/restore',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsWorkspaceRoute = AppSettingsWorkspaceRouteImport.update({
+  id: '/workspace',
+  path: '/workspace',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsSectionRoute = AppSettingsSectionRouteImport.update({
   id: '/settings_/$section',
   path: '/settings/$section',
@@ -302,11 +360,63 @@ const AppMyWorkSubscribedIdentifierRoute =
     path: '/$identifier',
     getParentRoute: () => AppMyWorkSubscribedRoute,
   } as any)
+const AppSettingsConnectionsIndexRoute =
+  AppSettingsConnectionsIndexRouteImport.update({
+    id: '/connections/',
+    path: '/connections/',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
+const AppSettingsConnectionsKindRoute =
+  AppSettingsConnectionsKindRouteImport.update({
+    id: '/connections/$kind',
+    path: '/connections/$kind',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
+const AppSettingsDevelopersIndexRoute =
+  AppSettingsDevelopersIndexRouteImport.update({
+    id: '/developers/',
+    path: '/developers/',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
+const AppSettingsDevelopersTabRoute =
+  AppSettingsDevelopersTabRouteImport.update({
+    id: '/developers/$tab',
+    path: '/developers/$tab',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
+const AppSettingsPeopleIndexRoute = AppSettingsPeopleIndexRouteImport.update({
+  id: '/people/',
+  path: '/people/',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsPeopleOperatorIdRoute =
+  AppSettingsPeopleOperatorIdRouteImport.update({
+    id: '/people/$operatorId',
+    path: '/people/$operatorId',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
+const AppSettingsTeamsIndexRoute = AppSettingsTeamsIndexRouteImport.update({
+  id: '/teams/',
+  path: '/teams/',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppViewsViewIdIdentifierRoute =
   AppViewsViewIdIdentifierRouteImport.update({
     id: '/$identifier',
     path: '/$identifier',
     getParentRoute: () => AppViewsViewIdRoute,
+  } as any)
+const AppSettingsTeamsTeamIdIndexRoute =
+  AppSettingsTeamsTeamIdIndexRouteImport.update({
+    id: '/teams/$teamId/',
+    path: '/teams/$teamId/',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
+const AppSettingsTeamsTeamIdTabRoute =
+  AppSettingsTeamsTeamIdTabRouteImport.update({
+    id: '/teams/$teamId/$tab',
+    path: '/teams/$teamId/$tab',
+    getParentRoute: () => AppSettingsRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -324,7 +434,7 @@ export interface FileRoutesByFullPath {
   '/app/new': typeof AppNewRoute
   '/app/new-issue': typeof AppNewIssueRoute
   '/app/search': typeof AppSearchRoute
-  '/app/settings': typeof AppSettingsRoute
+  '/app/settings': typeof AppSettingsRouteWithChildren
   '/app/triage': typeof AppTriageRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/app/': typeof AppIndexRoute
@@ -344,6 +454,13 @@ export interface FileRoutesByFullPath {
   '/app/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/app/projects/new': typeof AppProjectsNewRoute
   '/app/releases/$releaseId': typeof AppReleasesReleaseIdRoute
+  '/app/settings/housekeeping': typeof AppSettingsHousekeepingRoute
+  '/app/settings/labels': typeof AppSettingsLabelsRoute
+  '/app/settings/move-in': typeof AppSettingsMoveInRoute
+  '/app/settings/notifications': typeof AppSettingsNotificationsRoute
+  '/app/settings/profile': typeof AppSettingsProfileRoute
+  '/app/settings/restore': typeof AppSettingsRestoreRoute
+  '/app/settings/workspace': typeof AppSettingsWorkspaceRoute
   '/app/settings/$section': typeof AppSettingsSectionRoute
   '/app/settings/audit': typeof AppSettingsAuditRoute
   '/app/teams/$teamId': typeof AppTeamsTeamIdRoute
@@ -355,10 +472,20 @@ export interface FileRoutesByFullPath {
   '/app/my-work/': typeof AppMyWorkIndexRoute
   '/app/projects/': typeof AppProjectsIndexRoute
   '/app/releases/': typeof AppReleasesIndexRoute
+  '/app/settings/': typeof AppSettingsIndexRoute
   '/app/views/': typeof AppViewsIndexRoute
   '/app/my-work/created/$identifier': typeof AppMyWorkCreatedIdentifierRoute
   '/app/my-work/subscribed/$identifier': typeof AppMyWorkSubscribedIdentifierRoute
+  '/app/settings/connections/$kind': typeof AppSettingsConnectionsKindRoute
+  '/app/settings/developers/$tab': typeof AppSettingsDevelopersTabRoute
+  '/app/settings/people/$operatorId': typeof AppSettingsPeopleOperatorIdRoute
   '/app/views/$viewId/$identifier': typeof AppViewsViewIdIdentifierRoute
+  '/app/settings/connections/': typeof AppSettingsConnectionsIndexRoute
+  '/app/settings/developers/': typeof AppSettingsDevelopersIndexRoute
+  '/app/settings/people/': typeof AppSettingsPeopleIndexRoute
+  '/app/settings/teams/': typeof AppSettingsTeamsIndexRoute
+  '/app/settings/teams/$teamId/$tab': typeof AppSettingsTeamsTeamIdTabRoute
+  '/app/settings/teams/$teamId/': typeof AppSettingsTeamsTeamIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -371,7 +498,6 @@ export interface FileRoutesByTo {
   '/app/new': typeof AppNewRoute
   '/app/new-issue': typeof AppNewIssueRoute
   '/app/search': typeof AppSearchRoute
-  '/app/settings': typeof AppSettingsRoute
   '/app/triage': typeof AppTriageRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/app': typeof AppIndexRoute
@@ -391,6 +517,13 @@ export interface FileRoutesByTo {
   '/app/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/app/projects/new': typeof AppProjectsNewRoute
   '/app/releases/$releaseId': typeof AppReleasesReleaseIdRoute
+  '/app/settings/housekeeping': typeof AppSettingsHousekeepingRoute
+  '/app/settings/labels': typeof AppSettingsLabelsRoute
+  '/app/settings/move-in': typeof AppSettingsMoveInRoute
+  '/app/settings/notifications': typeof AppSettingsNotificationsRoute
+  '/app/settings/profile': typeof AppSettingsProfileRoute
+  '/app/settings/restore': typeof AppSettingsRestoreRoute
+  '/app/settings/workspace': typeof AppSettingsWorkspaceRoute
   '/app/settings/$section': typeof AppSettingsSectionRoute
   '/app/settings/audit': typeof AppSettingsAuditRoute
   '/app/teams/$teamId': typeof AppTeamsTeamIdRoute
@@ -402,10 +535,20 @@ export interface FileRoutesByTo {
   '/app/my-work': typeof AppMyWorkIndexRoute
   '/app/projects': typeof AppProjectsIndexRoute
   '/app/releases': typeof AppReleasesIndexRoute
+  '/app/settings': typeof AppSettingsIndexRoute
   '/app/views': typeof AppViewsIndexRoute
   '/app/my-work/created/$identifier': typeof AppMyWorkCreatedIdentifierRoute
   '/app/my-work/subscribed/$identifier': typeof AppMyWorkSubscribedIdentifierRoute
+  '/app/settings/connections/$kind': typeof AppSettingsConnectionsKindRoute
+  '/app/settings/developers/$tab': typeof AppSettingsDevelopersTabRoute
+  '/app/settings/people/$operatorId': typeof AppSettingsPeopleOperatorIdRoute
   '/app/views/$viewId/$identifier': typeof AppViewsViewIdIdentifierRoute
+  '/app/settings/connections': typeof AppSettingsConnectionsIndexRoute
+  '/app/settings/developers': typeof AppSettingsDevelopersIndexRoute
+  '/app/settings/people': typeof AppSettingsPeopleIndexRoute
+  '/app/settings/teams': typeof AppSettingsTeamsIndexRoute
+  '/app/settings/teams/$teamId/$tab': typeof AppSettingsTeamsTeamIdTabRoute
+  '/app/settings/teams/$teamId': typeof AppSettingsTeamsTeamIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -423,7 +566,7 @@ export interface FileRoutesById {
   '/app/new': typeof AppNewRoute
   '/app/new-issue': typeof AppNewIssueRoute
   '/app/search': typeof AppSearchRoute
-  '/app/settings': typeof AppSettingsRoute
+  '/app/settings': typeof AppSettingsRouteWithChildren
   '/app/triage': typeof AppTriageRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/app/': typeof AppIndexRoute
@@ -443,6 +586,13 @@ export interface FileRoutesById {
   '/app/projects/$projectId': typeof AppProjectsProjectIdRoute
   '/app/projects/new': typeof AppProjectsNewRoute
   '/app/releases/$releaseId': typeof AppReleasesReleaseIdRoute
+  '/app/settings/housekeeping': typeof AppSettingsHousekeepingRoute
+  '/app/settings/labels': typeof AppSettingsLabelsRoute
+  '/app/settings/move-in': typeof AppSettingsMoveInRoute
+  '/app/settings/notifications': typeof AppSettingsNotificationsRoute
+  '/app/settings/profile': typeof AppSettingsProfileRoute
+  '/app/settings/restore': typeof AppSettingsRestoreRoute
+  '/app/settings/workspace': typeof AppSettingsWorkspaceRoute
   '/app/settings_/$section': typeof AppSettingsSectionRoute
   '/app/settings_/audit': typeof AppSettingsAuditRoute
   '/app/teams/$teamId': typeof AppTeamsTeamIdRoute
@@ -454,10 +604,20 @@ export interface FileRoutesById {
   '/app/my-work/': typeof AppMyWorkIndexRoute
   '/app/projects/': typeof AppProjectsIndexRoute
   '/app/releases/': typeof AppReleasesIndexRoute
+  '/app/settings/': typeof AppSettingsIndexRoute
   '/app/views/': typeof AppViewsIndexRoute
   '/app/my-work/created/$identifier': typeof AppMyWorkCreatedIdentifierRoute
   '/app/my-work/subscribed/$identifier': typeof AppMyWorkSubscribedIdentifierRoute
+  '/app/settings/connections/$kind': typeof AppSettingsConnectionsKindRoute
+  '/app/settings/developers/$tab': typeof AppSettingsDevelopersTabRoute
+  '/app/settings/people/$operatorId': typeof AppSettingsPeopleOperatorIdRoute
   '/app/views/$viewId/$identifier': typeof AppViewsViewIdIdentifierRoute
+  '/app/settings/connections/': typeof AppSettingsConnectionsIndexRoute
+  '/app/settings/developers/': typeof AppSettingsDevelopersIndexRoute
+  '/app/settings/people/': typeof AppSettingsPeopleIndexRoute
+  '/app/settings/teams/': typeof AppSettingsTeamsIndexRoute
+  '/app/settings/teams/$teamId/$tab': typeof AppSettingsTeamsTeamIdTabRoute
+  '/app/settings/teams/$teamId/': typeof AppSettingsTeamsTeamIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -496,6 +656,13 @@ export interface FileRouteTypes {
     | '/app/projects/$projectId'
     | '/app/projects/new'
     | '/app/releases/$releaseId'
+    | '/app/settings/housekeeping'
+    | '/app/settings/labels'
+    | '/app/settings/move-in'
+    | '/app/settings/notifications'
+    | '/app/settings/profile'
+    | '/app/settings/restore'
+    | '/app/settings/workspace'
     | '/app/settings/$section'
     | '/app/settings/audit'
     | '/app/teams/$teamId'
@@ -507,10 +674,20 @@ export interface FileRouteTypes {
     | '/app/my-work/'
     | '/app/projects/'
     | '/app/releases/'
+    | '/app/settings/'
     | '/app/views/'
     | '/app/my-work/created/$identifier'
     | '/app/my-work/subscribed/$identifier'
+    | '/app/settings/connections/$kind'
+    | '/app/settings/developers/$tab'
+    | '/app/settings/people/$operatorId'
     | '/app/views/$viewId/$identifier'
+    | '/app/settings/connections/'
+    | '/app/settings/developers/'
+    | '/app/settings/people/'
+    | '/app/settings/teams/'
+    | '/app/settings/teams/$teamId/$tab'
+    | '/app/settings/teams/$teamId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -523,7 +700,6 @@ export interface FileRouteTypes {
     | '/app/new'
     | '/app/new-issue'
     | '/app/search'
-    | '/app/settings'
     | '/app/triage'
     | '/docs/$slug'
     | '/app'
@@ -543,6 +719,13 @@ export interface FileRouteTypes {
     | '/app/projects/$projectId'
     | '/app/projects/new'
     | '/app/releases/$releaseId'
+    | '/app/settings/housekeeping'
+    | '/app/settings/labels'
+    | '/app/settings/move-in'
+    | '/app/settings/notifications'
+    | '/app/settings/profile'
+    | '/app/settings/restore'
+    | '/app/settings/workspace'
     | '/app/settings/$section'
     | '/app/settings/audit'
     | '/app/teams/$teamId'
@@ -554,10 +737,20 @@ export interface FileRouteTypes {
     | '/app/my-work'
     | '/app/projects'
     | '/app/releases'
+    | '/app/settings'
     | '/app/views'
     | '/app/my-work/created/$identifier'
     | '/app/my-work/subscribed/$identifier'
+    | '/app/settings/connections/$kind'
+    | '/app/settings/developers/$tab'
+    | '/app/settings/people/$operatorId'
     | '/app/views/$viewId/$identifier'
+    | '/app/settings/connections'
+    | '/app/settings/developers'
+    | '/app/settings/people'
+    | '/app/settings/teams'
+    | '/app/settings/teams/$teamId/$tab'
+    | '/app/settings/teams/$teamId'
   id:
     | '__root__'
     | '/'
@@ -594,6 +787,13 @@ export interface FileRouteTypes {
     | '/app/projects/$projectId'
     | '/app/projects/new'
     | '/app/releases/$releaseId'
+    | '/app/settings/housekeeping'
+    | '/app/settings/labels'
+    | '/app/settings/move-in'
+    | '/app/settings/notifications'
+    | '/app/settings/profile'
+    | '/app/settings/restore'
+    | '/app/settings/workspace'
     | '/app/settings_/$section'
     | '/app/settings_/audit'
     | '/app/teams/$teamId'
@@ -605,10 +805,20 @@ export interface FileRouteTypes {
     | '/app/my-work/'
     | '/app/projects/'
     | '/app/releases/'
+    | '/app/settings/'
     | '/app/views/'
     | '/app/my-work/created/$identifier'
     | '/app/my-work/subscribed/$identifier'
+    | '/app/settings/connections/$kind'
+    | '/app/settings/developers/$tab'
+    | '/app/settings/people/$operatorId'
     | '/app/views/$viewId/$identifier'
+    | '/app/settings/connections/'
+    | '/app/settings/developers/'
+    | '/app/settings/people/'
+    | '/app/settings/teams/'
+    | '/app/settings/teams/$teamId/$tab'
+    | '/app/settings/teams/$teamId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -909,6 +1119,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppReleasesReleaseIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/settings/': {
+      id: '/app/settings/'
+      path: '/'
+      fullPath: '/app/settings/'
+      preLoaderRoute: typeof AppSettingsIndexRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/housekeeping': {
+      id: '/app/settings/housekeeping'
+      path: '/housekeeping'
+      fullPath: '/app/settings/housekeeping'
+      preLoaderRoute: typeof AppSettingsHousekeepingRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/labels': {
+      id: '/app/settings/labels'
+      path: '/labels'
+      fullPath: '/app/settings/labels'
+      preLoaderRoute: typeof AppSettingsLabelsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/move-in': {
+      id: '/app/settings/move-in'
+      path: '/move-in'
+      fullPath: '/app/settings/move-in'
+      preLoaderRoute: typeof AppSettingsMoveInRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/notifications': {
+      id: '/app/settings/notifications'
+      path: '/notifications'
+      fullPath: '/app/settings/notifications'
+      preLoaderRoute: typeof AppSettingsNotificationsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/profile': {
+      id: '/app/settings/profile'
+      path: '/profile'
+      fullPath: '/app/settings/profile'
+      preLoaderRoute: typeof AppSettingsProfileRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/restore': {
+      id: '/app/settings/restore'
+      path: '/restore'
+      fullPath: '/app/settings/restore'
+      preLoaderRoute: typeof AppSettingsRestoreRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/workspace': {
+      id: '/app/settings/workspace'
+      path: '/workspace'
+      fullPath: '/app/settings/workspace'
+      preLoaderRoute: typeof AppSettingsWorkspaceRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/app/settings_/$section': {
       id: '/app/settings_/$section'
       path: '/settings/$section'
@@ -958,12 +1224,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMyWorkSubscribedIdentifierRouteImport
       parentRoute: typeof AppMyWorkSubscribedRoute
     }
+    '/app/settings/connections/': {
+      id: '/app/settings/connections/'
+      path: '/connections'
+      fullPath: '/app/settings/connections/'
+      preLoaderRoute: typeof AppSettingsConnectionsIndexRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/connections/$kind': {
+      id: '/app/settings/connections/$kind'
+      path: '/connections/$kind'
+      fullPath: '/app/settings/connections/$kind'
+      preLoaderRoute: typeof AppSettingsConnectionsKindRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/developers/': {
+      id: '/app/settings/developers/'
+      path: '/developers'
+      fullPath: '/app/settings/developers/'
+      preLoaderRoute: typeof AppSettingsDevelopersIndexRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/developers/$tab': {
+      id: '/app/settings/developers/$tab'
+      path: '/developers/$tab'
+      fullPath: '/app/settings/developers/$tab'
+      preLoaderRoute: typeof AppSettingsDevelopersTabRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/people/': {
+      id: '/app/settings/people/'
+      path: '/people'
+      fullPath: '/app/settings/people/'
+      preLoaderRoute: typeof AppSettingsPeopleIndexRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/people/$operatorId': {
+      id: '/app/settings/people/$operatorId'
+      path: '/people/$operatorId'
+      fullPath: '/app/settings/people/$operatorId'
+      preLoaderRoute: typeof AppSettingsPeopleOperatorIdRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/teams/': {
+      id: '/app/settings/teams/'
+      path: '/teams'
+      fullPath: '/app/settings/teams/'
+      preLoaderRoute: typeof AppSettingsTeamsIndexRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/app/views/$viewId/$identifier': {
       id: '/app/views/$viewId/$identifier'
       path: '/$identifier'
       fullPath: '/app/views/$viewId/$identifier'
       preLoaderRoute: typeof AppViewsViewIdIdentifierRouteImport
       parentRoute: typeof AppViewsViewIdRoute
+    }
+    '/app/settings/teams/$teamId/': {
+      id: '/app/settings/teams/$teamId/'
+      path: '/teams/$teamId'
+      fullPath: '/app/settings/teams/$teamId/'
+      preLoaderRoute: typeof AppSettingsTeamsTeamIdIndexRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/app/settings/teams/$teamId/$tab': {
+      id: '/app/settings/teams/$teamId/$tab'
+      path: '/teams/$teamId/$tab'
+      fullPath: '/app/settings/teams/$teamId/$tab'
+      preLoaderRoute: typeof AppSettingsTeamsTeamIdTabRouteImport
+      parentRoute: typeof AppSettingsRoute
     }
   }
 }
@@ -1062,6 +1391,50 @@ const AppMyWorkRouteWithChildren = AppMyWorkRoute._addFileChildren(
   AppMyWorkRouteChildren,
 )
 
+interface AppSettingsRouteChildren {
+  AppSettingsHousekeepingRoute: typeof AppSettingsHousekeepingRoute
+  AppSettingsLabelsRoute: typeof AppSettingsLabelsRoute
+  AppSettingsMoveInRoute: typeof AppSettingsMoveInRoute
+  AppSettingsNotificationsRoute: typeof AppSettingsNotificationsRoute
+  AppSettingsProfileRoute: typeof AppSettingsProfileRoute
+  AppSettingsRestoreRoute: typeof AppSettingsRestoreRoute
+  AppSettingsWorkspaceRoute: typeof AppSettingsWorkspaceRoute
+  AppSettingsIndexRoute: typeof AppSettingsIndexRoute
+  AppSettingsConnectionsKindRoute: typeof AppSettingsConnectionsKindRoute
+  AppSettingsDevelopersTabRoute: typeof AppSettingsDevelopersTabRoute
+  AppSettingsPeopleOperatorIdRoute: typeof AppSettingsPeopleOperatorIdRoute
+  AppSettingsConnectionsIndexRoute: typeof AppSettingsConnectionsIndexRoute
+  AppSettingsDevelopersIndexRoute: typeof AppSettingsDevelopersIndexRoute
+  AppSettingsPeopleIndexRoute: typeof AppSettingsPeopleIndexRoute
+  AppSettingsTeamsIndexRoute: typeof AppSettingsTeamsIndexRoute
+  AppSettingsTeamsTeamIdTabRoute: typeof AppSettingsTeamsTeamIdTabRoute
+  AppSettingsTeamsTeamIdIndexRoute: typeof AppSettingsTeamsTeamIdIndexRoute
+}
+
+const AppSettingsRouteChildren: AppSettingsRouteChildren = {
+  AppSettingsHousekeepingRoute: AppSettingsHousekeepingRoute,
+  AppSettingsLabelsRoute: AppSettingsLabelsRoute,
+  AppSettingsMoveInRoute: AppSettingsMoveInRoute,
+  AppSettingsNotificationsRoute: AppSettingsNotificationsRoute,
+  AppSettingsProfileRoute: AppSettingsProfileRoute,
+  AppSettingsRestoreRoute: AppSettingsRestoreRoute,
+  AppSettingsWorkspaceRoute: AppSettingsWorkspaceRoute,
+  AppSettingsIndexRoute: AppSettingsIndexRoute,
+  AppSettingsConnectionsKindRoute: AppSettingsConnectionsKindRoute,
+  AppSettingsDevelopersTabRoute: AppSettingsDevelopersTabRoute,
+  AppSettingsPeopleOperatorIdRoute: AppSettingsPeopleOperatorIdRoute,
+  AppSettingsConnectionsIndexRoute: AppSettingsConnectionsIndexRoute,
+  AppSettingsDevelopersIndexRoute: AppSettingsDevelopersIndexRoute,
+  AppSettingsPeopleIndexRoute: AppSettingsPeopleIndexRoute,
+  AppSettingsTeamsIndexRoute: AppSettingsTeamsIndexRoute,
+  AppSettingsTeamsTeamIdTabRoute: AppSettingsTeamsTeamIdTabRoute,
+  AppSettingsTeamsTeamIdIndexRoute: AppSettingsTeamsTeamIdIndexRoute,
+}
+
+const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
+  AppSettingsRouteChildren,
+)
+
 interface AppViewsViewIdRouteChildren {
   AppViewsViewIdIdentifierRoute: typeof AppViewsViewIdIdentifierRoute
 }
@@ -1085,7 +1458,7 @@ interface AppRouteChildren {
   AppNewRoute: typeof AppNewRoute
   AppNewIssueRoute: typeof AppNewIssueRoute
   AppSearchRoute: typeof AppSearchRoute
-  AppSettingsRoute: typeof AppSettingsRoute
+  AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppTriageRoute: typeof AppTriageRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCyclesCycleIdRoute: typeof AppCyclesCycleIdRoute
@@ -1117,7 +1490,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNewRoute: AppNewRoute,
   AppNewIssueRoute: AppNewIssueRoute,
   AppSearchRoute: AppSearchRoute,
-  AppSettingsRoute: AppSettingsRoute,
+  AppSettingsRoute: AppSettingsRouteWithChildren,
   AppTriageRoute: AppTriageRoute,
   AppIndexRoute: AppIndexRoute,
   AppCyclesCycleIdRoute: AppCyclesCycleIdRoute,
@@ -1151,12 +1524,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

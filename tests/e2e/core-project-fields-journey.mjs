@@ -11,8 +11,8 @@ export async function projectFieldsJourney({page,runtime,capture,clause,expected
   const suffix=String(page.viewportSize().width)+'-'+randomBytes(3).toString('hex');
   const name=`Project planning ${suffix}`;
   const labels=[`Delivery ${suffix}`,`Customer ${suffix}`];
-  await beforePrivateNavigation(page,base+'/app/settings');
-  await page.goto(base+'/app/settings');
+  await beforePrivateNavigation(page,base+'/app/settings/labels');
+  await page.goto(base+'/app/settings/labels');
   await openDisclosures(page);
   for(const name of labels) {
     const form=page.getByRole('form',{name:'Create label',exact:true});

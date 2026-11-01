@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ApiError, fetchJson, useApiResource } from "../../../app/api-client";
 import { grantSchema, restoreSchema, reviewEffectsSchema } from "./restore-schema";
@@ -51,7 +52,7 @@ export function RestorePanel() {
       </li>)}</ul>
       <h3>Future effects</h3>
       <p>{resource.data.status.effectsHeld ? "Sending, receiving and scheduled effects are held. Check your restored workspace and integration destinations before turning them on." : "Future effects are on. Integrations still need their credentials re-entered."}</p>
-      <p>Historical deliveries remain quarantined and are never replayed by this review. Secrets are excluded from archives; review destinations and re-enter credentials in <a href="#integrations">Integrations</a>.</p>
+      <p>Historical deliveries remain quarantined and are never replayed by this review. Secrets are excluded from archives; review destinations and re-enter credentials in <Link to="/app/settings/connections">Connections</Link>.</p>
       {Boolean(resource.data.status.effectsHeld) && <button type="button" disabled={disabled} onClick={() => void change()}>{pending === "effects" ? "Turning on future effects…" : "Turn on future effects"}</button>}
     </>}
   </section>;

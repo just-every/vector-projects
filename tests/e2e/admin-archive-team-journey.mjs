@@ -13,8 +13,8 @@ export async function archiveRestoreTeam({
 }) {
   const { base, sql } = runtime;
 
-  await beforePrivateNavigation(page, base + "/app/settings");
-  await page.goto(base + "/app/settings");
+  await beforePrivateNavigation(page, base + "/app/settings/teams");
+  await page.goto(base + "/app/settings/teams");
   await openAdministrationForm(page, "Edit " + team.name);
   await clause(
     "TEAM-003",
@@ -85,8 +85,8 @@ export async function archiveRestoreTeam({
         .waitFor();
       await capture("archived-team-existing-issue");
 
-      await beforePrivateNavigation(page, base + "/app/settings");
-      await page.goto(base + "/app/settings");
+      await beforePrivateNavigation(page, base + "/app/settings/teams");
+      await page.goto(base + "/app/settings/teams");
       const restore = await openAdministrationForm(page, "Edit " + team.name);
       await restore
         .getByRole("button", { name: "Unarchive team", exact: true })

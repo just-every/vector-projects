@@ -56,7 +56,7 @@ export async function deliveryPresentation({
           ),
         });
       await navigate(page, runtime.base + "/app/issues/" + issue.identifier);
-      await navigate(peer, runtime.base + "/app/settings");
+      await navigate(peer, runtime.base + "/app/settings/notifications");
       const section = peer.getByRole("region", {
         name: "Notifications",
         exact: true,

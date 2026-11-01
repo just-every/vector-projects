@@ -112,15 +112,15 @@ export async function authorProject({ page, runtime, capture, clause, expectedTe
   await capture("project-markdown-detail");
 
   await clause("PROJ-012", "save project structure, launch native issue teams and retain projects after template deletion", async()=>{await projectTemplatesJourney(page,page.context(),runtime,async name=>capture(name),expectedTemplateConflicts);await nativeProjectTemplatesJourney(page.context().browser());await projectTemplateAccessCells(page,runtime,process.cwd()+'/.artifacts/verification/admin-browser');});
-  await beforePrivateNavigation(page, base + "/app/settings");
-  await page.goto(base + "/app/settings");
+  await beforePrivateNavigation(page, base + "/app/cycles");
+  await page.goto(base + "/app/cycles");
   await openDisclosures(page);
   return project;
 }
 export async function authorCycles({ page, runtime, capture, clause, team }) {
   const { sql, base } = runtime;
-  await beforePrivateNavigation(page, base + "/app/settings");
-  await page.goto(base + "/app/settings");
+  await beforePrivateNavigation(page, base + "/app/cycles");
+  await page.goto(base + "/app/cycles");
   await page.getByRole("form", { name: "Create cycle", exact: true }).waitFor();
   const beforeCycles = sql("SELECT * FROM cycles ORDER BY id");
   await clause(

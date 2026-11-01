@@ -1,0 +1,78 @@
+/* Settings: one section list (the rail beside a readable pane, or the index page on a phone) and one pane.
+   The switch is the width of the content column, never a redirect. */
+.settings-shell {
+  container: settings / inline-size;
+  min-height: 100svh;
+  background: var(--app-column);
+  color: var(--app-ink);
+}
+.settings-frame { padding: 1rem 1rem 2rem; }
+.settings-index-title { margin: 0.5rem 0 0.75rem; font-size: 2.1rem; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; }
+
+.settings-nav-title { display: none; margin: 0 0 1rem 0.75rem; font-size: 1.5rem; font-weight: 650; letter-spacing: -0.015em; }
+.settings-nav-group { margin: 0; }
+.settings-nav-heading { margin: 1.5rem 0 0.25rem; font-size: var(--app-text-small); font-weight: 560; letter-spacing: 0.1em; text-transform: uppercase; color: var(--app-muted); }
+.settings-nav ul { margin: 0; padding: 0; list-style: none; }
+.settings-nav-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0.75rem;
+  align-items: center;
+  min-height: 4rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--app-line);
+  color: var(--app-ink);
+  text-decoration: none;
+}
+.settings-nav-name { grid-column: 1; font-size: 1.15rem; line-height: 1.3; }
+.settings-nav-line { grid-column: 1; overflow: hidden; font-size: var(--app-text-small); line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; color: var(--app-body); }
+.settings-nav-chevron { grid-column: 2; grid-row: 1 / span 2; font-size: 1.6rem; line-height: 1; color: var(--app-muted); }
+.settings-nav-link:focus-visible,
+.settings-back:focus-visible,
+.settings-crumbs a:focus-visible { outline: 2px solid var(--app-focus); outline-offset: 2px; border-radius: 0.35rem; }
+
+.settings-skeleton { display: grid; gap: 0.9rem; padding: 0.75rem 0.75rem 0; }
+.settings-skeleton span { height: 1rem; border-radius: 0.5rem; background: var(--app-line); animation: settings-pulse 1.4s ease-in-out infinite; }
+.settings-skeleton span:nth-child(2) { width: 70%; }
+.settings-skeleton span:nth-child(3) { width: 45%; }
+@keyframes settings-pulse { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .settings-skeleton span { animation: none; } }
+
+.settings-section { max-width: 44rem; }
+.settings-section > h1 { margin: 0 0 1.25rem; font-size: 2.1rem; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; }
+.settings-back { display: inline-flex; align-items: center; min-height: 44px; margin-bottom: 0.25rem; color: var(--app-body); font-size: 1rem; text-decoration: none; }
+.settings-crumbs { display: flex; align-items: center; gap: 0.5rem; min-height: 2rem; margin-bottom: 0.25rem; font-size: var(--app-text-small); color: var(--app-body); }
+.settings-crumbs a { color: var(--app-body); text-decoration: none; }
+.settings-crumbs a:hover { color: var(--app-ink); }
+.settings-denied, .settings-notfound, .settings-load-failure { margin: 0; color: var(--app-body); line-height: 1.6; }
+.settings-denied a, .settings-notfound a { display: inline-flex; align-items: center; min-height: 44px; color: var(--app-cobalt-ink); }
+
+/* Panels that have not been rebuilt yet keep their own look, set into the pane. */
+.settings-pane .settings-page.settings-legacy { max-width: none; margin: 0; padding: 0; }
+.settings-pane .settings-legacy > section:first-child { margin-top: 0; }
+
+.leave-guard { position: sticky; top: 0; z-index: 4; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 0 0 1rem; padding: 0.75rem 1rem; border-radius: 0.5rem; background: var(--app-danger-soft); color: var(--app-ink); }
+.leave-guard p { margin: 0; }
+.leave-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.leave-actions button { min-height: 44px; padding: 0.4rem 0.9rem; border: 1px solid var(--app-field-border); border-radius: 0.5rem; background: var(--app-field); color: var(--app-ink); }
+
+/* A phone: the list is the page, or the pane is. */
+@container settings (max-width: 53.99rem) {
+  .settings-frame[data-view="index"] .settings-pane { display: none; }
+  .settings-frame[data-view="section"] .settings-nav { display: none; }
+  .settings-crumbs { display: none; }
+  .settings-section > h1 { font-size: 1.9rem; }
+}
+/* Beside a readable pane: the rail. */
+@container settings (min-width: 54rem) {
+  .settings-frame { display: grid; grid-template-columns: 15rem minmax(0, 44rem); gap: 2.5rem; align-items: start; padding: 2rem 2.5rem 4rem; }
+  .settings-index-title, .settings-back, .settings-nav-line, .settings-nav-chevron { display: none; }
+  .settings-nav { position: sticky; top: 1.5rem; }
+  .settings-nav-title { display: block; }
+  .settings-nav-heading { margin-top: 1.4rem; padding-left: 0.75rem; }
+  .settings-nav-link { min-height: 2.5rem; padding: 0.4rem 0.75rem; border-bottom: 0; border-radius: 0.5rem; }
+  .settings-nav-name { font-size: 1rem; }
+  .settings-nav-link:hover { background: var(--app-paper-deep); box-shadow: inset 0 0 0 1px var(--app-outline); }
+  .settings-nav-link[aria-current="page"], .settings-nav-link[aria-current="page"]:hover { background: var(--app-cobalt-soft); box-shadow: inset 0 0 0 1px var(--app-cobalt-ink); color: var(--app-cobalt-ink); font-weight: 560; }
+  .leave-guard { grid-column: 1 / -1; }
+}

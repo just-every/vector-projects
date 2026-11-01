@@ -73,7 +73,7 @@ export async function inspectMemberNotificationChannels({page,runtime,teammateCo
  try {
   const separator=teammateCookie.indexOf('=');
   await context.addCookies([{name:teammateCookie.slice(0,separator),value:teammateCookie.slice(separator+1),url:runtime.base}]);
-  const member=await context.newPage();await member.goto(runtime.base+'/app/settings');
+  const member=await context.newPage();await member.goto(runtime.base+'/app/settings/notifications');
   const panel=member.locator('.notification-channels');
   await panel.getByRole('table',{name:'Your notification channels',exact:true}).waitFor();
   assert.equal(await panel.getByRole('button',{name:'Manage workspace defaults',exact:true}).count(),0,'Member cannot manage workspace defaults');

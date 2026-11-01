@@ -14,7 +14,7 @@ export async function confirmInviter(page,context,base,state) {
  await withOperatorClient(context,async client=>{const requested=await client.post(base+'/api/settings/operators/confirm-identity',{headers:{Origin:base},data:{}});assert.equal(requested.status(),202);await requested.json()});
  const link=await readDevelopmentLink(base,context.request,session.operator.email,state);
  await navigate(page,link);await page.getByRole('button',{name:'Confirm',exact:true}).click();
- await page.waitForURL(base+'/app/settings#operators');
+ await page.waitForURL(base+'/app/settings/people');
  const renewed=await withOperatorClient(context,async client=>{const response=await client.get(base+'/auth/session');assert.equal(response.status(),200);return await response.json()});
  assert.equal(renewed.id,session.id,'confirmation preserves the inviter session');
  confirmedProofs.set(session.id,Date.now());
@@ -25,7 +25,7 @@ export async function confirmInviter(page,context,base,state) {
 export async function withInvitedOperator(page,context,base,state,journey,displayName='Stream planning teammate'){
  await confirmInviter(page,context,base,state);
  const original=await context.cookies(),email=`stream-planning-${Date.now()}@vector.test`;
- await navigate(page,base+'/app/settings');await openDisclosures(page);
+ await navigate(page,base+'/app/settings/people');await openDisclosures(page);
  const operators=page.getByRole('region',{name:'Members',exact:true});
  await operators.getByLabel('Name',{exact:true}).fill(displayName);
  await operators.getByLabel('Email',{exact:true}).fill(email);

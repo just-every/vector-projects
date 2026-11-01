@@ -140,7 +140,7 @@ try {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     );
-    await page.goto(runtime.base + "/app/settings");
+    await page.goto(runtime.base + "/app/cycles");
     await page
       .getByRole("heading", { name: "Automatic cycle schedule", exact: true })
       .scrollIntoViewIfNeeded();

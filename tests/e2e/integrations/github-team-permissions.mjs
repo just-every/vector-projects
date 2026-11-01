@@ -29,7 +29,7 @@ export async function exerciseGithubTeamPermissions({page,runtime,call,team,star
   return person;
  };
  const openTeam=async person=>{
-  await navigate(person.page,runtime.base+'/app/settings#teams');
+  await navigate(person.page,runtime.base+'/app/settings/teams');
   const teams=person.page.getByRole('region',{name:'Teams',exact:true});await teams.waitFor();
   await openAdministrationForm(person.page,'Edit '+team.name);
   await settleReads(person.page);
@@ -59,7 +59,7 @@ export async function exerciseGithubTeamPermissions({page,runtime,call,team,star
  };
  try{
   await page.setViewportSize({width:1440,height:1000});
-  await navigate(page,runtime.base+'/app/settings#teams');
+  await navigate(page,runtime.base+'/app/settings/teams');
   await openAdministrationForm(page,'Permissions for '+team.name);
   await permissions('team_owners');
   const lead=await invite(1730,'member','owner'),member=await invite(1731,'member','member');
@@ -95,7 +95,7 @@ export async function exerciseGithubTeamPermissions({page,runtime,call,team,star
   console.log('Git Teams cell c: next GET omitted the team, save refused 403 with visible error, and the next Teams screen hid the editor');
   await inspect(member.page,member.page.getByRole('region',{name:'Teams',exact:true}),'github-team-member-refused');
   await member.page.setViewportSize({width:1440,height:1000});
-  await navigate(member.page,runtime.base+'/app/settings#integrations');
+  await navigate(member.page,runtime.base+'/app/settings/developers');
   const personal=member.page.getByRole('region',{name:'Integrations',exact:true});
   await personal.getByRole('heading',{name:'API tokens',exact:true}).waitFor();
   assert.equal(await personal.getByRole('heading',{name:'GitHub pull request webhooks',exact:true}).count(),0);
@@ -110,8 +110,8 @@ export async function exerciseGithubTeamPermissions({page,runtime,call,team,star
   await adminRules.getByRole('status').getByText('Rule saved.',{exact:true}).waitFor();
   for(const [number,role] of [[1733,'guest'],[1734,'viewer']]){
    const person=await invite(number,role);
-   await navigate(person.page,runtime.base+'/app/settings#teams');
-   await person.page.getByRole('heading',{name:'Appearance',exact:true}).waitFor();await settleReads(person.page);
+   await navigate(person.page,runtime.base+'/app/settings/teams');
+   await person.page.getByText('You can’t open this page.').waitFor();await settleReads(person.page);
    assert.equal(await person.page.getByRole('region',{name:'Teams',exact:true}).count(),0,role+' cannot open team settings');
    assert.equal(await person.page.getByRole('region',{name:'Git automation rules',exact:true}).count(),0,role+' sees no editor');
    await request(person,'/github/automation','GET',undefined,403);

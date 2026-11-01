@@ -18,7 +18,7 @@ export async function exerciseGithubChain({page:shared,runtime,cookie,team,width
   const shipped=statuses.find(s=>s.name==='Shipped'),review=statuses.find(s=>s.name==='In Review'),started=statuses.find(s=>s.category==='started'),done=statuses.find(s=>s.category==='completed');
   const fixtureRepository='synthetic-vector-1710/chain-'+width;
   const config=await call('/settings/integrations/github','POST',{name:'synthetic-vector-1710 '+width,repository:fixtureRepository},201);
-  await page.setViewportSize({width,height:900});await navigate(page,runtime.base+'/app/settings#integrations');
+  await page.setViewportSize({width,height:900});await navigate(page,runtime.base+'/app/settings/connections');
   const integrations=page.getByRole('region',{name:'Integrations',exact:true});
   await integrations.getByRole('link',{name:'Manage Git automation rules in Teams',exact:true}).waitFor();
   assert.ok((await integrations.getByRole('link',{name:'Manage Git automation rules in Teams',exact:true}).boundingBox()).height>=44,'the Git automation link is a 44px touch target');

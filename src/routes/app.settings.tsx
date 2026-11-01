@@ -1,6 +1,3 @@
-import { editorLeaf } from '../core/editor/leaf';
-import { createFileRoute } from "@tanstack/react-router";
-import { SettingsPage } from "../core/features/settings/ui/settings-page";
-export const Route = createFileRoute("/app/settings")({
-  component: editorLeaf(SettingsPage),
-});
+import { createFileRoute } from '@tanstack/react-router';
+import { SettingsLayout } from '../core/features/settings/ui/shell/settings-layout';
+export const Route = createFileRoute('/app/settings')({ component: SettingsLayout });

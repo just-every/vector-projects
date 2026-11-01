@@ -55,7 +55,7 @@ const r=await client.fetch(base+'/api'+path,{method,headers:{Origin:base},data})
   await page.getByRole('button',{name:'Subscribe to initiative',exact:true}).click();assert.equal((await subscribed).status(),201);await page.getByRole('button',{name:'Unsubscribe from initiative',exact:true}).waitFor();
   if(width===1440){await page.locator('header').getByText('Planned · Owner:',{exact:false}).waitFor();await capture('initiative-planned');}
   await capture('initiative-three-level-hierarchy');
-  await navigate(page,base+'/app/settings#integrations');
+  await navigate(page,base+'/app/settings/connections');
   const panel=page.locator('.channel-settings');await panel.getByRole('heading',{name:'Slack and Discord channels',exact:true}).waitFor();
   await call('/settings/integrations/slack','POST',{botToken:'synthetic-vector-1820'});
   await page.reload();await panel.getByText('Slack connected to Delivery workspace',{exact:true}).waitFor();
@@ -79,7 +79,7 @@ const r=await client.fetch(base+'/api'+path,{method,headers:{Origin:base},data})
   await inspect(page,binding,'initiative-channel-bound-'+width);await page.setViewportSize({width,height:1000});
   const config=await call('/settings/integrations/channels');assert.deepEqual(config.bindings.find(b=>b.id===destination).events,['initiative.updated']);
   await navigate(page,base+'/app/initiatives/'+root.id);
-  const header=page.locator('main header');await header.locator('a[href="/app/settings#integrations"]').waitFor();await header.getByText('initiative-direction-'+width,{exact:false}).waitFor();
+  const header=page.locator('main header');await header.locator('a[href="/app/settings/connections"]').waitFor();await header.getByText('initiative-direction-'+width,{exact:false}).waitFor();
   await page.getByText('Edit initiative',{exact:true}).click();
   const edit=page.getByRole('form',{name:'Edit initiative',exact:true});await edit.getByLabel('Initiative status',{exact:true}).selectOption('active');
   const saved=page.waitForResponse(r=>r.request().method()==='PATCH'&&new URL(r.url()).pathname==='/api/initiatives/'+root.id);
@@ -100,7 +100,7 @@ const r=await client.fetch(base+'/api'+path,{method,headers:{Origin:base},data})
   const {headers,session}=memberFixture;
   // INIT-001 scoped capability: an Owner approves an existing channel in Settings; the Member binds it on the initiative page.
   await call('/settings/integrations/channels/allowed','POST',{channelId:'CSCOPED'+width,channelName:'scoped-'+width},201);
-  await navigate(page,base+'/app/settings#integrations');await panel.getByRole('heading',{name:'Slack and Discord channels',exact:true}).waitFor();
+  await navigate(page,base+'/app/settings/connections');await panel.getByRole('heading',{name:'Slack and Discord channels',exact:true}).waitFor();
   const approval=panel.getByRole('form',{name:'Approve initiative channel',exact:true});
   await approval.getByLabel('Initiative to approve for',{exact:true}).selectOption(root.id);
   await approval.getByLabel('Existing channel',{exact:true}).selectOption('slack:CSCOPED'+width);
@@ -163,7 +163,7 @@ async function scopedChannelReasons({page,runtime,call,root,width,headers,sessio
     const panel=target.getByRole('form',{name:'Initiative channel',exact:true});await panel.waitFor();await settleReads(target);
     text.push({role:target===reader?'member':'owner',panel:await panel.locator('p').first().innerText(),header:target===page?await target.locator('main header').innerText():null});
    }
-   await navigate(page,base+'/app/settings#integrations');const settings=page.locator('.channel-settings');await settings.getByRole('heading',{name:'Slack and Discord channels',exact:true}).waitFor();
+   await navigate(page,base+'/app/settings/connections');const settings=page.locator('.channel-settings');await settings.getByRole('heading',{name:'Slack and Discord channels',exact:true}).waitFor();
    const row=settings.locator('li').filter({has:page.getByRole('button',{name:'Remove binding for '+root.name,exact:true})});
    console.log('INIT-001 reason',JSON.stringify({width,code,door:memberState.binding.notPosting,text,settings:await row.innerText()}));
   };
@@ -181,12 +181,12 @@ async function scopedChannelReasons({page,runtime,call,root,width,headers,sessio
   observer=await openAuthenticatedPage(page.context().browser(),observerCookie,base);await observer.setViewportSize({width,height:1000});
   await navigate(observer,base+'/app/initiatives/'+root.id);await observer.getByText('Channel notifications',{exact:true}).click();
   console.log('INIT-001 reason',JSON.stringify({width,code:'binder_cannot_edit',door:ownerState.binding.notPosting,memberPanel:await observer.getByRole('form',{name:'Initiative channel',exact:true}).innerText(),panel:await page.getByRole('form',{name:'Initiative channel',exact:true}).innerText(),header:await page.locator('main header').innerText()}));
-  await navigate(page,base+'/app/settings#integrations');await page.locator('.channel-settings').getByRole('heading',{name:'Slack and Discord channels',exact:true}).waitFor();
+  await navigate(page,base+'/app/settings/connections');await page.locator('.channel-settings').getByRole('heading',{name:'Slack and Discord channels',exact:true}).waitFor();
   console.log('INIT-001 binder settings',JSON.stringify({width,text:await page.locator('.channel-settings li').filter({has:page.getByRole('button',{name:'Remove binding for '+root.name,exact:true})}).innerText()}));
   await call('/settings/operators/'+session.operatorId+'/role','PATCH',{role:'member',teamIds:[]});
   let state=await member(door);await member(door,'PUT',{provider:'slack',channelId:'CSCOPED'+width,events:['initiative.updated'],expectedVersion:state.version});
   await call('/settings/integrations/slack','POST',{botToken:'synthetic-vector-1850'});await render('workspace_changed');
-  await navigate(page,base+'/app/settings#integrations');await page.locator('.channel-settings').getByRole('heading',{name:'Slack and Discord channels',exact:true}).waitFor();
+  await navigate(page,base+'/app/settings/connections');await page.locator('.channel-settings').getByRole('heading',{name:'Slack and Discord channels',exact:true}).waitFor();
   console.log('INIT-001 approval reason',JSON.stringify({width,text:await page.locator('.channel-settings li').filter({has:page.getByRole('button',{name:'Withdraw approval for '+root.name+' #delivery',exact:true})}).innerText()}));
   // Save a different approved destination through the panel and compare the header's destination without a reload.
   const source=await call('/settings/integrations/channels','POST',{scope:'project',objectId:projects[2].id,provider:'discord',channelName:'synthetic-vector-1860-'+width,webhookUrl:'https://discord.com/api/webhooks/1860/synthetic-vector-1861',events:['issue.created']},201);

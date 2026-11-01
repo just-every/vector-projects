@@ -17,7 +17,7 @@ export async function privateTeamJourney({page,peer,memberId,runtime,clause,evid
  for(const width of [1440,390]) {
   const name='synthetic-vector-'+(width===1440?980:981);
   await page.setViewportSize({width,height:width===390?844:1000});await peer.setViewportSize({width,height:width===390?844:1000});
-  await navigate(page,base+'/app/settings');await openDisclosures(page);
+  await navigate(page,base+'/app/settings/teams');await openDisclosures(page);
   const create=page.getByRole('form',{name:'Create team',exact:true});
   await create.getByLabel('Team name',{exact:true}).fill(name);await create.getByLabel('Identifier prefix',{exact:true}).fill(width===1440?'SYNUIA':'SYNUIB');
   if(width===1440)await inspect(page,create,'private-team-create-controls');
@@ -32,7 +32,7 @@ export async function privateTeamJourney({page,peer,memberId,runtime,clause,evid
   const issue=await api(peer,'/issues','POST',{title:name+' private work',teamId:team.id,projectId:project.id,statusId:team.statuses.find(s=>s.category==='started').id,assigneeOperatorId:memberId,dueDate:'2026-11-04'},201);
   await api(peer,`/issues/${issue.identifier}/comments`,'POST',{body:name+' comment'},201);
   const set=async value=>{
-   await navigate(page,base+'/app/settings');await openDisclosures(page);
+   await navigate(page,base+'/app/settings/teams');await openDisclosures(page);
    const select=page.getByRole('combobox',{name:'Visibility of '+name,exact:true});
    const changed=page.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/privacy`&&r.request().method()==='PUT');
    await select.selectOption(value);assert.equal((await changed).status(),200);
@@ -45,12 +45,12 @@ export async function privateTeamJourney({page,peer,memberId,runtime,clause,evid
    assert.equal((await readerResponse(peer,base,`/teams/${team.id}/requests`,'POST',{})).status,404);
    for(const path of ['/search?q='+encodeURIComponent(name+' private work'),'/current','/insights.csv?q='+encodeURIComponent(name+' private work')])assert.ok(!JSON.stringify((await readerResponse(peer,base,path)).text).includes(issue.identifier),path);
    await navigate(peer,base+'/app');assert.ok(!(await peer.locator('main:visible').first().innerText()).includes(issue.identifier));
-   await navigate(peer,base+'/app/settings');assert.equal(await peer.getByRole('button',{name:'Join '+name,exact:true}).count(),0);
+   await navigate(peer,base+'/app/settings/teams');assert.equal(await peer.getByRole('button',{name:'Join '+name,exact:true}).count(),0);
   });
   if(width===1440){await inspect(page,page.getByRole('combobox',{name:'Visibility of '+name,exact:true}).locator('..'),'private-team-owner-controls');}
   await clause('ROLE-002',`non-member Admin sees its name and privacy control, changes visibility, and cannot read its work at ${width}`,async()=>{
    await api(page,`/settings/operators/${memberId}/role`,'PATCH',{role:'admin'});
-   await navigate(peer,base+'/app/settings');await openDisclosures(peer);
+   await navigate(peer,base+'/app/settings/teams');await openDisclosures(peer);
    assert.equal(await peer.getByRole('form',{name:'Edit '+name,exact:true}).count(),0);
    const control=peer.getByRole('combobox',{name:'Visibility of '+name,exact:true});
    assert.equal(await control.inputValue(),'private');

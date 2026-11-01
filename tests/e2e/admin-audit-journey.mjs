@@ -49,11 +49,18 @@ export async function exerciseAuditView({ page, runtime, capture, clause, eviden
 
 export async function exerciseAuditAccess({ page, peer, runtime, clause, memberId }) {
   await clause('ROLE-005', 'a Member is refused the audit document and both data doors', async () => {
-    for (const path of ['/app/settings/audit', '/api/settings/audit', '/api/settings/audit.csv']) {
+    // The page keeps its 403 but shows one plain line and a link, never the server's JSON.
+    const page403 = await peer.request.get(runtime.base + '/app/settings/audit');
+    assert.equal(page403.status(), 403);
+    assert.match(page403.headers()['content-type'], /text\/html/);
+    for (const path of ['/api/settings/audit', '/api/settings/audit.csv']) {
       const response = await peer.request.get(runtime.base + path);
       assert.equal(response.status(), 403, path);
       assert.equal((await response.json()).error, 'forbidden');
     }
+    await peer.goto(runtime.base + '/app/settings/audit');
+    await peer.getByText('You can’t open this page.').waitFor();
+    assert.equal(await peer.getByText('Only Owners and Admins can browse and export the audit log.').count(), 0, 'no raw refusal text on the page');
     assert.equal(await peer.getByRole('link', { name: 'Audit log', exact: true }).count(), 0);
     await exerciseGuestAuditAccess({page,peer,runtime,memberId});
   });
@@ -65,6 +72,7 @@ export async function exerciseGuestAuditAccess({page,peer,runtime,memberId}) {
  const role=async value=>{const response=await page.request.patch(runtime.base+'/api/settings/operators/'+memberId+'/role',{headers:{Origin:runtime.base},data:{role:value,...(value==='guest'?{teamIds:[metadata.teams[0].id]}:{})}});assert.equal(response.status(),200);};
  await role('guest');
  try {for(const path of ['/app/settings/audit','/api/settings/audit','/api/settings/audit.csv']) {
-  const response=await peer.request.get(runtime.base+path);assert.equal(response.status(),403,'Guest '+path);assert.equal((await response.json()).error,'forbidden');
+  const response=await peer.request.get(runtime.base+path);assert.equal(response.status(),403,'Guest '+path);
+  if(path.startsWith('/api/'))assert.equal((await response.json()).error,'forbidden');else assert.match(response.headers()['content-type'],/text\/html/);
  }}finally{await role('member');}
 }

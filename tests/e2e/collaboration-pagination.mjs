@@ -66,7 +66,7 @@ export async function paginationAndRemoval({
           "31 actual native UI comments; no synthetic Inbox response or row fixture",
         paginationRows: expected.length,
       });
-      await navigate(page, runtime.base + "/app/settings");
+      await navigate(page, runtime.base + "/app/settings/people");
       await openDisclosures(page);
       await page
         .getByRole("button", { name: "Remove " + operator.name, exact: true })

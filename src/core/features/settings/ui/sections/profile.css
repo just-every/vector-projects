@@ -1,0 +1,5 @@
+.profile-body { display: grid; gap: 1.75rem; max-width: 37.5rem; }
+.profile-hours { display: grid; gap: 1.1rem; }
+.profile-hours h2 { margin: 0.5rem 0 0; font-size: 1.35rem; font-weight: 650; letter-spacing: -0.01em; }
+.field-pair { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 1rem; }
+@container settings (max-width: 30rem) { .field-pair { grid-template-columns: 1fr; } }

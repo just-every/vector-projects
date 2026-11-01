@@ -11,8 +11,8 @@ import { roleScreens } from "./role-ui-support.mjs";
 export async function createTeamWorkflow({ page, runtime, capture, clause }) {
   const { base, sql } = runtime;
 
-  await beforePrivateNavigation(page, base + "/app/settings");
-  await page.goto(base + "/app/settings");
+  await beforePrivateNavigation(page, base + "/app/settings/teams");
+  await page.goto(base + "/app/settings/teams");
   await page.getByRole("form", { name: "Create team", exact: true }).waitFor();
   await clause(
     "TEAM-001",
@@ -149,8 +149,8 @@ export async function removeUsedStatus({
     (s) => s.category === "started" && s.id !== from.id,
   );
 
-  await beforePrivateNavigation(page, base + "/app/settings");
-  await page.goto(base + "/app/settings");
+  await beforePrivateNavigation(page, base + "/app/settings/teams");
+  await page.goto(base + "/app/settings/teams");
   await openAdministrationForm(page, "Edit " + team.name);
   await clause(
     "TEAM-001",
@@ -281,7 +281,7 @@ export async function exerciseTeamRoles({ page, runtime, clause, evidence, refus
     await region.getByRole("button", { name: `${action === "join" ? "Join" : "Leave"} ${team.name}`, exact: true }).click();
     assert.equal((await done).status(), status);
   };
-  await navigate(peer, base + "/app/settings");
+  await navigate(peer, base + "/app/settings/teams");
   for (const width of [1440, 390]) {
     await peer.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
     await clause("ROLE-007", `a Member joins a public team from the directory at ${width} and finds its settings, members and permissions locked`, async () => {
@@ -304,7 +304,7 @@ export async function exerciseTeamRoles({ page, runtime, clause, evidence, refus
       assert.equal(membership(), undefined);
     });
   }
-  await navigate(page, base + "/app/settings");
+  await navigate(page, base + "/app/settings/teams");
   const teams = page.getByRole("region", { name: "Teams", exact: true });
   await clause("ROLE-007", "the last team owner cannot leave until another is named", async () => {
     await toggle(page, teams, "leave", 409);
@@ -338,11 +338,16 @@ export async function teamCreationPermission({page,peer,runtime,clause,evidence}
   const viewer=await inviteReader({owner:page,browser:page.context().browser(),runtime,email:'synthetic-vector-1944@vector.test',name:'synthetic-vector-1944'});
   try{
   const set=async value=>{
-    await navigate(page,base+"/app/settings");
-    const form=page.getByRole("form",{name:"Team creation permission",exact:true});
-    await form.getByLabel("Who may create teams",{exact:true}).selectOption(value?"members":"admins");
+    await navigate(page,base+"/app/settings/workspace");
+    const select=page.getByLabel("Who may create teams",{exact:true});
+    await select.waitFor();
+    // The policy saves as it changes: no Save button, a quiet Saved beside the control.
+    assert.equal(await page.getByRole("button",{name:/^Save/}).count(),0);
+    const choice=value?"members":"admins";
+    // Choosing what is already set changes and sends nothing.
+    if(await select.inputValue()===choice)return;
     const receipt=page.waitForResponse(r=>new URL(r.url()).pathname==="/api/settings/teams/creation"&&r.request().method()==="PUT");
-    await form.getByRole("button",{name:"Save team creation permission",exact:true}).click();
+    await select.selectOption(choice);
     assert.equal((await receipt).status(),200);
   };
   const before=sql("SELECT count(*) n FROM audit_records WHERE action='workspace.team_creation_changed'")[0].n;
@@ -350,15 +355,15 @@ export async function teamCreationPermission({page,peer,runtime,clause,evidence}
     await page.setViewportSize({width,height:width===390?844:1000});
     await peer.setViewportSize({width,height:width===390?844:1000});
     await clause("TEAM-008",`workspace policy controls a Member's public team creation at ${width}`,async()=>{
-      await navigate(peer,base+"/app/settings");
+      await navigate(peer,base+"/app/settings/teams");
       assert.equal(await peer.getByRole("form",{name:"Create team",exact:true}).count(),0);
-      assert.equal(await peer.getByRole("form",{name:"Team creation permission",exact:true}).count(),0);
+      assert.equal(await peer.getByLabel("Who may create teams",{exact:true}).count(),0);
       await teamCreationReaderCell(viewer,runtime,width);
       await set(true);
       await teamCreationReaderCell(viewer,runtime,width);
       await privateTeamCreationCells({page,peer,runtime,width,evidence});
       assert.equal((await peer.request.post(base+'/api/settings/teams',{headers:{Origin:base},data:{name:'synthetic-vector-1945',identifierPrefix:'SYNPRIVATE',isPrivate:true}})).status(),403);
-      await navigate(peer,base+"/app/settings");
+      await navigate(peer,base+"/app/settings/teams");
       const create=peer.getByRole("form",{name:"Create team",exact:true});
       await create.getByLabel("Team name",{exact:true}).fill("synthetic-vector-team-"+width);
       await create.getByLabel("Identifier prefix",{exact:true}).fill(width===1440?"SYNVA":"SYNVB");
@@ -373,11 +378,12 @@ export async function teamCreationPermission({page,peer,runtime,clause,evidence}
       assert.equal((await peer.request.put(base+"/api/settings/teams/creation",{headers:{Origin:base},data:{membersMayCreate:false}})).status(),403);
       await set(false);
       assert.equal((await peer.request.post(base+"/api/settings/teams",{headers:{Origin:base},data:{name:"synthetic-vector-refused-team-"+width,identifierPrefix:"REFUSE"}})).status(),403);
-      await navigate(peer,base+"/app/settings");
+      await navigate(peer,base+"/app/settings/teams");
       assert.equal(await peer.getByRole("form",{name:"Create team",exact:true}).count(),0);
       assert.equal(sql("SELECT count(*) n FROM teams WHERE id='"+owned[0].id+"'")[0].n,1);
     });
   }
+  await navigate(page,base+"/app/settings/teams");
   await inspect(page,page.getByRole("region",{name:"Teams",exact:true}),"team-creation-policy");
   await inspect(peer,peer.getByRole("region",{name:"Teams",exact:true}),"member-team-created");
   assert.equal(sql("SELECT count(*) n FROM audit_records WHERE action='workspace.team_creation_changed'")[0].n-before,4);
@@ -407,20 +413,20 @@ export async function teamJoinPermissions({page,peer,browser,runtime,clause,evid
    assert.equal(made.status(),200);const team=(await made.json()).teams.find(team=>team.name===name);
    assert.equal((await page.request.put(base+`/api/settings/teams/${team.id}/members/${owner}`,{headers:{Origin:base},data:{role:"owner"}})).status(),200);
    await clause("TEAM-007",`a Member requests an invite-only public team and a Member team owner approves once at ${width}`,async()=>{
-    await navigate(peer,base+"/app/settings");await openAdministrationForm(peer,"Edit "+name);
+    await navigate(peer,base+"/app/settings/teams");await openAdministrationForm(peer,"Edit "+name);
     const mode=peer.getByRole("form",{name:"Membership mode for "+name,exact:true});
     await mode.getByLabel("Membership mode",{exact:true}).selectOption("invite_only");
     await mode.getByLabel("Accept membership requests",{exact:true}).check();
     const changed=peer.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/membership`);
     await mode.getByRole("button",{name:"Save membership mode",exact:true}).click();assert.equal((await changed).status(),200);
     assert.equal((await requester.request.post(base+`/api/teams/${team.id}/join`,{headers:{Origin:base},data:{}})).status(),403);
-    await navigate(requester,base+"/app/settings");
+    await navigate(requester,base+"/app/settings/teams");
     const requested=requester.waitForResponse(r=>new URL(r.url()).pathname===`/api/teams/${team.id}/requests`);
     await requester.getByRole("button",{name:"Request to join "+name,exact:true}).click();assert.equal((await requested).status(),200);
     await requester.getByRole("button",{name:"Request pending for "+name,exact:true}).waitFor();
     assert.equal(sql(`SELECT count(*) n FROM team_members WHERE team_id='${team.id}' AND operator_id='${member}'`)[0].n,0);
     if(width===1440)await inspect(requester,requester.getByRole("region",{name:"Teams",exact:true}),"public-team-request-pending");
-    await navigate(peer,base+"/app/settings");await openAdministrationForm(peer,"Edit "+name);
+    await navigate(peer,base+"/app/settings/teams");await openAdministrationForm(peer,"Edit "+name);
     let group=peer.getByRole("group",{name:"Request from Delivery lead",exact:true});
     const decide=async decision=>{
      const receipt=peer.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/requests/${member}/decision`);
@@ -429,10 +435,10 @@ export async function teamJoinPermissions({page,peer,browser,runtime,clause,evid
     if(width===390) {
      await decide("declined");
      assert.equal(sql(`SELECT count(*) n FROM team_members WHERE team_id='${team.id}' AND operator_id='${member}'`)[0].n,0);
-     await navigate(requester,base+"/app/settings");
+     await navigate(requester,base+"/app/settings/teams");
      const retry=requester.waitForResponse(r=>new URL(r.url()).pathname===`/api/teams/${team.id}/requests`);
      await requester.getByRole("button",{name:"Request to join "+name,exact:true}).click();assert.equal((await retry).status(),200);
-     await navigate(peer,base+"/app/settings");await openAdministrationForm(peer,"Edit "+name);
+     await navigate(peer,base+"/app/settings/teams");await openAdministrationForm(peer,"Edit "+name);
      group=peer.getByRole("group",{name:"Request from Delivery lead",exact:true});
     }
     if(width===1440)await inspect(peer,peer.getByRole("region",{name:"Membership for "+name,exact:true}),"team-owner-request-decision");
@@ -442,7 +448,7 @@ export async function teamJoinPermissions({page,peer,browser,runtime,clause,evid
     assert.equal((await peer.request.post(base+`/api/settings/teams/${team.id}/requests/${member}/decision`,{headers:{Origin:base},data:{decision:"approved"}})).status(),200);
     assert.equal(sql(`SELECT count(*) n FROM audit_records WHERE action='team.join_request_approved' AND subject_id='${team.id}'`)[0].n,before);
     assert.equal(sql(`SELECT count(*) n FROM team_members WHERE team_id='${team.id}' AND operator_id='${member}'`)[0].n,1);
-    await navigate(requester,base+"/app/settings");await requester.getByRole("button",{name:"Leave "+name,exact:true}).waitFor();
+    await navigate(requester,base+"/app/settings/teams");await requester.getByRole("button",{name:"Leave "+name,exact:true}).waitFor();
     assert.equal(sql(`SELECT count(*) n FROM audit_records WHERE action='team.membership_mode_changed' AND subject_id='${team.id}'`)[0].n,1);
    });
    await clause('TEAM-007',`private and Viewer membership cells at ${width}`,()=>teamJoinReaderCells({page,peer,requester,viewer,runtime,team,member,width}));
@@ -453,19 +459,19 @@ export async function teamJoinPermissions({page,peer,browser,runtime,clause,evid
 /** An explicitly exposed private request grants metadata only until approval. */
 export async function privateTeamRequest({page,peer,memberId,runtime,team,clause}) {
  const {base}=runtime;
- await navigate(page,base+'/app/settings');await openDisclosures(page);
+ await navigate(page,base+'/app/settings/teams');await openDisclosures(page);
  const form=page.getByRole('form',{name:'Membership mode for '+team.name,exact:true});
  await form.getByLabel('Membership mode',{exact:true}).selectOption('invite_only');
  await form.getByLabel('Accept membership requests',{exact:true}).check();
  let response=page.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/membership`);
  await form.getByRole('button',{name:'Save membership mode',exact:true}).click();assert.equal((await response).status(),200);
- await navigate(peer,base+'/app/settings');
+ await navigate(peer,base+'/app/settings/teams');
  response=peer.waitForResponse(r=>new URL(r.url()).pathname===`/api/teams/${team.id}/requests`);
  await peer.getByRole('button',{name:'Request to join '+team.name,exact:true}).click();assert.equal((await response).status(),200);
  await peer.getByRole('button',{name:'Request pending for '+team.name,exact:true}).waitFor();
  assert.equal((await readerResponse(peer,base,'/issues/'+team.identifier)).status,404);
  assert.equal(runtime.sql(`SELECT count(*) n FROM team_members WHERE team_id='${team.id}' AND operator_id='${memberId}'`)[0].n,0);
- await navigate(page,base+'/app/settings');await openDisclosures(page);
+ await navigate(page,base+'/app/settings/teams');await openDisclosures(page);
  response=page.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/requests/${memberId}/decision`);
  await page.getByRole('button',{name:'Approve Role member',exact:true}).click();assert.equal((await response).status(),200);
  assert.equal((await readerResponse(peer,base,'/issues/'+team.identifier)).status,200);

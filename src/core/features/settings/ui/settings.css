@@ -247,51 +247,6 @@
 .administration-panel details[open] > summary {
   margin-bottom: 0.75rem;
 }
-.settings-sections {
-  position: sticky;
-  top: 0.5rem;
-  z-index: 3;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  padding: 0.5rem;
-  margin-top: 1rem;
-  border: 1px solid var(--app-line-strong);
-  border-radius: 0.5rem;
-  background: var(--app-card);
-}
-.settings-sections a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0.45rem 0.65rem;
-  color: var(--app-ink);
-  border-radius: 0.35rem;
-  text-decoration: none;
-}
-.settings-sections a:hover {
-  background: var(--app-field);
-  box-shadow: inset 3px 0 0 var(--app-outline);
-}
-.settings-sections a:focus-visible {
-  outline: 2px solid var(--app-focus);
-  outline-offset: 2px;
-}
-.settings-page :is(section[id], #notifications) {
-  scroll-margin-top: 8rem;
-}
-@media (max-width: 700px) {
-  .settings-sections {
-    gap: 0.15rem;
-  }
-  .settings-sections a {
-    padding-inline: 0.4rem;
-    font-size: 0.85rem;
-  }
-  .settings-page :is(section[id], #notifications) {
-    scroll-margin-top: 10rem;
-  }
-}
 .settings-members li > form {
   grid-auto-flow: column;
   align-items: end;
@@ -305,21 +260,6 @@
     grid-auto-flow: row;
   }
 }
-.settings-member-invites {
-  margin-block: 1rem 1.5rem;
-}
-.settings-member-invites label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 44px;
-}
-.settings-member-invites input[type="checkbox"] {
-  width: auto;
-  min-height: 0;
-  margin: 0;
-}
-
 .settings-members li > form label.admin-checkbox {
   display: flex;
   align-items: center;

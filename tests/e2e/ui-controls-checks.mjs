@@ -27,37 +27,14 @@ export async function openAccountMenu(page) {
 }
 
 export async function assertSettingsSections(page, label) {
-  const sections = [
-    "Workspace time",
-    "Members",
-    "Teams",
-    "Labels",
-    "Projects",
-    "Cycles",
-    "Data / Move in",
-    "Integrations",
-  ];
-  for (const name of sections) {
-    const section = page.getByRole("region", { name, exact: true });
-    await section.waitFor();
-    assert.equal(
-      await section.getByRole("heading", { name, exact: true }).count(),
-      1,
-      `${label}: named ${name} section`,
-    );
-  }
-  const notifications = page.getByRole("region", {
-    name: "Notifications",
-    exact: true,
-  });
-  await notifications.waitFor();
-  assert.equal(
-    await notifications
-      .getByRole("heading", { name: "Notifications", exact: true })
-      .count(),
-    1,
-    `${label}: named Notifications section`,
-  );
+  // The one section list: every section an Owner opens, no Projects or Cycles, and Restore only while pending.
+  await page.goto(new URL("/app/settings", page.url()).href);
+  const list = page.getByRole("navigation", { name: "Settings sections" });
+  await list.waitFor();
+  for (const name of ["Profile", "Notifications", "Workspace", "People", "Teams", "Labels", "Connections", "Developers", "Move in", "Audit log"])
+    assert.equal(await list.getByRole("link", { name: new RegExp("^" + name + "( |$)") }).count(), 1, `${label}: ${name} entry`);
+  for (const name of ["Projects", "Cycles", "Restore"])
+    assert.equal(await list.getByRole("link", { name: new RegExp("^" + name + "( |$)") }).count(), 0, `${label}: no ${name} entry`);
   await openAccountMenu(page);
   const settings = page
     .getByRole("link", { name: "Settings", exact: true })

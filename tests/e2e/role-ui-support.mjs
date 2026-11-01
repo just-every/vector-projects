@@ -60,7 +60,7 @@ export async function exerciseGuestRoles({page,browser,runtime,clause,evidence})
   const visible=await post('/api/issues',{title:'Guest invited delivery issue',teamId:invitedTeam.id,projectId:project.id},201);
   const hidden=await post('/api/issues',{title:'Guest excluded delivery issue',teamId:outside.id,projectId:project.id},201);
   const cycle=(await post('/api/settings/cycles',{name:'Guest invited delivery cycle',teamId:invitedTeam.id,startsLocal:'2038-01-04T09:00',endsLocal:'2038-01-08T09:00',capacity:null})).cycles.find(cycle=>cycle.name==='Guest invited delivery cycle');
-  await navigate(page,base+'/app/settings');
+  await navigate(page,base+'/app/settings/people');
   await openDisclosures(page);
   const members=page.getByRole('region',{name:'Members',exact:true});
   let context;
@@ -112,14 +112,19 @@ export async function exerciseGuestRoles({page,browser,runtime,clause,evidence})
       assert.equal(await guest.getByRole('form',{name:'Create cycle',exact:true}).count(),0);
       assert.equal(await guest.getByRole('button',{name:'Save cycle schedule',exact:true}).count(),0);
       await navigate(guest,base+'/app/settings');
-      await guest.getByRole('heading',{name:'Appearance',exact:true}).waitFor();
+      await guest.getByRole('navigation',{name:'Settings sections'}).locator('.settings-nav-name',{hasText:'Notifications'}).waitFor();
+      assert.deepEqual(await guest.getByRole('navigation',{name:'Settings sections'}).locator('.settings-nav-name').allTextContents(),['Profile','Notifications']);
+      await navigate(guest,base+'/app/settings/profile');
+      await guest.getByRole('heading',{name:'Profile',exact:true}).waitFor();
       assert.equal(await guest.getByRole('region',{name:'Members',exact:true}).count(),0);
       assert.equal(await guest.getByRole('heading',{name:'API tokens',exact:true}).count(),0);
+      await navigate(guest,base+'/app/settings/people');await guest.getByText('You can’t open this page.').waitFor();
+      await navigate(guest,base+'/app/settings/profile');
       await inspect(guest,guest.locator('main:visible').first(),'guest-account-only');
     });
     const id=sql("SELECT id FROM operators WHERE email='synthetic-vector-803@vector.test'")[0].id;
     await clause('ROLE-003','an Owner changes an accepted Guest to Member and back through the named-team role form; its open session follows immediately',async()=>{
-      await navigate(page,base+'/app/settings');
+      await navigate(page,base+'/app/settings/people');
       await openDisclosures(page);
       let form=members.getByRole('form',{name:'Role for Agency collaborator (Guest)',exact:true});
       await form.getByRole('combobox').selectOption('member');

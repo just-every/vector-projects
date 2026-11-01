@@ -1,5 +1,6 @@
 import { useHydrated } from '../initial-resources'
 import { Link } from '@tanstack/react-router'
+import { inSettings } from './settings-path'
 import { useEffect, useId, useRef, useState } from 'react'
 
 export function MobileAccount({ name, pathname, signingOut, onSignOut }: {
@@ -34,7 +35,7 @@ export function MobileAccount({ name, pathname, signingOut, onSignOut }: {
       <span>{name}</span><span aria-hidden="true">⌄</span>
     </button>
     {open && <div id={id} className="app-mobile-account-menu">
-      <Link to="/app/settings" aria-current={pathname === '/app/settings' ? 'page' : undefined}
+      <Link to="/app/settings" aria-current={inSettings(pathname) ? 'page' : undefined}
         onClick={() => setOpen(false)}>Settings</Link>
       <button type="button" disabled={signingOut} onClick={onSignOut}>
         {signingOut ? 'Signing out…' : 'Sign out'}

@@ -1,0 +1,52 @@
+/* The shared Settings controls: Saved by the control that changed, a refused save under its field. */
+.field { display: grid; align-content: start; gap: 0.4rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.field-head { display: flex; align-items: baseline; gap: 0.75rem; min-height: 1.5rem; padding: 0; font-size: 1rem; color: var(--app-ink); }
+.field-head label { color: inherit; }
+legend.field-head { float: none; margin: 0 0 0.4rem; }
+.field-saved { min-width: 3rem; font-size: var(--app-text-small); color: var(--app-muted); }
+.field-saved:not(:empty) { animation: field-saved 2.2s ease forwards; }
+@keyframes field-saved { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .field-saved:not(:empty) { animation: none; } }
+.field-hint { margin: 0; font-size: var(--app-text-small); line-height: 1.5; color: var(--app-body); }
+.field-failure { display: grid; gap: 0.1rem; margin: 0; font-size: var(--app-text-small); line-height: 1.5; color: var(--app-danger); }
+.field-reason { color: var(--app-body); }
+.field-retry { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.25rem; border: 0; background: none; color: var(--app-cobalt-ink); font: inherit; text-decoration: underline; cursor: pointer; }
+
+.field select,
+.field input[type="text"],
+.field input[type="time"] {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--app-field-border);
+  border-radius: 0.5rem;
+  background-color: var(--app-field);
+  color: var(--app-ink);
+  font: inherit;
+}
+.field select:focus-visible,
+.field input[type="text"]:focus-visible { outline: 0; border-color: var(--app-focus); box-shadow: 0 0 0 1px var(--app-focus); }
+
+.field-choice .choice-segments { display: flex; width: min(100%, 26rem); border: 1px solid var(--app-field-border); border-radius: 0.6rem; overflow: hidden; background: var(--app-field); }
+.choice-segments label { position: relative; display: flex; flex: 1 1 0; align-items: center; justify-content: center; min-width: 0; min-height: 44px; padding: 0 0.75rem; cursor: pointer; }
+.choice-segments label + label { box-shadow: inset 1px 0 0 var(--app-line-strong); }
+.choice-segments input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.choice-segments label:has(input:checked) { background: var(--app-cobalt-soft); color: var(--app-cobalt-ink); font-weight: 560; }
+.choice-segments label:has(input:focus-visible) { outline: 2px solid var(--app-focus); outline-offset: -2px; }
+
+.field-switch .switch-row { display: flex; align-items: center; gap: 0.9rem; min-height: 44px; cursor: pointer; }
+.switch-row input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.switch-track { position: relative; flex: none; width: 2.5rem; height: 1.5rem; border-radius: 999px; background: var(--app-line-strong); transition: background 0.15s; }
+.switch-track::after { content: ""; position: absolute; top: 0.2rem; left: 0.2rem; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: var(--app-column); box-shadow: 0 1px 2px rgb(var(--app-shadow-rgb) / 30%); transition: transform 0.15s; }
+.switch-row input:checked + .switch-track { background: var(--app-cobalt-ink); }
+.switch-row input:checked + .switch-track::after { transform: translateX(1rem); }
+.switch-row input:focus-visible + .switch-track { outline: 2px solid var(--app-focus); outline-offset: 2px; }
+.switch-label { flex: 1; }
+@media (prefers-reduced-motion: reduce) { .switch-track, .switch-track::after { transition: none; } }
+
+.day-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.day-chips label { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--app-paper-deep); color: var(--app-body); font-weight: 560; cursor: pointer; }
+.day-chips input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.day-chips label:has(input:checked) { background: var(--app-cobalt-ink); color: var(--app-on-accent); }
+.day-chips label:has(input:focus-visible) { outline: 2px solid var(--app-focus); outline-offset: 2px; }

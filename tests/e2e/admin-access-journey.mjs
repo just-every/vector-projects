@@ -98,6 +98,7 @@ export async function auditEmptyWorkspace({ page, runtime, capture, clause }) {
     .first()
     .click();
   await page.waitForURL(base + "/app/settings");
+  await page.goto(base + "/app/settings/teams");
   const teamForm = await openAdministrationForm(
     page,
     "Edit " + runtime.config.DEFAULT_TEAM_NAME,
@@ -140,8 +141,8 @@ export async function inviteProjectLead({
 }) {
   const { base, sql } = runtime;
 
-  await beforePrivateNavigation(page, base + "/app/settings");
-  await page.goto(base + "/app/settings");
+  await beforePrivateNavigation(page, base + "/app/settings/people");
+  await page.goto(base + "/app/settings/people");
   await openDisclosures(page);
   await clause(
     "PROJ-002",
@@ -221,8 +222,8 @@ export async function inviteProjectLead({
   await capture("project-invited-lead-transfer");
 }
 export async function assertSignOut({ page, runtime, capture }) {
-  await beforePrivateNavigation(page, runtime.base + "/app/settings");
-  await page.goto(runtime.base + "/app/settings");
+  await beforePrivateNavigation(page, runtime.base + "/app/settings/teams");
+  await page.goto(runtime.base + "/app/settings/teams");
   const teamForm = await openAdministrationForm(
     page,
     "Edit " + runtime.config.DEFAULT_TEAM_NAME,
@@ -253,7 +254,7 @@ export async function exerciseWorkspaceRoles({ page, browser, runtime, clause, e
   const { base, sql } = runtime;
   const inspect = roleScreens(evidence);
   const owner = sql("SELECT o.id,o.name FROM operators o JOIN workspace_installation i ON i.setup_operator_id=o.id")[0];
-  await navigate(page, base + "/app/settings");
+  await navigate(page, base + "/app/settings/people");
   await openDisclosures(page);
   const members = page.getByRole("region", { name: "Members", exact: true });
   let context, peer;
@@ -277,7 +278,7 @@ export async function exerciseWorkspaceRoles({ page, browser, runtime, clause, e
   });
   const memberId = sql("SELECT id FROM operators WHERE email='role-member@admin-runtime.test'")[0].id;
   // The accepted member joins the directory on the Owner's next Settings visit.
-  await navigate(page, base + "/app/settings");
+  await navigate(page, base + "/app/settings/people");
   await openDisclosures(page);
   // A workspace settings write that saves the current timezone: only the role decides its answer.
   const settingsRequest = async () => withOperatorClient(peer.context(), async client => {
@@ -328,15 +329,23 @@ export async function exerciseWorkspaceRoles({ page, browser, runtime, clause, e
   });
   assert.equal(labelCreated.status(), 200);
   await clause("ROLE-001", "a Member reads the member directory without managing anyone and opens only their own Settings pages", async () => {
-    await navigate(peer, base + "/app/settings");
+    await navigate(peer, base + "/app/settings/people");
     await openDisclosures(peer);
     const directory = peer.getByRole("region", { name: "Members", exact: true });
     await directory.getByText("Role member (you)", { exact: true }).waitFor();
     assert.equal(await directory.getByRole("button", { name: "Change role", exact: true }).count(), 0);
     assert.deepEqual(await directory.getByRole("button", { name: /^Remove / }).allTextContents(), ["Remove Role member"]);
     assert.equal(await directory.getByRole("form", { name: "Invite member", exact: true }).count(), 0);
-    for (const name of ["Workspace time", "Cycles", "Data / Move in"])
-      assert.equal(await peer.getByRole("region", { name, exact: true }).count(), 0, name);
+    // A Member's list holds only their own sections; a denied path is one plain line, not a page.
+    await navigate(peer, base + "/app/settings");
+    const entries = peer.getByRole("navigation", { name: "Settings sections" }).locator(".settings-nav-name");
+    await entries.filter({ hasText: "Developers" }).waitFor();
+    assert.deepEqual(await entries.allTextContents(), ["Profile", "Notifications", "People", "Teams", "Labels", "Developers"]);
+    for (const denied of ["workspace", "connections", "move-in"]) {
+      await navigate(peer, base + "/app/settings/" + denied);
+      await peer.getByText("You can’t open this page.").waitFor();
+    }
+    await navigate(peer, base + "/app/settings/labels");
     const labels = peer.getByRole("region", { name: "Labels", exact: true });
     await labels.getByText("Workspace labels are read-only here. Owners and Admins manage labels.", { exact: true }).waitFor();
     await labels.getByText("synthetic-vector-15", { exact: true }).waitFor();
@@ -350,8 +359,10 @@ export async function exerciseWorkspaceRoles({ page, browser, runtime, clause, e
         await labels.getByText(label.name, { exact: true }).waitFor();
     }
     await inspect(peer, labels, "member-labels-read-only");
+    await navigate(peer, base + "/app/settings/developers");
     await peer.getByRole("region", { name: "Integrations", exact: true }).getByRole("heading", { name: "API tokens", exact: true }).waitFor();
   });
+  await navigate(peer, base + "/app/settings/people");
   await inspect(peer, peer.getByRole("region", { name: "Members", exact: true }), "members-member-view");
   await exerciseGuestRoles({page,browser,runtime,clause,evidence});
   await privateTeamJourney({page,peer,memberId,runtime,clause,evidence});

@@ -20,7 +20,7 @@ export async function cycleMembershipJourney(page, context, base, record = async
   const create=title=>api('/issues','POST',{teamId:team.id,title,description:'Keep checkout available while payment providers are slow.',estimate:3});
   for(const width of [1440,390]) {
     await page.setViewportSize({width,height:900});
-    await beforePrivateNavigation(page,base+'/app/settings'); await page.goto(base+'/app/settings');
+    await beforePrivateNavigation(page,base+'/app/settings/teams'); await page.goto(base+'/app/settings/teams');
     const details=page.locator('#teams details').filter({has:page.locator('summary').filter({hasText:team.name})}).first();
     const form=details.getByRole('form',{name:'Edit '+team.name});
     await page.waitForFunction(name=>[...document.querySelectorAll('form')].find(f=>f.getAttribute('aria-label')===name)?.querySelector('button')?.matches(':enabled'),'Edit '+team.name);

@@ -11,7 +11,7 @@ and repositories; old encrypted values cannot be recovered with the new key.
 
 ## Secret webhook URLs (no code)
 
-Register a source in Settings → Integrations → Signal sources and copy its secret
+Register a source in Settings → Connections → Signal sources and copy its secret
 webhook URL into a tool’s POST action. The page has complete Zapier, Make and
 UptimeRobot steps. Anyone holding the URL can send reports: keep it private.
 The URL credential is encrypted separately from the signing secret and excluded
@@ -60,7 +60,7 @@ does not reopen terminal decisions. Native issue deletion replaces external reco
 
 ## Sentry and Datadog
 
-Owners and Admins connect error tracking in Settings → Integrations → Error tracking.
+Owners and Admins connect error tracking in Settings → Connections → Error tracking.
 Choose the intake team and a regression rule. New records enter Needs decision;
 link an existing Vector issue and provider record ID before the first event to
 append its evidence instead. Counts, affected users, release and the original
@@ -128,7 +128,7 @@ including email-intake replies deleted by an Owner. The migration replaces only
 the event trigger and preserves queued events, delivery history and restore holds.
 Retain the forward migration on compatible-source rollback.
 
-Enable delivery in Settings → Integrations → Outbound webhooks. The page asks
+Enable delivery in Settings → Connections → Outbound webhooks. The page asks
 for the Cloudflare account ID and a token with Account / Workers Scripts / Read
 and Zone / Zone / Read for the hosting account and all its zones. Vector reads
 the account’s workers.dev subdomain and complete visible zone inventory, verifies
@@ -184,7 +184,7 @@ Pull requests, Pushes and Deployment statuses in the repository's webhook settin
 Vector validates the exact raw-byte HMAC, repository, delivery UUID and payload.
 See [signature validation](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries)
 and [payload documentation](https://docs.github.com/en/webhooks/webhook-events-and-payloads).
-Settings → Integrations shows each repository's last durably accepted pull request,
+Settings → Connections shows each repository's last durably accepted pull request,
 push or deployment delivery in the viewer's time, or that none has arrived yet.
 Signed pings and connection tests are not recorded, and the time reports GitHub's
 deliveries to Vector, not a call Vector made to GitHub.
@@ -242,7 +242,7 @@ live accounts, the public site and publication remain owner work.
 
 ## Slack and Discord channel notifications (SLACK-003)
 
-In Settings → Integrations → Slack and Discord channels, an Admin pastes a Slack
+In Settings → Connections → Slack and Discord channels, an Admin pastes a Slack
 bot token with `chat:write`, `channels:manage` and `channels:read`. Vector validates it with `auth.test` and seals it with AES-GCM using
 `sealSecret`/`openSecret`, bound to this workspace. The token never appears in a
 read response. Replace it in the same form to rotate it. Removing the connection
@@ -310,7 +310,7 @@ comments, attachments and evidence bodies are never included. Slack formatting
 and Discord allowed mentions prevent issue text from generating mentions.
 
 Channel delivery reuses the existing durable outbound events, claims, attempts,
-finite retries and uncertain terminal states. Settings → Delivery history shows
+finite retries and uncertain terminal states. Settings → Developers → Delivery history shows
 failures. A timeout or unknown provider result is never automatically resent.
 Unbinding, issue deletion, removal of the configuring operator or removing Slack
 stops future sends; a request already started may finish. Vector’s local erasure
@@ -425,7 +425,7 @@ Archives retain outcomes and replay identities. Verification keys are excluded a
 
 ### Slack app installation
 
-Owners and Admins can configure a notification app in **Settings → Integrations → Slack app installation**. **Create an app automatically** uses a one-time app configuration token. Alternatively, **Use Slack’s prefilled page** opens Slack’s app setup with the manifest already filled in; create the app there, then save the app ID, client ID, client secret and signing secret in Vector. Submitted secret fields clear after a successful save. **Install Slack app** opens Slack’s consent screen; finish it in the same Owner/Admin session. **Remove Slack app** and the existing **Remove Slack connection** control both revoke the connection and remove the stored credentials and member links. They do not delete the app definition in Slack.
+Owners and Admins can configure a notification app in **Settings → Connections → Slack app installation**. **Create an app automatically** uses a one-time app configuration token. Alternatively, **Use Slack’s prefilled page** opens Slack’s app setup with the manifest already filled in; create the app there, then save the app ID, client ID, client secret and signing secret in Vector. Submitted secret fields clear after a successful save. **Install Slack app** opens Slack’s consent screen; finish it in the same Owner/Admin session. **Remove Slack app** and the existing **Remove Slack connection** control both revoke the connection and remove the stored credentials and member links. They do not delete the app definition in Slack.
 
 The authenticated Settings API remains available. `GET /api/settings/integrations/slack/app` returns the generated
 installation manifest, its prefilled Slack creation URL and this installation's

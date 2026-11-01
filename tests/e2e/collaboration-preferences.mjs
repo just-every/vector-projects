@@ -40,7 +40,7 @@ export async function collaborationPreferences({
         4,
         "muted action creates no mail intent",
       );
-      await navigate(peer, runtime.base + "/app/settings");
+      await navigate(peer, runtime.base + "/app/settings/notifications");
       await peer
         .getByRole("region", { name: "Notifications", exact: true })
         .getByRole("button", {

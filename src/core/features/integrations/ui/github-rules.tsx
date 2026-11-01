@@ -1,3 +1,4 @@
+import {Link} from '@tanstack/react-router';
 import './github-rules.css';
 import {useState} from 'react';
 import {z} from 'zod';
@@ -17,7 +18,7 @@ export function useGithubRules(){
 }
 export type GithubRulesResource=ReturnType<typeof useGithubRules>;
 export function GithubRules(props:{teamId:string;resource:GithubRulesResource}|{teamId?:undefined}){
- return props.teamId?<TeamGithubRules teamId={props.teamId} data={props.resource}/>:<p><a className="github-rules-teams-link" href="#teams">Manage Git automation rules in Teams</a></p>;
+ return props.teamId?<TeamGithubRules teamId={props.teamId} data={props.resource}/>:<p><Link className="github-rules-teams-link" to="/app/settings/teams">Manage Git automation rules in Teams</Link></p>;
 }
 function TeamGithubRules({teamId,data}:{teamId:string;data:GithubRulesResource}){
  const team=data.data?.teams.find(team=>team.id===teamId);

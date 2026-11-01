@@ -32,8 +32,8 @@ export async function exerciseOAuthApps({page,runtime,cookie,evidence}){
   return confirmed.headers.get('set-cookie').split(';')[0];
  };
  const memberCookie=await person(4542,'member'),adminCookie=await person(4543,'admin');
- await page.setViewportSize({width:1440,height:1000});trackRequests(page);await navigate(page,runtime.base+'/app/settings/oauth-apps');
- assert.equal(new URL(page.url()).hash,'#oauth-apps');
+ await page.setViewportSize({width:1440,height:1000});trackRequests(page);await navigate(page,runtime.base+'/app/settings/developers/apps');
+ assert.equal(new URL(page.url()).pathname,'/app/settings/developers/apps');
  const panel=page.getByRole('region',{name:'OAuth apps',exact:true});await panel.getByRole('heading',{name:'Registered applications',exact:true}).waitFor();
  await panel.getByLabel('Application name',{exact:true}).fill(name);await panel.getByLabel('Redirect URLs',{exact:true}).fill('http://example.com/callback');
  let response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/settings/oauth-apps'&&r.request().method()==='POST');
@@ -62,13 +62,13 @@ export async function exerciseOAuthApps({page,runtime,cookie,evidence}){
   const api=(path,method='GET',body)=>runtime.req('/api/v1'+path,{method,headers:{Authorization:'Bearer '+token.access_token,'Content-Type':jsonMediaType},body:body===undefined?undefined:JSON.stringify(body)});
   assert.equal((await api('/issues')).status,200);const before=runtime.sql('SELECT COUNT(*) AS n FROM issues')[0].n,team=runtime.sql('SELECT id FROM teams ORDER BY created_at LIMIT 1')[0].id;
   assert.equal((await api('/issues','POST',{teamId:team,title:'synthetic-vector-4545'})).status,403);assert.equal(runtime.sql('SELECT COUNT(*) AS n FROM issues')[0].n,before);
-  await navigate(member,runtime.base+'/app/settings#integrations');const personal=member.getByRole('region',{name:'API tokens',exact:true});await personal.waitFor();
+  await navigate(member,runtime.base+'/app/settings/developers');const personal=member.getByRole('region',{name:'API tokens',exact:true});await personal.waitFor();
   assert.equal(await personal.getByText(name,{exact:true}).count(),0);await capture(member,personal,'oauth-member-tokens');
   const invalid=new URLSearchParams(query);invalid.set('client_id',randomUUID());
   await navigate(member,runtime.base+'/api/oauth/authorize?'+invalid);assert.equal(new URL(member.url()).pathname,'/app/settings/oauth-consent');
   await member.getByRole('alert').waitFor();assert.ok(await member.getByRole('alert').isVisible());assert.ok(await member.getByRole('link',{name:'Back to Vector',exact:true}).isVisible());
   await capture(member,member.getByRole('region',{name:'Authorize an application',exact:true}),'oauth-consent-error');
-  trackRequests(admin);await navigate(admin,runtime.base+'/app/settings#oauth-apps');const inventory=admin.getByRole('region',{name:'Authorized grants',exact:true}),revoke=inventory.getByRole('button',{name:'Revoke '+name+' for synthetic-vector-4542',exact:true});
+  trackRequests(admin);await navigate(admin,runtime.base+'/app/settings/developers/apps');const inventory=admin.getByRole('region',{name:'Authorized grants',exact:true}),revoke=inventory.getByRole('button',{name:'Revoke '+name+' for synthetic-vector-4542',exact:true});
   await revoke.waitFor();await capture(admin,admin.getByRole('region',{name:'OAuth apps',exact:true}),'oauth-apps');
   response=admin.waitForResponse(r=>r.request().method()==='DELETE'&&new URL(r.url()).pathname==='/api/settings/oauth-apps/grants/'+token.grant_id);
   await revoke.click();assert.equal((await response).status(),200);await inventory.getByRole('status').waitFor();assert.equal((await api('/issues')).status,401);await settleReads(admin);

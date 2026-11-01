@@ -72,7 +72,7 @@ export async function slackAppScenario(phase:'installation'|'mapping'|'events'|'
   expect((await callback(current,admin)).status).toBe(403);
   expect(calls.filter(c=>c.method==='oauth.v2.access')).toHaveLength(0);
   const installed=await callback(current);expect(installed.status,await installed.clone().text()).toBe(303);
-  expect(installed.headers.get('Location')).toBe('/app/settings#integrations');
+  expect(installed.headers.get('Location')).toBe('/app/settings/connections');
   expect((await read(await f.call('/settings/integrations/channels'))).slack).toMatchObject({connected:true,signingSecret:true});
   expect((await callback(current)).status).toBe(403);expect(calls.filter(c=>c.method==='oauth.v2.access')).toHaveLength(1);
   const all=(await env.DB.prepare("SELECT encrypted FROM vector_integration_secret_keys WHERE identity LIKE 'slack%'").all()).results;

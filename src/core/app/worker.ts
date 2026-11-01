@@ -93,11 +93,13 @@ export async function handleRequest(
     }
   }
   if(admitted){const denial=await initiativePageDenial(env,url.pathname,admitted.id) ?? await releasePageDenial(env,url.pathname,admitted.id);if(denial)return denial;}
+  // A person who may not browse the audit log still gets the page: it renders the plain denial, with the same status.
+  let pageDenialStatus: number | null = null;
   if (url.pathname.replace(/\/$/, '') === '/app/settings/audit' && admitted) {
     try { await auditAuthority(env.DB, admitted.id); }
     catch (error) {
-      if (error instanceof SettingsError) return Response.json({ error: error.code, message: error.message }, { status: error.status, headers: { 'Cache-Control': 'no-store' } });
-      throw error;
+      if (!(error instanceof SettingsError)) throw error;
+      pageDenialStatus = error.status;
     }
   }
   if (
@@ -123,7 +125,7 @@ export async function handleRequest(
   }
   let response = await (privateRequest ? timed('render', () => renderAsOperator(admitted, () => start.fetch(request))) : start.fetch(request));
   // Finish private rendering before the final native snapshot, including streamed SSR.
-  if (admitted) response = new Response(await timed('body', () => response.arrayBuffer()), {status:response.status,statusText:response.statusText,headers:response.headers});
+  if (admitted) response = new Response(await timed('body', () => response.arrayBuffer()), {status:pageDenialStatus ?? response.status,statusText:pageDenialStatus ? '' : response.statusText,headers:response.headers});
   if (admitted) {
     // Page resources now travel in the document. Retain the API's complete
     // native reauthorization (provider policy and restore grants included).

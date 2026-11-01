@@ -81,7 +81,7 @@ try {
 
   // Light is saved for the member: it survives a reload and reaches a second browser on a dark device.
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await show(page, '/app/settings#appearance');
+  await show(page, '/app/settings/profile');
   const saved = page.waitForResponse(r => r.url().endsWith('/api/settings/appearance') && r.request().method() === 'PATCH');
   await page.getByRole('radio', { name: /^Light/ }).check();
   assert.equal((await saved).status(), 200);
@@ -97,9 +97,9 @@ try {
 
   // System follows a live device change without a reload.
   await page.setViewportSize({ width: 1440, height: 1000 });
-  await show(page, '/app/settings#appearance');
+  await show(page, '/app/settings/profile');
   await page.getByRole('radio', { name: /^System/ }).check();
-  await page.getByText('Your theme is saved for every browser you sign in to.').waitFor();
+  await page.locator('.field-saved:not(:empty)').first().waitFor();
   await page.evaluate(() => { window.__sameDocument = true; });
   assert.ok(await isDark(page), 'System on a dark device');
   await page.emulateMedia({ colorScheme: 'light' });

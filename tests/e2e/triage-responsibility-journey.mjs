@@ -73,7 +73,7 @@ export async function triageResponsibilityJourney({
       "TRIAGE-001",
       "weekly rotation, native and signed intake, handover and once-only Inbox through mounted doors",
       async () => {
-        await navigate(page, base + "/app/settings");
+        await navigate(page, base + "/app/settings/teams");
         await openDisclosures(page);
         const form = page.getByRole("form", {
           name: `Weekly triage rotation for ${team.name}`,

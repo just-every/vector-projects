@@ -155,8 +155,8 @@ export async function followerJourney(actorPage, actorContext, inboxPage, recipi
     assert(await inboxPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Inbox fits the viewport');
     await mkdir(verificationDirectory + '/follower-events', { recursive: true });
     await inboxPage.screenshot({ path: `${verificationDirectory}/follower-events/inbox-${width}.png`, fullPage: true });
-    await beforePrivateNavigation(inboxPage, base + '/app/settings');
-    await inboxPage.goto(base + '/app/settings');
+    await beforePrivateNavigation(inboxPage, base + '/app/settings/notifications');
+    await inboxPage.goto(base + '/app/settings/notifications');
     const notificationPanel = inboxPage.getByRole('region', { name: 'Notifications', exact: true });
     const disclosure = inboxPage.locator('details').filter({ has: inboxPage.locator('#notifications-heading') }).first();
     if (await disclosure.count() && await disclosure.getAttribute('open') === null) await disclosure.locator('summary').first().click();

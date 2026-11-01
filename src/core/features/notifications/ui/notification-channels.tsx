@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { fetchJson, useApiResource } from "../../../app/api-client";
 import type { ChannelChoice } from "../channel-schema";
@@ -56,7 +57,7 @@ export function NotificationChannels({ settings }: { settings: NotificationSetti
     {data && <>
       {!settings.emailAvailable ? <p>Email delivery is unavailable for this installation. Your channel choices are saved for when email is available.</p>
         : !settings.emailEnabled && <p>Email delivery is paused. Turn on “Allow email notifications” below to receive your chosen email notifications.</p>}
-      <p>Hourly and daily digests use <a href="#personal-time">your time and working hours</a>.</p>
+      <p>Hourly and daily digests use <Link to="/app/settings/profile">your time and working hours</Link>.</p>
       {slackReason && <p id="notification-slack-channel-reason">{slackReason}</p>}
       <ChannelMatrix rows={data.channels} disabled={pending || Boolean(resource.error)} slackReason={slackReason}
         onChange={choice => void save(choice)} onReset={kind => void save({ kind, inherit: true })} />

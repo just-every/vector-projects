@@ -7,7 +7,7 @@ export async function exerciseDataMapping({page,runtime,team,status,width,eviden
  await page.setViewportSize({width,height:900});const panel=page.locator('#data');
  const anchor=await completedListAnchor(page,runtime.base,team,status,width);
  const observer=await observeImportBatches(page,panel,{width,evidence,baselineEvidence,anchorId:anchor.id});
- try { await page.goto(runtime.base+'/app/settings');await panel.getByRole('heading',{name:'Data / Move in',exact:true}).waitFor();
+ try { await page.goto(runtime.base+'/app/settings/move-in');await panel.getByRole('heading',{name:'Data / Move in',exact:true}).waitFor();
  await panel.getByLabel('File format',{exact:true}).selectOption('json');
  // SSR supplies the initial list. A real retained-run action starts the stale
  // browser read that later mutation receipts must supersede without rollback.

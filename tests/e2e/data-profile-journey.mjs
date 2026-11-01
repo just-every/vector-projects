@@ -5,7 +5,7 @@ import {beforePrivateNavigation} from './collaboration-navigation.mjs';
 /** DATA-015: Huly JSON review and reconciliation through Settings at both sizes. */
 export async function exerciseProfileBrowser({page,runtime,team,status,width,evidence}) {
  await page.setViewportSize({width,height:width===390?844:1000});
- await beforePrivateNavigation(page,runtime.base+'/app/settings');await page.goto(runtime.base+'/app/settings');
+ await beforePrivateNavigation(page,runtime.base+'/app/settings/move-in');await page.goto(runtime.base+'/app/settings/move-in');
  const panel=page.locator('#data');await panel.getByRole('heading',{name:'Data / Move in',exact:true}).waitFor();
  for(const format of ['plane-csv','shortcut-csv','huly-json'])await panel.getByLabel('File format',{exact:true}).selectOption(format);
  await panel.getByLabel('Import source name',{exact:true}).fill('huly-ui-'+width);

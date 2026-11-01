@@ -4,7 +4,7 @@ import {resolve} from 'node:path';
 import {mkdir,readFile} from 'node:fs/promises';
 export async function exerciseErrorProviders({page,runtime,cookie,team,evidence}){
  await runtime.freshRequestWindow();
- await page.setViewportSize({width:1440,height:1000});await page.goto(runtime.base+'/app/settings');
+ await page.setViewportSize({width:1440,height:1000});await page.goto(runtime.base+'/app/settings/connections');
  const region=page.getByRole('region',{name:'Error tracking',exact:true});await region.waitFor();
  const token='synthetic-vector-8201',secret='synthetic-vector-8202';
  await region.getByLabel('Error intake team',{exact:true}).selectOption(team.id);await region.getByLabel('Regression rule',{exact:true}).selectOption('reopen');

@@ -12,7 +12,7 @@ export async function disabledEmailJourney({
   installations,
 }) {
   await bootstrapOwner(page, runtime);
-  await navigate(page, runtime.base + "/app/settings");
+  await navigate(page, runtime.base + "/app/settings/notifications");
   await clause(
     "NOTIFY-006",
     "installation email disabled retains native authentication and Inbox with no delivery intent",

@@ -59,14 +59,6 @@ export function MembersPanel({ data, denied, onChanged }: { data: Settings; deni
       method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ role, ...(['guest','viewer'].includes(role) ? {teamIds} : {}) }),
     }), `${member.name} is now ${role === "admin" ? "an" : "a"} ${roleLabels[role as Role]}.`)) form.reset();
   };
-  const saveInvites = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const memberInvites = new FormData(event.currentTarget).has("memberInvites");
-    await act(() => fetchJson("/api/settings", settingsSchema, {
-      method: "PATCH", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ timezone: data.workspace.timezone, memberInvites }),
-    }), memberInvites ? "Members can now invite Members." : "Only Owners and Admins invite now.");
-  };
   return (
     <section id="members" aria-labelledby="members-heading">
       <h2 id="members-heading">Members</h2>
@@ -117,15 +109,6 @@ export function MembersPanel({ data, denied, onChanged }: { data: Settings; deni
         </div>
       )}
       {message && <p role="status">{message}</p>}
-      {(controls.leads || controls.manages) && (
-        <form className="settings-member-invites" aria-label="Member invitations" onSubmit={saveInvites}>
-          <label>
-            <input type="checkbox" name="memberInvites" defaultChecked={data.workspace.memberInvites} disabled={pending || denied} key={String(data.workspace.memberInvites)} />
-            Members can invite other Members
-          </label>
-          <button type="submit" disabled={pending || denied}>Save invitation setting</button>
-        </form>
-      )}
       {controls.inviteRoles.length ? (
         <InviteOperator teams={data.teams} delivery={data.invitationDelivery} roles={controls.inviteRoles} disabled={pending || denied} onInvited={onChanged} />
       ) : (

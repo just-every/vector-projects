@@ -43,7 +43,7 @@ export async function exerciseSlackAppArchive({page,runtime,cookie,width,evidenc
   assert.equal((await targetApi('/settings/integrations/slack/app/install','POST',{})).status,409);
   assert.deepEqual(target.sql('SELECT * FROM vector_slack_event_receipts ORDER BY event_key'),runtime.sql('SELECT * FROM vector_slack_event_receipts ORDER BY event_key'));
   const restored=await openAuthenticatedPage(page.context().browser(),authenticated.cookie,target.base);context=restored.context();await restored.setViewportSize({width,height:900});const errors=[];restored.on('pageerror',error=>errors.push(error.message));restored.on('console',message=>{if(message.type()==='error'&&/hydrat/i.test(message.text()))errors.push(message.text());});
-  await restored.goto(target.base+'/app/settings#integrations');const panel=restored.getByRole('region',{name:'Slack app installation',exact:true});await panel.getByRole('heading',{name:'Slack app installation',exact:true}).waitFor();
+  await restored.goto(target.base+'/app/settings/connections');const panel=restored.getByRole('region',{name:'Slack app installation',exact:true});await panel.getByRole('heading',{name:'Slack app installation',exact:true}).waitFor();
   await panel.getByText('Use Slack’s prefilled page',{exact:true}).click();const form=panel.getByRole('form',{name:'Slack app credentials',exact:true});
   for(const label of ['App client secret','App signing secret'])assert.equal(await form.getByLabel(label,{exact:true}).inputValue(),'');
   assert.equal(await panel.getByRole('button',{name:'Install Slack app',exact:true}).count(),0);assert.ok(await restored.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));

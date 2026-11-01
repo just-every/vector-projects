@@ -16,7 +16,7 @@ export async function inviteReader({owner,browser,runtime,email,name,role='viewe
  const {base,sql}=runtime;
  await confirmInviter(owner,owner.context(),base,runtime.state);
  if(form){
-  await navigate(owner,base+'/app/settings');await openDisclosures(owner);
+  await navigate(owner,base+'/app/settings/people');await openDisclosures(owner);
   const invite=owner.getByRole('form',{name:'Invite member',exact:true});
   await invite.getByLabel('Name',{exact:true}).fill(name);await invite.getByLabel('Email',{exact:true}).fill(email);await invite.getByLabel('Role',{exact:true}).selectOption(role);
   if(teams.length){const group=invite.getByRole('group',{name:`Teams this ${role==='viewer'?'Viewer':'Guest'} can access`,exact:true});for(const id of teams)await group.locator(`input[value="${id}"]`).check();}

@@ -18,12 +18,18 @@ try {
  const records=await prepareTimeSurfaces(context,runtime,issue,team);
  const future=new Date(Date.now()+3*86400000);future.setUTCHours(18,30,0,0);const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(future).map(p=>[p.type,p.value]));const local=`${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
  for(const width of [1440,390]) {
-  await page.setViewportSize({width,height:width===390?844:1000});await page.goto(runtime.base+'/app/settings#personal-time');
-  const form=page.getByRole('form',{name:'Your time preferences'});
-  await form.getByLabel('Personal IANA timezone').fill('America/Los_Angeles');await form.getByLabel('Working day starts').fill('08:30');await form.getByLabel('Working day ends').fill('16:30');
-  const saved=page.waitForResponse(r=>r.url().endsWith('/settings/personal-time')&&r.request().method()==='PATCH');await form.getByRole('button',{name:'Save your time preferences'}).click();assert.equal((await saved).status(),200);
-  await page.getByText('Your time preferences are saved.',{exact:true}).waitFor();await page.getByRole('heading',{name:'Your time and working hours'}).scrollIntoViewIfNeeded();
-  await page.screenshot({path:`${output}/settings-${width}.png`});await form.getByRole('button',{name:'Save your time preferences'}).scrollIntoViewIfNeeded();await page.screenshot({path:`${output}/working-hours-${width}.png`});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await page.setViewportSize({width,height:width===390?844:1000});await page.goto(runtime.base+'/app/settings/profile');
+  // Each field saves as it changes: the zone when it is left, the hours when chosen. No Save button.
+  const patched=()=>page.waitForResponse(r=>r.url().endsWith('/settings/personal-time')&&r.request().method()==='PATCH');
+  // A change that sets what is already set writes nothing, so the second width picks different hours and finds the zone kept.
+  let saved;const zone=page.getByLabel('Time zone',{exact:true});
+  if(width===1440){saved=patched();await zone.fill('America/Los_Angeles');await zone.blur();assert.equal((await saved).status(),200);}
+  else assert.equal(await zone.inputValue(),'America/Los_Angeles','the saved personal zone is shown on the next visit');
+  saved=patched();await page.getByLabel('Day starts',{exact:true}).selectOption(width===1440?'08:30':'08:00');assert.equal((await saved).status(),200);
+  saved=patched();await page.getByLabel('Day ends',{exact:true}).selectOption(width===1440?'16:30':'16:00');assert.equal((await saved).status(),200);
+  assert.equal(await page.getByRole('button',{name:/^Save/}).count(),0);
+  await page.locator('.field-saved:not(:empty)').first().waitFor();await page.getByRole('heading',{name:'Your hours'}).scrollIntoViewIfNeeded();
+  await page.screenshot({path:`${output}/settings-${width}.png`});await page.getByLabel('Day ends',{exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:`${output}/working-hours-${width}.png`});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   await page.goto(runtime.base+'/app/issues/'+issue.identifier);await page.getByRole('heading',{name:issue.title,exact:true}).waitFor();await page.getByRole('button',{name:'Remind me',exact:true}).click();
   await page.getByLabel('Remind me at (America/Los_Angeles)').fill(local);const created=page.waitForResponse(r=>r.url().endsWith('/reminders')&&r.request().method()==='POST');await page.getByRole('button',{name:'Set personal reminder',exact:true}).click();assert.equal((await created).status(),200);
   const reminders=await(await api.get(runtime.base+'/api/issues/'+issue.identifier+'/reminders')).json();assert.ok(reminders.reminders.some(r=>r.remindAt===future.toISOString()),'personal zone controls the instant although browser is Tokyo');

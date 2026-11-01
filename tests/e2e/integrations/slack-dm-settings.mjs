@@ -40,7 +40,7 @@ const response=await client.fetch(runtime.base+'/api'+path,{method,headers,data}
  };
  await writeFile(usersFile,'{}');
  // Unavailable, with its reason, while the workspace has no Slack credential.
- await page.goto(runtime.base+'/app/settings');await slack.getByText(/Slack direct messages are unavailable/).waitFor();
+ await page.goto(runtime.base+'/app/settings/notifications');await slack.getByText(/Slack direct messages are unavailable/).waitFor();
  assert.equal(await mentions.isDisabled(),true);await shot('unavailable',slack.getByText(/Slack direct messages are unavailable/));await axe('.notifications-panel');
  await exerciseNotificationChannelControls({page,region,send,answered,shot,axe});
  await send('/settings/integrations/slack','POST',{botToken:'synthetic-vector-'+(7000+width)});
@@ -60,6 +60,7 @@ const response=await client.fetch(runtime.base+'/api'+path,{method,headers,data}
  await chooseSlack(assignments,false);await chooseSlack(assignments,true);await chooseSlack(assignments,false);
  assert.equal(await mentions.isChecked(),true);await shot('linked',slack.locator('.slack-direct-link'));await axe('.notifications-panel');
  // The Admin enters a generated signing secret beside the bot token.
+ await page.goto(runtime.base+'/app/settings/connections');
  const channels=page.locator('.channel-settings'),details=channels.locator('details').filter({has:page.getByRole('form',{name:'Slack credential',exact:true,includeHidden:true})});if(!await details.evaluate(element=>element.open))await details.locator('summary').click();
  const secret=crypto.randomUUID().replaceAll('-',''),field=channels.getByLabel('Slack signing secret',{exact:true});await field.fill(secret);await shot('signing-secret',field);await axe('.channel-settings');
  await answered('/settings/integrations/slack/signing-secret','POST',()=>channels.getByRole('button',{name:'Save signing secret',exact:true}).click());
@@ -83,6 +84,6 @@ const response=await client.fetch(runtime.base+'/api'+path,{method,headers,data}
  assert.ok(!JSON.stringify(dm).includes('PRIVATE_BROWSER_BODY')&&!JSON.stringify(dm).includes(owner.email),'only the allowed fields leave the deployment');
  await writeFile(resolve(evidence,`slack-004-dm-payload-${width}.json`),JSON.stringify(dm,null,1)+'\n');
  // Unlink is revocable at any time; removing the Slack connection leaves the next width unconnected.
- await page.reload();await answered('/settings/notifications/slack/link','DELETE',()=>slack.getByRole('button',{name:'Unlink Slack',exact:true}).click());await link.waitFor();assert.equal(links(),0);
+ await page.goto(runtime.base+'/app/settings/notifications');await answered('/settings/notifications/slack/link','DELETE',()=>slack.getByRole('button',{name:'Unlink Slack',exact:true}).click());await link.waitFor();assert.equal(links(),0);
  await send('/settings/integrations/slack','DELETE');
 }

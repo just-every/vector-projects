@@ -33,7 +33,7 @@ export async function exerciseJiraPublicJourney({page,runtime,native,directory,p
   assert.deepEqual(after,before,'Public preview changes no table row counts');
   return result;
  };
- await page.goto(runtime.base+'/app/settings');
+ await page.goto(runtime.base+'/app/settings/move-in');
  await panel.getByRole('heading',{name:'Data / Move in',exact:true}).waitFor();
  await panel.getByLabel('File format',{exact:true}).selectOption('jira-csv');
  await capture('jira-choice');

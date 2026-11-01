@@ -19,7 +19,7 @@ const res=await client.fetch(base+'/api'+path,{method,headers:{Origin:base},data
  for(const width of [1440,390]){
   await page.setViewportSize({width,height:1000});
   const inspect=async(region,name)=>{await capture(page,region,name+'-'+width);await page.setViewportSize({width,height:1000});};
-  await navigate(page,base+'/app/settings');
+  await navigate(page,base+'/app/settings/developers');
   const panel=page.locator('#integrations');
   await panel.getByLabel('Token name',{exact:true}).fill('synthetic-vector-1750-'+width);
   await panel.getByLabel('releases:read',{exact:true}).check();await panel.getByLabel('releases:write',{exact:true}).check();

@@ -111,7 +111,7 @@ try {
   await peer.goto(link('peer@auth-runtime.test'));
   await peer.getByRole('button',{name:'Confirm',exact:true}).click();
   await peer.waitForURL(origin+'/app');
-  await peer.goto(origin+'/app/settings');
+  await peer.goto(origin+'/app/settings/people');
   await peer.getByRole('button',{name:'Remove Invited peer',exact:true}).waitFor();
   // An Admin removes Members and itself, never an Owner, and invites Members, named-team Guests or Viewers.
   assert.equal(await peer.getByRole('button',{name:'Remove Workspace owner',exact:true}).count(),0);

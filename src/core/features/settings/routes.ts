@@ -125,7 +125,7 @@ export function addSettingsRoutes(app: Hono<AppEnvironment>) {
     try {
       await baseAuth(c.env).requestStepUp(c.req.raw, {
         action: "owner:transfer",
-        returnTo: "/app/settings#operators",
+        returnTo: "/app/settings/people",
       });
       return c.json({ status: "accepted", delivery: "email" }, 202);
     } catch (error) {

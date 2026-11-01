@@ -31,9 +31,12 @@ const categories = [
 export function TeamsPanel({
   data,
   onChanged,
+  openTeamId,
 }: {
   data: Administration;
   onChanged: () => void;
+  /** The team whose record the path names; its editor opens. */
+  openTeamId?: string;
 }) {
   const githubRules = useGithubRules();
   const handleChanged = () => {
@@ -67,18 +70,6 @@ export function TeamsPanel({
         Teams organise work. Archived teams retain their issues and history.
         Public work is visible across the workspace. Private work is for its team members and Owners.
       </p>
-      {(data.viewer.role === "owner" || data.viewer.role === "admin") && <form aria-label="Team creation permission" onSubmit={async event=>{
-        event.preventDefault();
-        await action.run("/api/settings/teams/creation","PUT",{membersMayCreate:new FormData(event.currentTarget).get("membersMayCreate")==="members"});
-      }}>
-        <fieldset disabled={action.pending}>
-          <label htmlFor="team-creation-permission">Who may create teams</label>
-          <select id="team-creation-permission" name="membersMayCreate" key={String(data.workspace.memberTeamCreation)} defaultValue={data.workspace.memberTeamCreation?"members":"admins"}>
-            <option value="admins">Owners and Admins only</option><option value="members">Members too</option>
-          </select>
-          <button>Save team creation permission</button>
-        </fieldset>
-      </form>}
       <h3>Team directory</h3>
       <ul className="team-directory">
         {data.teams.map((team) => {
@@ -133,7 +124,7 @@ export function TeamsPanel({
       </form>}
       <AdministrationFeedback action={action} />
       {data.teams.filter((team) => teamAccess(data, team).opens).map((team) => (
-        <TeamEditor key={team.id} data={data} team={team} onChanged={handleChanged} githubRules={githubRules} />
+        <TeamEditor key={team.id} data={data} team={team} onChanged={handleChanged} githubRules={githubRules} initiallyOpen={team.id === openTeamId} />
       ))}
     </section>
   );
@@ -143,11 +134,13 @@ function TeamEditor({
   team,
   onChanged,
   githubRules,
+  initiallyOpen,
 }: {
   data: Administration;
   team: Team;
   onChanged: () => void;
   githubRules: GithubRulesResource;
+  initiallyOpen: boolean;
 }) {
   const action = useAdministrationAction(onChanged);
   const hydrated = useHydrated();
@@ -178,7 +171,7 @@ function TeamEditor({
   }
   const statuses = [...team.statuses].sort((a, b) => a.position - b.position);
   return (
-    <details>
+    <details open={initiallyOpen || undefined}>
       <summary>
         {team.name} · {team.identifierPrefix}
         {team.archivedAt ? " · Archived" : ""}

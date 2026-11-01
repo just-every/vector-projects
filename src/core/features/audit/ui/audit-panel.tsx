@@ -1,6 +1,7 @@
 import { auditAction, auditActor, actorLabels } from "./audit-labels";
 import { useEffect, useState, type FormEvent } from 'react';
-import { useApiResource } from '../../../app/api-client';
+import { Link } from '@tanstack/react-router';
+import { ApiError, useApiResource } from '../../../app/api-client';
 import { useViewerTime } from '../../../app/viewer-time';
 import { actorKinds, auditSchema, auditSearch, type AuditQuery } from '../schema';
 import '../../settings/ui/settings.css';
@@ -26,6 +27,9 @@ export function AuditPanel() {
       actions: [...new Set(entries.map(entry => entry.action))],
     });
   }, [entries, filters]);
+  // Only Owners and Admins browse the audit log: anyone else gets one plain line and a way on, never the server's JSON.
+  if (resource.error instanceof ApiError && resource.error.status === 403)
+    return <p role="status">You can’t open this page. <Link to="/app/settings/profile">Go to Profile</Link></p>;
   return <section id="audit" className="audit-panel" aria-labelledby="audit-heading">
     <div className="audit-heading"><div><h2 id="audit-heading">Audit log</h2><p>Who changed things in this workspace. Deleted people’s names are removed.</p></div>
       {resource.data && <a className="audit-export" href={'/api/settings/audit.csv?' + auditSearch({ ...filters, through: String(resource.data.through) })}>Export filtered CSV</a>}

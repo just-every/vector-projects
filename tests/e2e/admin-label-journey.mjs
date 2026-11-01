@@ -10,6 +10,9 @@ export async function authorLabel({ page, runtime, capture, clause }) {
     "ISSUE-014",
     "create rename recolour readable workspace label",
     async () => {
+      // Labels have their own Settings page; the previous step left the page on Teams.
+      await beforePrivateNavigation(page, runtime.base + "/app/settings/labels");
+      await page.goto(runtime.base + "/app/settings/labels");
       const create = page.getByRole("form", {
         name: "Create label",
         exact: true,
@@ -64,8 +67,8 @@ export async function deleteAppliedLabel({
   const second = await page.request.post(base+"/api/issues",{headers:{Origin:base},data:{title:"synthetic-vector-merge-second",teamId:issue.team_id,labelIds:[label.id,destination.id]}});
   assert.equal(second.status(),201);
   const secondIssue = await second.json();
-  await beforePrivateNavigation(page,base+"/app/settings");
-  await page.goto(base+"/app/settings");
+  await beforePrivateNavigation(page,base+"/app/settings/labels");
+  await page.goto(base+"/app/settings/labels");
   await openAdministrationForm(page,"Edit label "+label.name);
   const merge=page.getByRole("form",{name:"Merge label "+label.name,exact:true});
   await merge.getByLabel("Merge into",{exact:true}).selectOption(destination.id);
@@ -83,8 +86,8 @@ export async function deleteAppliedLabel({
   assert.deepEqual(rewritten,{...view.filters,labelIds:[destination.id]});
   label=destination;
 
-  await beforePrivateNavigation(page, base + "/app/settings");
-  await page.goto(base + "/app/settings");
+  await beforePrivateNavigation(page, base + "/app/settings/labels");
+  await page.goto(base + "/app/settings/labels");
   await openAdministrationForm(page, "Edit label " + label.name);
   await clause(
     "ISSUE-007",
@@ -165,11 +168,16 @@ export async function memberLabelCreation({page, peer, runtime, clause, evidence
   assert.equal(made.status(),201);
   const issue=await made.json();
   const permission=async (membersMayCreate) => {
-    await navigate(page,base+"/app/settings");
-    const form=page.getByRole("form",{name:"Label creation permission",exact:true});
-    await form.getByLabel("Who may create labels",{exact:true}).selectOption(membersMayCreate?"members":"admins");
+    await navigate(page,base+"/app/settings/workspace");
+    const select=page.getByLabel("Who may create labels",{exact:true});
+    await select.waitFor();
+    // The policy saves as it changes: no Save button, a quiet Saved beside the control.
+    assert.equal(await page.getByRole("button",{name:/^Save/}).count(),0);
+    const choice=membersMayCreate?"members":"admins";
+    // Choosing what is already set changes and sends nothing.
+    if(await select.inputValue()===choice)return;
     const receipt=page.waitForResponse(r=>new URL(r.url()).pathname==="/api/settings/labels/creation"&&r.request().method()==="PUT");
-    await form.getByRole("button",{name:"Save label permission",exact:true}).click();
+    await select.selectOption(choice);
     assert.equal((await receipt).status(),200);
   };
   const open=async()=>{

@@ -17,9 +17,11 @@ try{
  await mkdir(evidence,{recursive:true});source=await dataInstallation(work,'source');destination=await dataInstallation(work,'destination');await source.configure(true);
  await unlink(join(source.root,'node_modules'));await source.installDependencies();await source.start();const cookie=await source.signIn();
  browser=await chromium.launch({headless:true,args:["--use-mock-keychain","--password-store=basic"]});const ordinary=await openAuthenticatedPage(browser,cookie,source.origin);
- await ordinary.goto(source.origin+'/app/settings#after-restore');const ordinaryPanel=ordinary.getByRole('region',{name:'After a restore'});
- await expect(ordinaryPanel).toBeVisible();await expect(ordinaryPanel.getByRole('status')).toHaveCount(0);await expect(ordinaryPanel.getByRole('button')).toHaveCount(0);await expect(ordinaryPanel.getByRole('list')).toHaveCount(0);
- for(const width of [1440,390]){await ordinary.setViewportSize({width,height:1000});await ordinaryPanel.scrollIntoViewIfNeeded();await ordinary.screenshot({path:join(evidence,'settings-ordinary-'+width+'.png')});}
+ await ordinary.goto(source.origin+'/app/settings/restore');const ordinaryLine=ordinary.getByText('No restore is waiting for review.');
+ // On an installation that was never restored the page is one quiet line, and Restore is not in the section list.
+ await expect(ordinaryLine).toBeVisible();await expect(ordinary.getByRole('region',{name:'After a restore'})).toHaveCount(0);await expect(ordinary.getByRole('button',{name:/Allow .* to sign in|Turn on future effects/})).toHaveCount(0);
+ await ordinary.goto(source.origin+'/app/settings');await expect(ordinary.getByRole('navigation',{name:'Settings sections'}).getByRole('link',{name:/^Restore( |$)/})).toHaveCount(0);
+ for(const width of [1440,390]){await ordinary.setViewportSize({width,height:1000});await ordinary.screenshot({path:join(evidence,'settings-ordinary-'+width+'.png')});}
  await ordinary.context().close();
  const fixture=await populateRoundtrip(source,cookie),reviewPerson=await createRestoreReviewPerson(source,cookie);const integrations=await populateIntegrationHistory(source,cookie,fixture.identifier);const oauth=await seedOAuthArchive(source,cookie);await source.stop();
  // rer keeps archives in the unserved exports/ folder.

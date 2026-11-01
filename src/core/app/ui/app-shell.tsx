@@ -25,6 +25,7 @@ import {
 import { SavedViewNavigation } from '../../features/views/ui/saved-views'
 import { SavedViewReceiptProvider } from '../../features/views/ui/saved-view-resource'
 import { VectorMark } from './vector-mark'
+import { inSettings } from './settings-path'
 import { documentReads, privateReads } from '../read-lifecycle'
 
 type AppShellProps = { children: ReactNode }
@@ -232,10 +233,10 @@ function AppShellContent({ children }: AppShellProps) {
         <SavedViewNavigation />
         <div className="app-nav-actions">
           <Link
-            className={`app-nav-link${location.pathname === '/app/settings' ? ' is-active' : ''}`}
+            className={`app-nav-link${inSettings(location.pathname) ? ' is-active' : ''}`}
             to="/app/settings"
             aria-current={
-              location.pathname === '/app/settings' ? 'page' : undefined
+              inSettings(location.pathname) ? 'page' : undefined
             }
           >
             <span aria-hidden="true">⚙</span>

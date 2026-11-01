@@ -5,6 +5,8 @@
   --app-text-small: max(13px, 0.8125rem);
   --app-paper: #f4f0e6;
   --app-paper-deep: #ebe5d7;
+  /* The content column. Pure white in the default and light looks; the dark looks keep their canvas. */
+  --app-column: #fff;
   --app-card: #fbf9f3;
   --app-field: #fffdf8;
   --app-ink: #171a20;
@@ -66,6 +68,7 @@
 :root[data-theme="dark"]:has(.app-shell) {
   --app-paper: #15171c;
   --app-paper-deep: #1d2026;
+  --app-column: var(--app-paper);
   --app-card: #1c1f25;
   --app-field: #23272e;
   --app-ink: #eceae4;
@@ -107,6 +110,7 @@
   :root[data-theme="system"]:has(.app-shell) {
     --app-paper: #15171c;
     --app-paper-deep: #1d2026;
+    --app-column: var(--app-paper);
     --app-card: #1c1f25;
     --app-field: #23272e;
     --app-ink: #eceae4;

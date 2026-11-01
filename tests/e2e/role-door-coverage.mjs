@@ -63,7 +63,9 @@ export async function assertRoleDoorCoverage(){
    for(const suffix of ['.tsx','.ts','.jsx','.js','.mjs','/index.tsx','/index.ts','/index.jsx','/index.js'])if(existsSync(target+suffix)){settingsModule(target+suffix);break;}
   }
  }
- settingsModule(resolve(root,'settings/ui/settings-page.tsx'));
+ // Every Settings route reaches its section module; the cycles page keeps its forms covered too.
+ for(const route of readdirSync(resolve('src/routes')).filter(name=>/^app\.settings(\..+)?\.tsx$/.test(name)).sort())settingsModule(resolve('src/routes',route));
+ settingsModule(resolve(root,'cycles/ui/cycles-workspace.tsx'));
  for(const [id,references] of Object.entries(settingsFormDoors))assert.equal(forms.get(id),references.length,'Stale Settings form registration '+id);
  const functions=new Set();
  function sources(folder){for(const item of readdirSync(folder,{withFileTypes:true})){

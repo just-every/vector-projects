@@ -7,7 +7,7 @@ const require = createRequire(import.meta.url);
 export async function pageAudit(page, base, issue, evidence, record) {
   const results = [];
   const source = await readFile(require.resolve('axe-core/axe.min.js'), 'utf8');
-  for (const path of ['/app', '/app/my-work', '/app/issues', '/app/issues/backlog', '/app/board', '/app/projects', '/app/projects/new', '/app/cycles', '/app/inbox', '/app/inbox/snoozed', '/app/views', '/app/settings/members', '/app/search', '/app/new-issue', '/app/new', '/app/issues/' + issue]) {
+  for (const path of ['/app', '/app/my-work', '/app/issues', '/app/issues/backlog', '/app/board', '/app/projects', '/app/projects/new', '/app/cycles', '/app/inbox', '/app/inbox/snoozed', '/app/views', '/app/settings', '/app/settings/people', '/app/search', '/app/new-issue', '/app/new', '/app/issues/' + issue]) {
     await beforePrivateNavigation(page, base + path);
     await page.goto(base + path);
     await beforePrivateNavigation(page, page.url());

@@ -8,12 +8,10 @@ export function LabelsPanel({
   labels,
   onChanged,
   readOnly = false,
-  memberLabelCreation,
 }: {
   labels: Administration["labels"];
   onChanged: () => void;
   readOnly?: boolean;
-  memberLabelCreation: boolean;
 }) {
   const action = useAdministrationAction(onChanged);
   const hydrated = useHydrated();
@@ -38,19 +36,6 @@ export function LabelsPanel({
     >
       <h2 id="labels-heading">Labels</h2>
       {readOnly && <p>Workspace labels are read-only here. Owners and Admins manage labels.</p>}
-      {!readOnly && <form aria-label="Label creation permission" onSubmit={async event => {
-        event.preventDefault();
-        await action.run("/api/settings/labels/creation", "PUT", {membersMayCreate: new FormData(event.currentTarget).get("membersMayCreate") === "members"});
-      }}>
-        <fieldset disabled={action.pending || !hydrated}>
-          <label htmlFor="label-creation-permission">Who may create labels</label>
-            <select id="label-creation-permission" name="membersMayCreate" key={String(memberLabelCreation)} defaultValue={memberLabelCreation ? "members" : "admins"}>
-              <option value="members">Members too</option>
-              <option value="admins">Owners and Admins only</option>
-            </select>
-          <button>Save label permission</button>
-        </fieldset>
-      </form>}
       {!readOnly && <form aria-label="Create label" onSubmit={create}>
         <fieldset disabled={action.pending || !hydrated}>
           <label>

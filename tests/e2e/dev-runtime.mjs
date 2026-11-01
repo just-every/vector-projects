@@ -99,7 +99,7 @@ try {
   // SSR now contains Current’s data before Vite finishes loading the client.
   // Begin the client-navigation assertion after its scripts have loaded.
   await page.waitForLoadState("networkidle");
-  const origin = await page.evaluate(() => performance.timeOrigin);
+  let origin = await page.evaluate(() => performance.timeOrigin);
   await settleReads(page);
   await page
     .getByRole("link", { name: "My work", exact: true })
@@ -164,6 +164,11 @@ try {
   await page.getByRole("link", { name: "Settings", exact: true }).filter({ visible: true }).first().click();
   await page.getByRole("heading", { name: "Settings", exact: true }).waitFor();
   assert.equal(await page.evaluate(() => performance.timeOrigin), origin);
+  // The section list opens each page in the pane without a new document.
+  const settingsSections = page.getByRole("navigation", { name: "Settings sections" });
+  await settingsSections.getByRole("link", { name: "Workspace", exact: true }).click();
+  await page.getByRole("heading", { name: "Workspace", exact: true, level: 1 }).waitFor();
+  assert.equal(await page.evaluate(() => performance.timeOrigin), origin, "Settings navigation remains hydrated");
   const initialSettings = await page.evaluate(async () => {
     const response = await fetch("/api/settings");
     return { status: response.status, body: await response.json() };
@@ -172,19 +177,15 @@ try {
   const initialWorkspace = settingsSchema.parse(initialSettings.body).workspace;
   assert.equal(typeof initialWorkspace.timezone, "string");
   assert.match(initialWorkspace.reminderTime, /^(?:[01][0-9]|2[0-3]):[0-5][0-9]$/);
-  const timezone = page.getByLabel("IANA timezone", { exact: true });
-  const reminderTime = page.getByLabel("Daily due reminder time", { exact: true });
+  const timezone = page.getByLabel("Time zone", { exact: true });
+  const reminderTime = page.getByLabel("Daily reminder", { exact: true });
   assert.equal(await timezone.inputValue(), initialWorkspace.timezone);
   assert.equal(await reminderTime.inputValue(), initialWorkspace.reminderTime);
   const savedTimezone =
     initialWorkspace.timezone === "Australia/Brisbane" ? "UTC" : "Australia/Brisbane";
   assert.notEqual(savedTimezone, initialWorkspace.timezone);
   await timezone.fill(savedTimezone);
-  const workspaceTimeForm = page.locator("#workspace-time form");
-  const saveWorkspaceTime = workspaceTimeForm.getByRole("button", {
-    name: "Save workspace time",
-    exact: true,
-  });
+  // The zone saves when the field is left: no Save button.
   const settingsActionDeadline = Date.now() + settingsActionBudgetMs;
   const settingsSave = page
     .waitForResponse(
@@ -204,7 +205,7 @@ try {
       };
     });
   const settingsSaveClick = Promise.resolve().then(() =>
-    saveWorkspaceTime.click({
+    timezone.blur({
       timeout: remainingSettingsActionMs(settingsActionDeadline),
     }),
   );
@@ -223,16 +224,10 @@ try {
   assert.equal(saveReceipt.response.status(), 200);
   assert.equal(saveReceipt.body.workspace.timezone, savedTimezone);
   assert.equal(saveReceipt.body.workspace.reminderTime, initialWorkspace.reminderTime);
-  await workspaceTimeForm
-    .locator('button[type="submit"]:enabled')
+  // A quiet Saved appears beside the zone and fades; nothing echoes the value.
+  await page.locator(".field-saved:not(:empty)").first()
     .waitFor({ timeout: remainingSettingsActionMs(settingsActionDeadline) });
-  const settingsFeedback = page
-    .locator("main.settings-page > p[role='status']")
-    .filter({ hasNotText: /^Loading/ });
-  await settingsFeedback
-    .last()
-    .waitFor({ timeout: remainingSettingsActionMs(settingsActionDeadline) });
-  assert.ok((await settingsFeedback.last().innerText()).trim());
+  assert.equal(await page.getByRole("button", { name: /^Save/ }).count(), 0);
   const persistedSettings = await page.evaluate(async () => {
     const response = await fetch("/api/settings");
     return { status: response.status, body: await response.json() };
@@ -242,15 +237,21 @@ try {
   assert.equal(persistedWorkspace.timezone, savedTimezone);
   assert.equal(persistedWorkspace.reminderTime, initialWorkspace.reminderTime);
   assert.equal(await page.evaluate(() => performance.timeOrigin), origin);
+  await settingsSections.getByRole("link", { name: "Move in", exact: true }).click();
+  await page.getByRole("heading", { name: "Move in", exact: true, level: 1 }).waitFor();
   await reviewDevelopmentImport(page, base);
   assert.equal(await page.evaluate(() => performance.timeOrigin), origin, "Data preflight remains hydrated");
+  await settingsSections.getByRole("link", { name: "Developers", exact: true }).click();
+  await page.getByRole("heading", { name: "Developers", exact: true, level: 1 }).waitFor();
   const integrations = page.locator("#integrations");
   await integrations.getByRole("heading", {name:"API tokens",exact:true}).waitFor();
   const usage = page.waitForResponse(r => new URL(r.url()).pathname === "/api/settings/integrations/tokens/usage");
   await integrations.getByRole("button", {name:"Refresh token usage",exact:true}).click();
   assert.equal((await usage).status(),200);
   assert.equal(await page.evaluate(() => performance.timeOrigin), origin, "Integration usage remains hydrated");
+  await settingsSections.getByRole("link", { name: "Notifications", exact: true }).click();
   await page.getByRole("region", { name: "Notifications", exact: true }).waitFor();
+  assert.equal(await page.evaluate(() => performance.timeOrigin), origin, "Settings sections remain hydrated");
   await settleReads(page);
   await page.getByRole("link", { name: /^Inbox/ }).filter({ visible: true }).first().click();
   await page.getByRole("heading", { name: "Inbox", exact: true }).waitFor();
@@ -260,12 +261,16 @@ try {
   await page.getByRole("link", { name: "Settings", exact: true }).filter({ visible: true }).first().click();
   await page.getByRole("heading", { name: "Settings", exact: true }).waitFor();
   assert.equal(await page.evaluate(() => performance.timeOrigin), origin);
-  await page.getByLabel("IANA timezone", { exact: true }).waitFor();
-  assert.equal(await page.getByLabel("IANA timezone", { exact: true }).inputValue(), savedTimezone);
-  assert.equal(await page.getByLabel("Daily due reminder time", { exact: true }).inputValue(), initialWorkspace.reminderTime);
+  await page.getByRole("navigation", { name: "Settings sections" }).getByRole("link", { name: "Workspace", exact: true }).click();
+  await page.getByRole("heading", { name: "Workspace", exact: true, level: 1 }).waitFor();
+  await page.getByLabel("Time zone", { exact: true }).waitFor();
+  assert.equal(await page.getByLabel("Time zone", { exact: true }).inputValue(), savedTimezone);
+  assert.equal(await page.getByLabel("Daily reminder", { exact: true }).inputValue(), initialWorkspace.reminderTime);
   await settleReads(page);
-  await page.getByRole("link", { name: "All cycles", exact: true }).click();
-  await page.waitForURL(base + "/app/cycles");
+  // Cycles are no longer a Settings section, so there is no in-app link from here yet; open the list in a fresh document.
+  await navigate(page, base + "/app/cycles");
+  await page.waitForLoadState("networkidle");
+  origin = await page.evaluate(() => performance.timeOrigin);
   await page.getByRole("heading", { name: "Cycles", exact: true, level: 1 }).waitFor();
   assert.equal(await page.evaluate(() => performance.timeOrigin), origin);
   const cycleLink = page.getByRole("link", { name: /^Open / }).first();

@@ -67,7 +67,7 @@ export async function exerciseSlackAppInstallation({page,runtime,cookie,team,wid
   assert.equal((await runtime.req('/api/integrations/slack/events',{method:'POST',headers,body})).status,409);
   await page.goto(runtime.base+'/app/issues/'+issue.identifier);await page.getByRole('heading',{name:title,exact:true}).waitFor();
   const recorded=runtime.sql("SELECT a.actor_operator_id FROM issue_activity a JOIN issues i ON i.id=a.issue_id WHERE i.identifier='"+issue.identifier+"' AND a.kind='issue.created'");assert.deepEqual(recorded.map(row=>row.actor_operator_id),[owner.id]);
-  await page.goto(runtime.base+'/app/settings#integrations');await panel.getByRole('button',{name:'Remove mapping for '+owner.name,exact:true}).waitFor();
+  await page.goto(runtime.base+'/app/settings/connections');await panel.getByRole('button',{name:'Remove mapping for '+owner.name,exact:true}).waitFor();
   const removing=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/settings/integrations/slack/app/members/'+owner.id&&r.request().method()==='DELETE');
   await panel.getByRole('button',{name:'Remove mapping for '+owner.name,exact:true}).click();assert.equal((await removing).status(),200);await panel.getByRole('button',{name:'Remove mapping for '+owner.name,exact:true}).waitFor({state:'hidden'});await inspect('member-unmapped');
   const changed=JSON.stringify({...payload,event_id:payload.event_id+'-unmapped'}),changedHeaders={...headers,'x-slack-signature':'v0='+createHmac('sha256',fixture.signingSecret).update('v0:'+timestamp+':'+changed).digest('hex')};
@@ -77,7 +77,7 @@ export async function exerciseSlackAppInstallation({page,runtime,cookie,team,wid
  };
  const install=async()=>{
   await panel.getByRole('button',{name:'Install Slack app',exact:true}).click();await page.getByRole('link',{name:'Approve fixture installation',exact:true}).click();
-  await page.waitForURL(runtime.base+'/app/settings#integrations');await panel.getByText('App '+fixture.appId+' is configured. Stored secrets are never shown again.',{exact:true}).waitFor();
+  await page.waitForURL(runtime.base+'/app/settings/connections');await panel.getByText('App '+fixture.appId+' is configured. Stored secrets are never shown again.',{exact:true}).waitFor();
   await page.getByText('Slack connected to Delivery workspace',{exact:true}).waitFor();await inspect('installed');await exerciseMappingAndIntake();
  };
  const remove=async(withinApp=true)=>{
@@ -88,7 +88,7 @@ export async function exerciseSlackAppInstallation({page,runtime,cookie,team,wid
   await panel.getByRole('button',{name:'Install Slack app',exact:true}).waitFor({state:'hidden'});await page.getByText('Slack is not connected.',{exact:true}).waitFor();
  };
  try{
-  await page.goto(runtime.base+'/app/settings#integrations');await panel.getByRole('heading',{name:'Slack app installation',exact:true}).waitFor();
+  await page.goto(runtime.base+'/app/settings/connections');await panel.getByRole('heading',{name:'Slack app installation',exact:true}).waitFor();
   await panel.getByText('Create an app automatically',{exact:true}).click();const automatic=panel.getByRole('form',{name:'Generate Slack app',exact:true});await inspect('automatic');
   await automatic.getByLabel('App configuration token',{exact:true}).fill('synthetic-vector-32016');await receive('/slack/app/create',()=>automatic.getByRole('button',{name:'Create Slack app',exact:true}).click(),400);
   await panel.getByRole('alert').filter({hasText:'invalid_auth'}).waitFor();assert.equal(await panel.getByRole('button',{name:'Install Slack app',exact:true}).count(),0);

@@ -18,7 +18,7 @@ export async function collaborationRuntime(width, sourceFiles = []) {
   return runtime;
 }
 export async function inviteRecipient({ page, browser, runtime }) {
-  await navigate(page, runtime.base + "/app/settings");
+  await navigate(page, runtime.base + "/app/settings/people");
   await openDisclosures(page);
   const operators = page.getByRole("region", {
     name: "Members",

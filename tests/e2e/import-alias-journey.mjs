@@ -49,7 +49,7 @@ export async function exerciseImportAliases({page,runtime,cookie,evidence}) {
  await send();const completed=await call('/issues/'+imported.identifier);assert.equal(completed.status.id,done.id);await send();assert.equal((await call('/issues/'+imported.identifier)).version,completed.version);
  await navigate(page,runtime.base+'/app/issues/'+imported.identifier);await page.getByRole('link',{name:'Fixes ENG-123 · octocat/hello-world #188',exact:true}).waitFor();
  await inspect(page,page.locator('.issue-inspector'),'alias-linked-issue');await page.setViewportSize({width:1440,height:1000});
- await navigate(page,runtime.base+'/app/settings#data');
+ await navigate(page,runtime.base+'/app/settings/move-in');
  const aliases=page.getByRole('region',{name:'Imported aliases',exact:true});await aliases.getByLabel('ENG aliases active',{exact:true}).waitFor();
  await aliases.getByLabel('ENG aliases active',{exact:true}).uncheck();await aliases.getByRole('status').getByText('ENG aliases disabled.',{exact:true}).waitFor();
  assert.equal((await runtime.req('/alias/ENG-123',{headers:{Cookie:cookie}})).status,404);
