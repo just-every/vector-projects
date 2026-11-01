@@ -103,8 +103,8 @@
       "buyerSteps": "Apply after 0119_webhook_subscriptions.sql without rewriting applied SQL. Retains identifier-only comment deletion events for external author labels. Preserve additive schema and terminal delivery ledgers on compatible-source rollback."
     },
     {
-      "id": "0122_document_thread_anchors.sql",
-      "buyerSteps": "Apply after 0121_triage_responsibility.sql without rewriting applied SQL. Adds persisted issue-owned document quote anchors on comments and retains the quoted source identity and removed quotes when the document body changes; deleting a comment clears its anchor. Preserve additive schema and retained issue threads on compatible-source rollback."
+      "id": "0123_document_thread_anchors.sql",
+      "buyerSteps": "Apply after 0122_document_mentions.sql without rewriting applied SQL. Adds persisted issue-owned document quote anchors on comments and retains the quoted source identity and removed quotes when the document body changes; deleting a comment clears its anchor. Preserve additive schema and retained issue threads on compatible-source rollback."
     }
   ],
   "breaking": false,
