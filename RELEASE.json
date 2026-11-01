@@ -101,6 +101,10 @@
     {
       "id": "0120_comment_webhook_author_labels.sql",
       "buyerSteps": "Apply after 0119_webhook_subscriptions.sql without rewriting applied SQL. Retains identifier-only comment deletion events for external author labels. Preserve additive schema and terminal delivery ledgers on compatible-source rollback."
+    },
+    {
+      "id": "0124_team_cycles_enabled.sql",
+      "buyerSteps": "Apply after 0123_report_export_schedules.sql without rewriting applied SQL. Existing teams keep cycles enabled; disabling cycles pauses automation and retains commitments, schedules and snapshots. Preserve additive schema and history on compatible-source rollback."
     }
   ],
   "breaking": false,

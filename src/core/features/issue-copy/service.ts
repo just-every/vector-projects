@@ -95,7 +95,7 @@ export async function copyIssue(
           `SELECT CASE WHEN
       (? IS NULL OR EXISTS(SELECT 1 FROM projects WHERE id=? AND workspace_id=?))
       AND (? IS NULL OR EXISTS(SELECT 1 FROM project_milestones m JOIN projects p ON p.id=m.project_id WHERE m.id=? AND m.project_id=? AND p.workspace_id=?))
-      AND (? IS NULL OR EXISTS(SELECT 1 FROM cycles WHERE id=? AND team_id=? AND closed_at IS NULL))
+      AND (? IS NULL OR EXISTS(SELECT 1 FROM cycles c JOIN teams t ON t.id=c.team_id WHERE c.id=? AND c.team_id=? AND t.cycles_enabled=1 AND c.closed_at IS NULL))
       AND NOT EXISTS(SELECT value FROM json_each(?) WHERE NOT EXISTS(SELECT 1 FROM labels WHERE id=value AND workspace_id=?))
       THEN 1 ELSE json('copy option changed') END`,
         )

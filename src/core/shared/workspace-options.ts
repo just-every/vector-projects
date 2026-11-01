@@ -13,6 +13,7 @@ export const workspaceOptionsSchema = z.object({
       id: z.string(),
       name: z.string(),
       identifierPrefix: z.string(),
+      cyclesEnabled: z.boolean(),
     }),
   ),
   operators: z.array(z.object({ id: z.string(), name: z.string() })),

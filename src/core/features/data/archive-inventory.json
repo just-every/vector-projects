@@ -1029,7 +1029,8 @@
     "planning_permission",
     "membership_mode",
     "requests_enabled",
-    "is_private"
+    "is_private",
+    "cycles_enabled"
   ],
   "vector_auth_operators": [
     "auth_id",

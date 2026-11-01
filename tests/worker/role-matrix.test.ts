@@ -1,3 +1,4 @@
+import { teamCyclesPermissions } from "./team-cycles-journey";
 import {unregisteredAndSettingsJourney} from './role-door-journey';
 import {viewerVisibilityJourney} from './role-viewer-journey';
 import {privateVisibilityJourney} from './role-private-journey';
@@ -143,7 +144,7 @@ it("[TEAM-007 TEAM-008 ROLE-007 OPS-001] a Member joins and leaves a public team
   expect((await audits("team.member_added")).map((row) => JSON.parse(String(row.next)))).toContainEqual({ operatorId: w.lead.id, role: "owner" });
 });
 
-it("[ROLE-009 CYCLE-001 CYCLE-007 TEAM-002 AUTO-003] a team's two permissions decide who changes its settings and cycles; each change is audited once and exported", async () => {
+it("[TEAM-005 ROLE-009 CYCLE-001 CYCLE-007 TEAM-002 AUTO-003] a team's two permissions decide who changes its settings and cycles; each change is audited once and exported", async () => {
   const w = await roleWorkspace();
   const member = w.as(w.member), guest = w.as(w.guest), lead = w.as(w.lead), admin = w.as(w.admin);
   const status = w.team.statuses.find((s) => s.category === "backlog")!;
@@ -193,6 +194,7 @@ it("[ROLE-009 CYCLE-001 CYCLE-007 TEAM-002 AUTO-003] a team's two permissions de
   // Both entries come from one transaction, so the export orders them by their random identifiers.
   expect(details.map((row) => [JSON.parse(String(row.previous_value_json)), JSON.parse(String(row.next_value_json))])).toEqual(expect.arrayContaining([
     [{ settings: "team_owners" }, { settings: "all_members" }], [{ planning: "all_members" }, { planning: "team_owners" }]]));
+  await teamCyclesPermissions(w);
 });
 
 type Cells = Record<"Owner" | "Admin" | "Member" | "Guest", string>;

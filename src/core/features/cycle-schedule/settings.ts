@@ -5,6 +5,7 @@ import {
   administrationContext,
   ownedRow,
   commit,
+  guard,
   audit,
   SettingsError,
 } from "../administration/transaction";
@@ -16,11 +17,12 @@ export async function saveCycleSchedule(
   input: z.infer<typeof cycleScheduleSchema>,
 ) {
   const ctx = await administrationContext(db, actor);
-  const team = await ownedRow<{ archived_at: string | null }>(
+  const team = await ownedRow<{ archived_at: string | null; cycles_enabled: number }>(
     ctx,
     "teams",
     teamId,
   );
+  if (!team.cycles_enabled) throw new SettingsError("cycles_disabled", "Enable cycles in team Settings before changing its schedule.", 409);
   if (team.archived_at)
     throw new SettingsError(
       "team_archived",
@@ -32,6 +34,7 @@ export async function saveCycleSchedule(
     .bind(teamId)
     .first();
   await commit(ctx, [
+    guard(ctx.db, "EXISTS(SELECT 1 FROM teams WHERE id=? AND cycles_enabled=1 AND archived_at IS NULL)", teamId),
     ctx.db
       .prepare(
         `INSERT INTO team_cycle_schedules(team_id,weeks,start_weekday,cooldown_weeks,upcoming_count,revision,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(team_id) DO UPDATE SET weeks=excluded.weeks,start_weekday=excluded.start_weekday,cooldown_weeks=excluded.cooldown_weeks,upcoming_count=excluded.upcoming_count,revision=excluded.revision,updated_at=excluded.updated_at`,

@@ -16,6 +16,8 @@ export function IssueBulk({ selection, options, onRefresh, onClear, onRemove, on
   const [message, setMessage] = useState("");
   const rows = [...selection.values()];
   if (!rows.length || options?.operator.role === 'viewer') return null;
+  const cyclesEnabled = rows.every(row => options?.teams.some(team => team.id === row.team.id && team.cyclesEnabled));
+  const activeField = field === "cycleId" && !cyclesEnabled ? "priority" : field;
   return (
     <section className="issues-bulk" aria-label="Bulk edit">
       <strong>{rows.length} selected</strong>
@@ -27,15 +29,15 @@ export function IssueBulk({ selection, options, onRefresh, onClear, onRemove, on
         </li>)}</ul>
       </details>
       <label>Change
-        <select aria-label="Change" value={field} onChange={(event) => setField(event.target.value as IssueEditField)}>
-          {Object.entries(issueEditFields).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+        <select aria-label="Change" value={activeField} onChange={(event) => setField(event.target.value as IssueEditField)}>
+          {Object.entries(issueEditFields).filter(([id]) => id !== "cycleId" || cyclesEnabled).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
         </select>
       </label>
       <button disabled={!options || rows.length > options.bulkEditIssuesPerOperation}
         onClick={() => { setMessage(""); setTargets(rows); }}>Edit selected</button>
       {options && rows.length > options.bulkEditIssuesPerOperation && <p role="alert">Select at most {options.bulkEditIssuesPerOperation} issues.</p>}
       {message && <p role="status">{message}</p>}
-      {targets && <IssueKeyboardDialog field={field} targets={targets} options={options} onClose={() => setTargets(null)}
+      {targets && <IssueKeyboardDialog field={activeField} targets={targets} options={options} onClose={() => setTargets(null)}
         onSuccess={(receipt) => {
           onSuccess(receipt.issues);
           setMessage(`${receipt.changed} issues updated.`);

@@ -6,12 +6,12 @@ export async function planAutomaticCycle(db: D1Database, teamId: string, cycleId
   if (cycleId || category === fromCategory || !["started", "completed"].includes(category)) return null;
   const flag = category === "started" ? "auto_cycle_started" : "auto_cycle_completed";
   const row = await db.prepare(`SELECT c.id FROM cycles c JOIN teams t ON t.id=c.team_id
-    WHERE c.team_id=? AND t.archived_at IS NULL AND t.${flag}=1 AND c.closed_at IS NULL
+    WHERE c.team_id=? AND t.archived_at IS NULL AND t.cycles_enabled=1 AND t.${flag}=1 AND c.closed_at IS NULL
       AND c.starts_at<=? AND c.ends_at>? ORDER BY c.starts_at,c.id LIMIT 1`)
     .bind(teamId, at, at).first<{ id: string }>();
   if (!row) return null;
   return { cycleId: row.id, condition: `EXISTS(SELECT 1 FROM cycles c JOIN teams t ON t.id=c.team_id
-    WHERE c.id=? AND c.team_id=? AND t.archived_at IS NULL AND t.${flag}=1 AND c.closed_at IS NULL
+    WHERE c.id=? AND c.team_id=? AND t.archived_at IS NULL AND t.cycles_enabled=1 AND t.${flag}=1 AND c.closed_at IS NULL
       AND c.starts_at<=? AND c.ends_at>?)`, values: [row.id, teamId, at, at] };
 }
 

@@ -14,8 +14,8 @@ export async function getSearchOptions(
   const row = await db
     .prepare(
       `SELECT w.id,w.name,actor.role,w.member_label_creation AS memberLabelCreation,
-    (SELECT json_group_array(json_object('id',id,'name',name,'identifierPrefix',identifier_prefix)) FROM (
-      SELECT id,name,identifier_prefix FROM teams WHERE workspace_id=actor.workspace_id AND archived_at IS NULL ORDER BY name,id LIMIT ${seed.limits.teams}
+    (SELECT json_group_array(json_object('id',id,'name',name,'identifierPrefix',identifier_prefix,'cyclesEnabled',json(CASE WHEN cycles_enabled=1 THEN 'true' ELSE 'false' END))) FROM (
+      SELECT id,name,identifier_prefix,cycles_enabled FROM teams WHERE workspace_id=actor.workspace_id AND archived_at IS NULL ORDER BY name,id LIMIT ${seed.limits.teams}
     )) AS teams,
     (SELECT json_group_array(json_object('id',id,'name',name,'role',role)) FROM (
       SELECT directory.id,directory.name,directory.role FROM operators directory WHERE directory.workspace_id=actor.workspace_id AND directory.removed_at IS NULL AND ${visibleDirectoryPerson('directory','actor.id')} ORDER BY name,id LIMIT ${seed.limits.operators}
@@ -36,7 +36,7 @@ export async function getSearchOptions(
     )) AS statuses,
     (SELECT json_group_array(json_object('id',id,'teamId',team_id,'name',name,'startsAt',starts_at,'endsAt',ends_at)) FROM (
       SELECT c.id,c.team_id,c.name,c.starts_at,c.ends_at FROM cycles c JOIN teams t ON t.id=c.team_id
-      WHERE t.workspace_id=actor.workspace_id AND t.archived_at IS NULL AND c.closed_at IS NULL
+      WHERE t.workspace_id=actor.workspace_id AND t.archived_at IS NULL AND t.cycles_enabled=1 AND c.closed_at IS NULL
       ORDER BY c.starts_at,c.id LIMIT ${seed.limits.teams * seed.limits.cyclesPerTeam}
     )) AS cycles,
     (SELECT json_group_array(json_object('id',id,'name',name,'surface',surface,'isShared',json(CASE WHEN is_shared=1 THEN 'true' ELSE 'false' END))) FROM (

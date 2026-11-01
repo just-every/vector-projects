@@ -1,3 +1,4 @@
+import { cyclesOffJourney } from "./team-cycles-journey";
 import { env } from "cloudflare:workers";
 import { expect, it } from "vitest";
 import { contractWith } from "../contract-tags";
@@ -5,7 +6,7 @@ import { setupAdministration } from "./administration-fixture";
 import { beforeCommit } from "./removal-interleaving";
 import { bindings, request } from "./base-auth-fixture";
 
-const check = (name: string, run: () => Promise<void>) => contractWith(it, "CYCLE-008 ISSUE-006 ISSUE-007 BASE-OPS-005", name, run);
+const check = (name: string, run: () => Promise<void>) => contractWith(it, "TEAM-005 CYCLE-008 ISSUE-006 ISSUE-007 BASE-OPS-005", name, run);
 let serial = 0;
 async function fixture() {
   const f = await setupAdministration(), prefix = 'AC' + String.fromCharCode(65 + serial++);
@@ -50,6 +51,7 @@ check('native start and completion opt in independently, keep commitments, and r
   const stale=await f.call('/issues/'+started.identifier,'PATCH',{expectedVersion:1,statusId:f.team.statuses.find(s=>s.category==='started')!.id}); expect(stale.status).toBe(409);
   await f.mutate('/settings/teams/'+f.team.id,'PATCH',{autoCycleCompleted:false});
   expect((await f.change(await f.create(),'completed')).cycle).toBeNull();
+  await cyclesOffJourney(f);
 });
 check('bulk changes undo as one action including automatic membership, and expired cycles are never chosen', async()=>{
   const f=await fixture(); await f.mutate('/settings/teams/'+f.team.id,'PATCH',{autoCycleStarted:true});
@@ -64,9 +66,12 @@ check('bulk changes undo as one action including automatic membership, and expir
   expect((await f.change(await f.create(),'started')).cycle).toBeNull();
 });
 check('a rule or cycle changing before commit refuses the whole mutation without orphan automation',async()=>{
-  const f=await fixture(); await f.mutate('/settings/teams/'+f.team.id,'PATCH',{autoCycleStarted:true}); const issue=await f.create();
-  const DB=beforeCommit(sql=>sql.includes('INSERT INTO issue_activity'),async()=>{await env.DB.prepare('UPDATE teams SET auto_cycle_started=0 WHERE id=?').bind(f.team.id).run()});
-  const r=await request('/api/issues/'+issue.identifier,'PATCH',{expectedVersion:issue.version,statusId:f.team.statuses.find(s=>s.category==='started')!.id},f.cookie,{...bindings,DB});
-  expect(r.status).toBe(400);
-  expect((await env.DB.prepare("SELECT id FROM issue_activity WHERE issue_id=? AND kind='issue.cycle_automatically_added'").bind(issue.id).all()).results).toHaveLength(0);
+  for (const setting of ['auto_cycle_started','cycles_enabled']) {
+    const f=await fixture(); await f.mutate('/settings/teams/'+f.team.id,'PATCH',{autoCycleStarted:true}); const issue=await f.create();
+    const DB=beforeCommit(sql=>sql.includes('INSERT INTO issue_activity'),async()=>{await env.DB.prepare('UPDATE teams SET '+setting+'=0 WHERE id=?').bind(f.team.id).run()});
+    const r=await request('/api/issues/'+issue.identifier,'PATCH',{expectedVersion:issue.version,statusId:f.team.statuses.find(s=>s.category==='started')!.id},f.cookie,{...bindings,DB});
+    expect(r.status).toBe(400);
+    expect((await env.DB.prepare("SELECT id FROM issue_activity WHERE issue_id=? AND kind='issue.cycle_automatically_added'").bind(issue.id).all()).results).toHaveLength(0);
+    expect(await env.DB.prepare('SELECT version FROM issues WHERE id=?').bind(issue.id).first('version')).toBe(issue.version);
+  }
 });

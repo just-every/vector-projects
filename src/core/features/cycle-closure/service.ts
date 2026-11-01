@@ -11,7 +11,7 @@ export async function closeEndedCycles(
   const candidates = (
     await db
       .prepare(
-        `SELECT id FROM cycles WHERE closed_at IS NULL AND julianday(ends_at)<=julianday(?) ORDER BY julianday(ends_at),id`,
+        `SELECT c.id FROM cycles c JOIN teams t ON t.id=c.team_id WHERE t.cycles_enabled=1 AND c.closed_at IS NULL AND julianday(ends_at)<=julianday(?) ORDER BY julianday(c.ends_at),c.id`,
       )
       .bind(at)
       .all<{ id: string }>()

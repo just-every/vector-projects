@@ -20,7 +20,7 @@ test('Vector deployment preserves owner and invitation guards, revokes removed o
   validateMigrations(migrations);
 
   const fixture = providerFixture(); t.after(() => fixture.close());
-  const api = cloudflare(fixture);
+  const api = cloudflare({...fixture, budgetMigrations: true});
   const database = await api.request('/d1/database', {method: 'POST', body: {name: 'vector-complete-head'}});
   assert.deepEqual(await migrate(api, database.uuid, migrations), { applied: names, retried: [], history: expectedHistory });
   const db = fixture.state.databases[0].db;

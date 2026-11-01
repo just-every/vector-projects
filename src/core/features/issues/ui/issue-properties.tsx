@@ -178,7 +178,7 @@ export function IssueProperties({
         options?.projects ?? [],
         "No project",
       )}
-      {picker("Cycle", "cycleId", issue.cycle?.id ?? "", cycles, "No cycle")}
+      {options?.teams.find(team => team.id === issue.team.id)?.cyclesEnabled && picker("Cycle", "cycleId", issue.cycle?.id ?? "", cycles, "No cycle")}
       {picker("Milestone", "milestoneId", issue.milestoneId ?? "",
         options?.milestones.filter(item => item.projectId === issue.project?.id) ?? [],
         "No milestone", !issue.project)}

@@ -80,6 +80,7 @@ export function CycleDetailPage({ cycleId }: { cycleId: string }) {
       </main>
     );
   const { cycle, progress } = detail.data;
+  const cyclesEnabled = administration.data?.teams.some(team => team.id === cycle.teamId && team.cyclesEnabled) === true;
   const choices =
     administration.data?.cycles.filter(
       (item) => item.teamId === cycle.teamId && !item.closedAt,
@@ -122,7 +123,7 @@ export function CycleDetailPage({ cycleId }: { cycleId: string }) {
           )}
         </p>
         <p>Capacity check: {capacityRiskCopy(progress.capacityRisk)}</p>
-        {!cycle.closedAt && (
+        {cyclesEnabled && !cycle.closedAt && (
           <p>
             This cycle closes automatically after its end. Unstarted and Started
             work rolls into the next cycle.
@@ -153,7 +154,7 @@ export function CycleDetailPage({ cycleId }: { cycleId: string }) {
       {cycle.closedAt && !detail.data.snapshot && (
         <p>No visible closure snapshot is available for this closed cycle.</p>
       )}
-      {!cycle.closedAt && (
+      {cyclesEnabled && !cycle.closedAt && (
         <section aria-labelledby="committed-issues-heading">
           <h2 id="committed-issues-heading">Committed issues</h2>
           {detail.error && (

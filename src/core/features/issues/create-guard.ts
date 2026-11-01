@@ -40,7 +40,7 @@ export function creationGuard(
   }
   if (input.cycleId) {
     conditions.push(
-      `EXISTS(SELECT 1 FROM cycles WHERE id=? AND team_id=? AND closed_at IS NULL) AND EXISTS(SELECT 1 FROM workflow_statuses WHERE id=? AND category NOT IN ('completed','canceled','duplicate'))`,
+      `EXISTS(SELECT 1 FROM cycles c JOIN teams t ON t.id=c.team_id WHERE c.id=? AND c.team_id=? AND t.cycles_enabled=1 AND c.closed_at IS NULL) AND EXISTS(SELECT 1 FROM workflow_statuses WHERE id=? AND category NOT IN ('completed','canceled','duplicate'))`,
     );
     values.push(input.cycleId, teamId, statusId);
   }

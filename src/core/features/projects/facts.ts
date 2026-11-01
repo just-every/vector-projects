@@ -35,6 +35,7 @@ export function isActiveCycle(
   const cycle = snapshot.cycles.find((item) => item.id === cycleId);
   return Boolean(
     cycle &&
+    snapshot.teams.some(team => team.id === cycle.teamId && team.cyclesEnabled) &&
     cycle.closedAt === null &&
     cycle.startsAt <= now.toISOString() &&
     cycle.endsAt > now.toISOString(),
