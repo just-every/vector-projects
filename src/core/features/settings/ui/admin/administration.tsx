@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, type ReactNode } from 'react';
 import { fetchJson, useApiResource } from '../../../../app/api-client';
 import { administrationSchema, type Administration } from '../../../administration/schema';
 import { SectionPage, Skeleton } from '../shell/section-page';
+import type { SectionPath } from '../shell/sections';
 import { useSettingsShell } from '../shell/settings-context';
 
 type Value = { data: Administration; publish: (next: Administration) => void; reload: () => void };
@@ -13,13 +14,13 @@ export function useAdministration() {
 }
 
 /** Reads the administration snapshot once for a section and shares it, with its reload, with every control under it. */
-export function AdministrationScope({ title, children }: { title: string; children: ReactNode }) {
+export function AdministrationScope({ title, parent, children }: { title: string; parent?: { label: string; to: SectionPath }; children: ReactNode }) {
   const administration = useApiResource('/api/settings/administration', administrationSchema);
   const { publishReceipt, reload } = administration;
   const publish = useCallback((next: Administration) => publishReceipt(() => next), [publishReceipt]);
   if (administration.data) return <Context.Provider value={{ data: administration.data, publish, reload }}>{children}</Context.Provider>;
-  if (administration.error) return <SectionPage title={title}><p role="alert">{administration.error.message} <button type="button" className="field-retry" onClick={reload}>Retry</button></p></SectionPage>;
-  return <SectionPage title={title}><Skeleton /></SectionPage>;
+  if (administration.error) return <SectionPage title={title} parent={parent}><p role="alert">{administration.error.message} <button type="button" className="field-retry" onClick={reload}>Retry</button></p></SectionPage>;
+  return <SectionPage title={title} parent={parent}><Skeleton /></SectionPage>;
 }
 
 /**

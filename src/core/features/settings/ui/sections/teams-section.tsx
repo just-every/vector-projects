@@ -12,7 +12,7 @@ import '../teams/teams.css';
 /** Teams: the list with New team in place; a record or tab path opens that team under "Teams › name". */
 export function TeamsSection({ teamId, tab }: { teamId?: string; tab?: string }) {
   return <SectionGate section="teams" title="Teams">
-    <AdministrationScope title="Teams">{teamId ? <TeamRecord teamId={teamId} tab={tab} /> : <Directory />}</AdministrationScope>
+    <AdministrationScope title="Teams" parent={teamId ? { label: 'Teams', to: '/app/settings/teams' } : undefined}>{teamId ? <TeamRecord teamId={teamId} tab={tab} /> : <Directory />}</AdministrationScope>
   </SectionGate>;
 }
 
