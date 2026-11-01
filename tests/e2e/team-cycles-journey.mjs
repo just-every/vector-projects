@@ -2,7 +2,7 @@ import { inviteReader } from './role-reader-support.mjs';
 import assert from 'node:assert/strict';
 import { expect } from '@playwright/test';
 import { navigate } from './collaboration-navigation.mjs';
-import { openAdministrationForm } from './ui-administration-form.mjs';
+import { openTeam, switchRow } from './settings-pane-support.mjs';
 import { openDisclosures } from './ui-controls-checks.mjs';
 import { roleScreens } from './role-ui-support.mjs';
 
@@ -33,19 +33,24 @@ export async function teamCyclesSettings({page,runtime,clause,evidence,peer,memb
     snapshots:sql(`SELECT s.* FROM cycle_snapshots s JOIN cycles c ON c.id=s.cycle_id WHERE c.team_id='${team.id}' ORDER BY s.cycle_id`),
   });
   const before=retained();
+  // Enable cycles is a switch in the team's Planning tab that stores as it flips: no Save button.
+  const cyclesSwitch=actor=>actor.getByRole('switch',{name:'Enable cycles',exact:true});
   const saveSwitch=async(actor,enabled)=>{
-    await navigate(actor,base+'/app/settings/teams');
-    const form=await openAdministrationForm(actor,'Edit '+team.name);
-    const checkbox=form.getByRole('checkbox',{name:'Enable cycles',exact:true});
-    await expect(checkbox).toBeEnabled();
-    await checkbox.focus();
-    assert.equal(await checkbox.evaluate(element=>element===document.activeElement),true,'keyboard reaches cycle setting');
-    await checkbox.setChecked(enabled);
-    const receipt=actor.waitForResponse(r=>new URL(r.url()).pathname==='/api'+path&&r.request().method()==='PATCH');
-    await form.getByRole('button',{name:'Save team',exact:true}).click();
-    assert.equal((await receipt).status(),200);
-    await expect(form.getByRole('checkbox',{name:'Enable cycles',exact:true})).toBeChecked({checked:enabled});
-    return form;
+    await openTeam(actor,base,team,'planning');
+    const control=cyclesSwitch(actor);
+    await expect(control).toBeEnabled();
+    await control.focus();
+    assert.equal(await control.evaluate(element=>element===document.activeElement),true,'keyboard reaches cycle setting');
+    assert.equal(await actor.getByRole('button',{name:'Save team',exact:true}).count(),0);
+    if(await control.isChecked()!==enabled){
+      const receipt=actor.waitForResponse(r=>new URL(r.url()).pathname==='/api'+path&&r.request().method()==='PATCH');
+      await switchRow(actor,'Enable cycles').click();
+      assert.equal((await receipt).status(),200);
+    }
+    await expect(cyclesSwitch(actor)).toBeChecked({checked:enabled});
+    // With cycles off the schedule is gone from Planning; on, it is there again.
+    assert.equal(await actor.getByLabel('Cycle length',{exact:true}).count(),enabled?1:0);
+    return actor.locator('.settings-pane');
   };
   const probe=await inviteReader({owner:page,browser:page.context().browser(),runtime,email:'synthetic-vector-2506'+'@'+'vector.test',name:'synthetic-vector-2506',role:'member',width:390});
   try {
@@ -56,8 +61,8 @@ export async function teamCyclesSettings({page,runtime,clause,evidence,peer,memb
     const form=await saveSwitch(page,false);
     await inspect(page,form,'team-cycles-disabled-settings');
     await page.reload();
-    const reloaded=await openAdministrationForm(page,'Edit '+team.name);
-    await expect(reloaded.getByRole('checkbox',{name:'Enable cycles',exact:true})).not.toBeChecked();
+    await openTeam(page,base,team,'planning');
+    await expect(cyclesSwitch(page)).not.toBeChecked();
     await navigate(page,base+'/app/issues/'+committed.identifier);
     await expect(page.getByRole('heading',{name:committed.title,exact:true})).toBeVisible();
     await expect(page.getByRole('combobox',{name:'Issue cycle',exact:true})).toHaveCount(0);
