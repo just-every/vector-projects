@@ -113,8 +113,7 @@ export async function readPageResources(env: WorkerBindings, request: Request, o
   else if (path === '/app/inbox' || path === '/app/inbox/snoozed') await read('/api/notifications' + (path.endsWith('/snoozed') ? '?snoozed=true' : ''))
   else if (path === '/app/settings/audit') await read('/api/settings/audit?')
   else if (path === '/app/settings' || path.startsWith('/app/settings/') && !/^\/app\/settings\/(?:audit|oauth-consent)$/.test(path)) {
-    // Each active team's email intake renders inside its settings at first paint, like the panels above.
-    await readSettingsResources(path.replace(/\/$/, ''), read, administration => ((administration as { teams?: Array<{ id: string, archivedAt: string | null }> } | null)?.teams ?? []).filter(team => team.archivedAt === null).map(team => team.id))
+    await readSettingsResources(path.replace(/\/$/, ''), read)
   }
   else if (path === '/app/new' || path === '/app/new-issue') await read('/api/options')
   await Promise.all(shared)

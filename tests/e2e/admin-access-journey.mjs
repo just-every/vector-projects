@@ -98,7 +98,7 @@ export async function auditEmptyWorkspace({ page, runtime, capture, clause }) {
     .click();
   await page.waitForURL(base + "/app/settings");
   await page.goto(base + "/app/settings/teams");
-  await teamList(page).getByRole("link", { name: runtime.config.DEFAULT_TEAM_NAME }).waitFor();
+  await teamList(page).getByRole("link", { name: runtime.config.DEFAULT_TEAM_NAME, exact: true }).waitFor();
   await assertSettingsSections(page, "empty workspace Settings");
   await clause(
     "OPS-003",
@@ -204,7 +204,7 @@ export async function inviteProjectLead({
 export async function assertSignOut({ page, runtime, capture }) {
   await beforePrivateNavigation(page, runtime.base + "/app/settings/teams");
   await page.goto(runtime.base + "/app/settings/teams");
-  await teamList(page).getByRole("link", { name: runtime.config.DEFAULT_TEAM_NAME }).waitFor();
+  await teamList(page).getByRole("link", { name: runtime.config.DEFAULT_TEAM_NAME, exact: true }).waitFor();
   await assertSettingsSections(page, "final Settings");
   await capture("settings-final-signout-reachable");
   await settleReads(page);

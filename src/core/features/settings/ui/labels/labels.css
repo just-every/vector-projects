@@ -10,7 +10,7 @@
 .label-body { display: grid; gap: 1.1rem; padding: 0.25rem 1rem 1.25rem 3.25rem; }
 .label-editor { display: grid; gap: 1.1rem; max-width: 26rem; }
 .label-editor .field input[type="text"] { background-color: var(--app-column); }
-.label-body .confirm-line { background: var(--app-column); box-shadow: 0 0 0 1px var(--app-line); }
+.label-body .confirm-line { background: var(--app-column); }
 .label-body .confirm-line select { max-width: 22rem; background-color: var(--app-column); }
 .new-label { display: grid; gap: 1rem; margin: 0 0 1.5rem; padding: 1.25rem 1.4rem; border-radius: 0.75rem; background: var(--app-paper); }
 .new-label .field input[type="text"] { background-color: var(--app-column); }

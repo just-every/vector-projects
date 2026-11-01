@@ -1,7 +1,7 @@
 /* Teams: the list, New team in place and the team record with its tabs. */
 .team-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; column-gap: 0.75rem; min-height: 4.25rem; padding: 0.6rem 0.25rem; }
 .team-row:hover { background: var(--app-paper); }
-.team-link { color: var(--app-ink); text-decoration: none; }
+.team-link { display: flex; align-items: center; min-height: 44px; color: var(--app-ink); text-decoration: none; }
 /* The whole row opens the team; the Join and Leave button sits above that area. */
 .team-link::after { content: ""; position: absolute; inset: 0; }
 .team-link:focus-visible { outline: 0; }
@@ -45,7 +45,7 @@
 .status-default { flex: none; }
 .status-handle { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border: 0; background: none; color: var(--app-muted); font-size: 1rem; letter-spacing: -0.1em; cursor: grab; border-radius: 0.5rem; }
 .status-handle:focus-visible { outline: 2px solid var(--app-focus); }
-.status-row .confirm-line { margin: 0 0 0.75rem 2.75rem; background: var(--app-column); box-shadow: 0 0 0 1px var(--app-line); }
+.status-row .confirm-line { margin: 0 0 0.75rem 2.75rem; background: var(--app-column); }
 .status-rename { display: flex; flex: 1; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .status-rename input { flex: 1; min-width: 8rem; min-height: 44px; padding: 0.4rem 0.7rem; border: 1px solid var(--app-field-border); border-radius: 0.5rem; background: var(--app-column); color: var(--app-ink); font: inherit; font-weight: 600; }
 .add-status { display: grid; gap: 1rem; padding: 1.1rem 1.25rem; border-radius: 0.6rem; background: var(--app-paper); }

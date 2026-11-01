@@ -37,12 +37,10 @@
 .row-menu-list button { display: flex; align-items: center; min-height: 44px; padding: 0 0.75rem; border: 0; border-radius: 0.4rem; background: none; color: var(--app-ink); font: inherit; text-align: left; cursor: pointer; }
 .row-menu-list button:hover, .row-menu-list button:focus-visible { background: var(--app-paper); outline: 0; }
 .row-menu-note { max-width: 14rem; margin: 0; padding: 0.4rem 0.75rem 0.6rem; font-size: var(--app-text-small); line-height: 1.45; color: var(--app-body); }
-.row-action { transition: opacity 0.12s; }
 @media (hover: hover) {
   .row-hover .row-action:not([aria-expanded="true"]) { opacity: 0; }
   .row-hover:hover .row-action, .row-hover:focus-within .row-action { opacity: 1; }
 }
-@media (prefers-reduced-motion: reduce) { .row-action { transition: none; } }
 
 /* The one disclosure. */
 .fold > summary { display: flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0; color: var(--app-body); list-style: none; cursor: pointer; }

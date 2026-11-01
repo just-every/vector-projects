@@ -122,7 +122,9 @@ export async function exerciseGuestRoles({page,browser,runtime,clause,evidence})
       await navigate(guest,base+'/app/settings/people');await guest.getByText('You can’t open this page.').waitFor();
       await navigate(guest,base+'/app/settings/profile');
       await guest.getByRole('heading',{name:'Profile',exact:true}).waitFor();
-      await guest.getByRole('navigation',{name:'Settings sections'}).locator('.settings-nav-name',{hasText:'Notifications'}).waitFor();
+      // The list is in the page once the role has answered (a phone shows the pane, not the list), so no skeleton is left to inspect.
+      await guest.getByRole('navigation',{name:'Settings sections',includeHidden:true}).locator('.settings-nav-name',{hasText:'Notifications'}).waitFor({state:'attached'});
+      await guest.locator('.settings-skeleton').waitFor({state:'detached'});
       await inspect(guest,guest.locator('main:visible').first(),'guest-account-only');
     });
     const id=sql("SELECT id FROM operators WHERE email='synthetic-vector-803@vector.test'")[0].id;
@@ -135,13 +137,13 @@ export async function exerciseGuestRoles({page,browser,runtime,clause,evidence})
       await role.selectOption('member');
       assert.equal((await saved).status(),200);
       assert.equal((await get('/api/metadata')).viewer.role,'member');
-      // A Guest needs a team: the choice waits, nothing is sent, until one is ticked.
-      await role.selectOption('guest');
-      await page.getByText('Choose at least one team.').waitFor();
-      await inspect(page,page.locator('.settings-pane'),'guest-named-team-assignment');
+      // Back to Guest: the named-team picker comes back with the team the Guest had, and the change stores at once.
       saved=page.waitForResponse(response=>new URL(response.url()).pathname===`/api/settings/operators/${id}/role`);
-      await page.getByRole('group',{name:'Teams this Guest can access',exact:true}).getByRole('checkbox',{name:invitedTeam.name,exact:true}).check();
+      await role.selectOption('guest');
       assert.equal((await saved).status(),200);
+      const picker=page.getByRole('group',{name:'Teams this Guest can access',exact:true});
+      assert.equal(await picker.getByRole('checkbox',{name:invitedTeam.name,exact:true}).isChecked(),true);
+      await inspect(page,page.locator('.settings-pane'),'guest-named-team-assignment');
       assert.equal((await get('/api/metadata')).viewer.role,'guest');
       assert.equal((await guest.request.get(base+'/api/issues/'+hidden.identifier)).status(),404);
       assert.equal((await guest.request.post(base+'/api/settings/integrations/tokens',{headers,data:{name:'Guest cannot mint',scopes:['issues:read']}})).status(),403);

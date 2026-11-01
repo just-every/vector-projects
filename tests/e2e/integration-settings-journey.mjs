@@ -68,7 +68,9 @@ export async function exerciseEmailIntake({page:shared,runtime,cookie,team,evide
  await openTeam(page,runtime.base,team,'automation');
  const section=page.getByRole('region',{name:'Email intake for '+team.name,exact:true});
  // Intake is off until switched on; its address, senders and acknowledgement follow.
- await switchRow(section,'Enable email intake').click();
+ const enable=section.getByRole('switch',{name:'Enable email intake',exact:true});
+ await enable.and(page.locator(':enabled')).waitFor();
+ if(!(await enable.isChecked()))await switchRow(section,'Enable email intake').click();
  await section.getByLabel('Private intake address',{exact:true}).fill(address);
  await section.getByLabel('Allowed sender addresses',{exact:true}).fill(sender);
  await inspect(page,section,'email-intake-configure');

@@ -20,10 +20,10 @@ export function SectionPage({ title, parent, record, action, sub, legacy = false
 }) {
   return <article className="settings-section" aria-labelledby="settings-title">
     {parent
-      ? <Link className="settings-back" to={parent.to}>‹ {parent.label}</Link>
+      ? <Link className="settings-back" to={parent.to} resetScroll={false}>‹ {parent.label}</Link>
       : <Link className="settings-back" to="/app/settings" resetScroll={false} onClick={wantIndexScroll}>‹ Settings</Link>}
     {parent && record && <nav className="settings-crumbs" aria-label="Breadcrumb">
-      <Link to={parent.to}>{parent.label}</Link><span aria-hidden="true">›</span><span aria-current="page">{record}</span>
+      <Link to={parent.to} resetScroll={false}>{parent.label}</Link><span aria-hidden="true">›</span><span aria-current="page">{record}</span>
     </nav>}
     <div className="settings-head">
       <h1 id="settings-title">{title}</h1>

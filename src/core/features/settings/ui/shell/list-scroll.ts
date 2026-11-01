@@ -12,8 +12,8 @@ export function useRestoreListScroll(list: string, ready = true) {
   useEffect(() => {
     const top = remembered.get(list);
     if (!ready || top === undefined) return;
-    remembered.delete(list);
-    const frame = requestAnimationFrame(() => window.scrollTo(0, top));
-    return () => cancelAnimationFrame(frame);
+    // After the router has finished its own scroll handling for the navigation; used once.
+    const timer = window.setTimeout(() => { remembered.delete(list); window.scrollTo(0, top); }, 60);
+    return () => window.clearTimeout(timer);
   }, [list, ready]);
 }

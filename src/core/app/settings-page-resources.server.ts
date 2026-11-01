@@ -8,7 +8,7 @@ const hasPersonalTokens = (role: string | undefined) => role === 'owner' || role
  * may read: a refused read is never made for a role that is refused it. The layout's own reads come first
  * (`/api/settings` for every role, and an Owner's restore state).
  */
-export async function readSettingsResources(path: string, read: Read, teamIds: (administration: unknown) => string[]) {
+export async function readSettingsResources(path: string, read: Read) {
   const settings = await read('/api/settings') as { role: string } | null
   const role = settings?.role
   const section = path.split('/')[3]
@@ -28,9 +28,19 @@ export async function readSettingsResources(path: string, read: Read, teamIds: (
     case 'workspace': case 'labels': case 'housekeeping':
       if (role) reads.push(administration())
       break
-    case 'teams':
-      if (role) reads.push(administration().then(data => Promise.all(teamIds(data).map(id => read(`/api/settings/teams/${id}/email-intake`)))))
+    case 'people':
       break
+    case 'teams': {
+      // The list reads the teams; a team's tab reads only that team's own resources, and only for those who lead.
+      if (!role) break
+      reads.push(administration())
+      const [, , , , team, tab] = path.split('/')
+      if (team && leads(role)) {
+        if (tab === 'people') reads.push(read(`/api/settings/teams/${team}/triage-rotation`))
+        if (tab === 'automation') reads.push(read(`/api/settings/teams/${team}/email-intake`), read('/api/github/automation'))
+      }
+      break
+    }
     case 'connections':
       if (leads(role)) reads.push(administration(), read('/api/settings/integrations'))
       break

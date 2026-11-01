@@ -6,7 +6,7 @@ import { createHash } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createAdminRuntime, poll } from "./admin-runtime-support.mjs";
-import { openDisclosures } from "./ui-controls-checks.mjs";
+import { invitePerson } from "./settings-pane-support.mjs";
 
 export async function collaborationRuntime(width, sourceFiles = []) {
   const runtime = createAdminRuntime(width, sourceFiles, {port: await freePort(), inspectorPort: 0});
@@ -19,24 +19,8 @@ export async function collaborationRuntime(width, sourceFiles = []) {
 }
 export async function inviteRecipient({ page, browser, runtime }) {
   await navigate(page, runtime.base + "/app/settings/people");
-  await openDisclosures(page);
-  const operators = page.getByRole("region", {
-    name: "Members",
-    exact: true,
-  });
-  await operators
-    .getByLabel("Name", { exact: true })
-    .fill("Collaboration recipient");
-  await operators
-    .getByLabel("Email", { exact: true })
-    .fill("recipient@collaboration.test");
-  const response = page.waitForResponse(
-    (r) => new URL(r.url()).pathname === "/api/settings/operators/invite",
-  );
-  await operators
-    .getByRole("button", { name: "Send invitation", exact: true })
-    .click();
-  assert.equal((await response).status(), 202);
+  const response = await invitePerson(page, { name: "Collaboration recipient", email: "recipient@collaboration.test" });
+  assert.equal(response.status(), 202);
   const link = runtime.sql(
     "SELECT json_extract(message,'$.text') AS sign_in_url FROM rer_mail_development_outbox WHERE json_extract(message,'$.to[0]')='recipient@collaboration.test' ORDER BY created_at DESC,sequence DESC LIMIT 1",
   )[0].sign_in_url.match(/https?:\/\/[^\s]+/)[0];

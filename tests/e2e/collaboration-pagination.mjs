@@ -2,7 +2,6 @@ import { navigate } from "./collaboration-navigation.mjs";
 import assert from "node:assert/strict";
 import { poll } from "./admin-runtime-support.mjs";
 import { receipt } from "./collaboration-support.mjs";
-import { openDisclosures } from "./ui-controls-checks.mjs";
 export async function paginationAndRemoval({
   page,
   peer,
@@ -66,8 +65,7 @@ export async function paginationAndRemoval({
           "31 actual native UI comments; no synthetic Inbox response or row fixture",
         paginationRows: expected.length,
       });
-      await navigate(page, runtime.base + "/app/settings/people");
-      await openDisclosures(page);
+      await navigate(page, runtime.base + "/app/settings/people/" + operator.id);
       await page
         .getByRole("button", { name: "Remove " + operator.name, exact: true })
         .click();

@@ -6,7 +6,7 @@ import {teamCreationReaderCell,teamJoinReaderCells,privateTeamCreationCells} fro
 import { beforePrivateNavigation, navigate } from "./collaboration-navigation.mjs";
 import assert from "node:assert/strict";
 import { poll } from "./admin-runtime-support.mjs";
-import { openTeam, storeText, switchRow, teamList } from "./settings-pane-support.mjs";
+import { inviteOnlyWithRequests, openTeam, storeText, teamList } from "./settings-pane-support.mjs";
 import { roleScreens } from "./role-ui-support.mjs";
 export async function createTeamWorkflow({ page, runtime, capture, clause }) {
   const { base, sql } = runtime;
@@ -401,12 +401,7 @@ export async function teamJoinPermissions({page,peer,browser,runtime,clause,evid
    assert.equal((await page.request.put(base+`/api/settings/teams/${team.id}/members/${owner}`,{headers:{Origin:base},data:{role:"owner"}})).status(),200);
    await clause("TEAM-007",`a Member requests an invite-only public team and a Member team owner approves once at ${width}`,async()=>{
     await openTeam(peer,base,team,"people");
-    const joining=peer.getByRole("region",{name:"Membership for "+name,exact:true});
-    // Joining and requests are controls that store as they change.
-    const mode=peer.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/membership`);
-    await joining.getByText("Invite only",{exact:true}).click();assert.equal((await mode).status(),200);
-    const requests=peer.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/membership`);
-    await switchRow(joining,"Accept membership requests").click();assert.equal((await requests).status(),200);
+    await inviteOnlyWithRequests(peer,team);
     assert.equal((await requester.request.post(base+`/api/teams/${team.id}/join`,{headers:{Origin:base},data:{}})).status(),403);
     await navigate(requester,base+"/app/settings/teams");
     const requested=requester.waitForResponse(r=>new URL(r.url()).pathname===`/api/teams/${team.id}/requests`);
@@ -437,7 +432,8 @@ export async function teamJoinPermissions({page,peer,browser,runtime,clause,evid
     assert.equal(sql(`SELECT count(*) n FROM audit_records WHERE action='team.join_request_approved' AND subject_id='${team.id}'`)[0].n,before);
     assert.equal(sql(`SELECT count(*) n FROM team_members WHERE team_id='${team.id}' AND operator_id='${member}'`)[0].n,1);
     await navigate(requester,base+"/app/settings/teams");await requester.getByRole("button",{name:"Leave "+name,exact:true}).waitFor();
-    assert.equal(sql(`SELECT count(*) n FROM audit_records WHERE action='team.membership_mode_changed' AND subject_id='${team.id}'`)[0].n,1);
+    // Joining mode and Accept requests each store as they change, so each is audited once.
+    assert.equal(sql(`SELECT count(*) n FROM audit_records WHERE action='team.membership_mode_changed' AND subject_id='${team.id}'`)[0].n,2);
    });
    await clause('TEAM-007',`private and Viewer membership cells at ${width}`,()=>teamJoinReaderCells({page,peer,requester,viewer,runtime,team,member,width}));
   }
@@ -448,11 +444,8 @@ export async function teamJoinPermissions({page,peer,browser,runtime,clause,evid
 export async function privateTeamRequest({page,peer,memberId,runtime,team,clause}) {
  const {base}=runtime;
  await openTeam(page,base,team,'people');
- const joining=page.getByRole('region',{name:'Membership for '+team.name,exact:true});
- let response=page.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/membership`);
- await joining.getByText('Invite only',{exact:true}).click();assert.equal((await response).status(),200);
- response=page.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/membership`);
- await switchRow(joining,'Accept membership requests').click();assert.equal((await response).status(),200);
+ await inviteOnlyWithRequests(page,team);
+ let response;
  await navigate(peer,base+'/app/settings/teams');
  response=peer.waitForResponse(r=>new URL(r.url()).pathname===`/api/teams/${team.id}/requests`);
  await peer.getByRole('button',{name:'Request to join '+team.name,exact:true}).click();assert.equal((await response).status(),200);

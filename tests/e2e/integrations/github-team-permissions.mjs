@@ -39,18 +39,29 @@ export async function exerciseGithubTeamPermissions({page,runtime,call,team,star
   await rules.getByLabel('Draft PR opened',{exact:true}).waitFor();
   return rules;
  };
- // The choice stores as it changes: its answer is the field's own Saved, or its refusal and Retry.
+ // The choice stores as it changes: its answer is the field's own Saved, or its refusal and Retry. A choice already on
+ // this status is first moved off it (it stores only when it changes), and a refused one is answered by Retry.
  const save=async(person,rules,statusId,status=200)=>{
-  const response=person.page.waitForResponse(r=>r.request().method()==='PATCH'&&new URL(r.url()).pathname==='/api/settings/teams/'+team.id);
-  await rules.getByLabel('Draft PR opened',{exact:true}).selectOption(statusId);
+  const field=rules.getByLabel('Draft PR opened',{exact:true});
+  const patch=()=>person.page.waitForResponse(r=>r.request().method()==='PATCH'&&new URL(r.url()).pathname==='/api/settings/teams/'+team.id);
+  const retry=rules.getByRole('button',{name:'Retry',exact:true});
+  let response;
+  if(await retry.count()){response=patch();await retry.click();}
+  else{
+   if(await field.inputValue()===statusId){const moved=patch();await field.selectOption('');assert.equal((await moved).status(),200);}
+   response=patch();await field.selectOption(statusId);
+  }
   const receipt=await response;assert.equal(receipt.status(),status);
   await settleReads(person.page);
   return receipt;
  };
  const permissions=async settings=>{
   await openTeamPage(page,runtime.base,team,'planning');
+  const field=page.getByLabel('Team settings',{exact:true});
+  // A choice stores only when it changes: already set, nothing is sent.
+  if(await field.inputValue()===settings)return;
   const response=page.waitForResponse(r=>r.request().method()==='PUT'&&new URL(r.url()).pathname===`/api/settings/teams/${team.id}/permissions`);
-  await page.getByLabel('Team settings',{exact:true}).selectOption(settings);
+  await field.selectOption(settings);
   assert.equal((await response).status(),200);await settleReads(page);
  };
  try{

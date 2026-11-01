@@ -36,7 +36,9 @@ export function InviteForm({ roles, teams, onClose, onSent }: {
     if (roles.includes(draft.role)) setRole(draft.role);
     setReturned(true);
     setMessage('Once you have confirmed it’s you, send the invitation again.');
-  }, [roles]);
+    // Once, on opening: the 5 s refresh re-renders this form and must never put the draft back over what is being typed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const needsTeam = role === 'guest' && teamIds.length === 0;
   async function send() {

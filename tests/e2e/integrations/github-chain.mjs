@@ -31,8 +31,11 @@ export async function exerciseGithubChain({page:shared,runtime,cookie,team,width
   const rules=page.getByRole('region',{name:'Git automation',exact:true});
   const saveMessages=[];
   for(const [trigger,label,status] of [['draft','Draft PR opened',review.id],['review','Review requested',review.id],['merged','PR merged',done.id],['deploy','Production deployed',shipped.id]]){
-   const saved=page.waitForResponse(r=>r.request().method()==='PATCH'&&new URL(r.url()).pathname==='/api/settings/teams/'+team.id);
-   await rules.getByLabel(label,{exact:true}).selectOption(status);assert.equal((await saved).status(),200);
+   const field=rules.getByLabel(label,{exact:true});
+   const store=async value=>{const saved=page.waitForResponse(r=>r.request().method()==='PATCH'&&new URL(r.url()).pathname==='/api/settings/teams/'+team.id);await field.selectOption(value);assert.equal((await saved).status(),200);};
+   // A choice stores only when it changes: a trigger already on this status is first moved off it.
+   if(await field.inputValue()===status)await store('');
+   await store(status);
    await settleReads(page);
    const message=rules.getByText('Saved',{exact:true}).first();
    await message.waitFor();saveMessages.push(await message.textContent());
