@@ -1029,7 +1029,8 @@
     "planning_permission",
     "membership_mode",
     "requests_enabled",
-    "is_private"
+    "is_private",
+    "cycles_enabled"
   ],
   "vector_auth_operators": [
     "auth_id",
@@ -2177,5 +2178,30 @@
     "recipient_id",
     "period_starts_at",
     "created_at"
+  ],
+  "document_followers": [
+    "document_id",
+    "operator_id",
+    "created_at"
+  ],
+  "document_mentions": [
+    "document_id",
+    "operator_id"
+  ],
+  "document_notification_events": [
+    "event_id",
+    "document_id",
+    "version",
+    "created_at"
+  ],
+  "document_notifications": [
+    "id",
+    "event_id",
+    "document_id",
+    "recipient_id",
+    "actor_id",
+    "actor_name",
+    "created_at",
+    "read_at"
   ]
 }

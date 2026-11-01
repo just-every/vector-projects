@@ -72,7 +72,8 @@ export function visibilityCtes(actor: string) {
       (r.parent_kind='project' AND r.parent_id IN(SELECT id FROM projects)) OR
       (r.parent_kind='team' AND r.parent_id IN(SELECT id FROM teams)) OR
       (r.parent_kind='initiative' AND NOT (${guest}) AND r.parent_id IN(SELECT id FROM main.initiatives WHERE workspace_id=(SELECT workspace_id FROM __vector_reader))))`),
-    ...['document_revisions','document_comments'].map(t=>scoped(t,'r.document_id IN(SELECT id FROM documents)')),
+    ...['document_revisions','document_comments','document_followers','document_mentions','document_notification_events'].map(t=>scoped(t,'r.document_id IN(SELECT id FROM documents)')),
+    `document_notifications AS (SELECT r.id,r.event_id,r.document_id,r.recipient_id,r.actor_id,COALESCE((SELECT name FROM operators o WHERE o.id=r.actor_id),r.actor_name) actor_name,r.created_at,r.read_at FROM main.document_notifications r WHERE r.document_id IN(SELECT id FROM documents))`,
     scoped('document_issue_references', 'r.document_id IN(SELECT id FROM documents) AND r.target_issue_id IN(SELECT id FROM issues)'),
     scoped('issue_specifications', 'r.issue_id IN(SELECT id FROM issues) AND r.document_id IN(SELECT id FROM documents)'),
   ].join(',\n')

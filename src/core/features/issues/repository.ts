@@ -178,6 +178,10 @@ export async function writeIntakeDecision(binding: D1Database, request: IntakeDe
       ...(request.kind === 'deferred' ? [binding.prepare(`INSERT INTO issue_deferral_origins(issue_id,decision_id) SELECT issue_id,id FROM intake_decisions WHERE id=?`).bind(decisionId)] : []),
       (() => { const { sql, params } = issueWrite.toSQL(); return binding.prepare(sql).bind(...params) })(),
     ])
+  if (request.kind === 'accepted' && (request.input as AcceptIssueInput).cycleId) {
+    statements.unshift(binding.prepare("SELECT CASE WHEN EXISTS(SELECT 1 FROM cycles c JOIN teams t ON t.id=c.team_id WHERE c.id=? AND t.id=? AND t.cycles_enabled=1 AND c.closed_at IS NULL) THEN 1 ELSE json('intake cycle unavailable') END")
+      .bind((request.input as AcceptIssueInput).cycleId, team.id));
+  }
   if (automaticCycle) {
     const originalUpdate = statements.pop()!
     statements.push(binding.prepare(`SELECT CASE WHEN ${automaticCycle.condition} THEN 1 ELSE json('automatic cycle changed') END`).bind(...automaticCycle.values),
@@ -350,8 +354,8 @@ export async function validateMilestone(db: Database, milestoneId: string | null
 
 export async function validateCycle(db: Database, cycleId: string | null, teamId: string) {
   if (cycleId === null) return
-  const [cycle] = await db.select().from(cycles).where(eq(cycles.id, cycleId)).limit(1)
-  if (!cycle || cycle.teamId !== teamId || cycle.closedAt !== null) {
+  const [cycle] = await db.select({ cycle: cycles, enabled: teams.cyclesEnabled }).from(cycles).innerJoin(teams, eq(teams.id, cycles.teamId)).where(eq(cycles.id, cycleId)).limit(1)
+  if (!cycle || !cycle.enabled || cycle.cycle.teamId !== teamId || cycle.cycle.closedAt !== null) {
     throw new IssueMutationError('invalid_option', `Cycle ${cycleId} is unavailable for this team.`)
   }
 }

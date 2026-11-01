@@ -45,6 +45,7 @@ export const teams = sqliteTable('teams', {
   identifierPrefix: text('identifier_prefix').notNull(),
   isPrivate: integer('is_private', { mode: 'boolean' }).notNull().default(false),
   archivedAt: text('archived_at'),
+  cyclesEnabled: integer('cycles_enabled', { mode: 'boolean' }).notNull().default(true),
   ...timestamps,
 }, (table) => [
   uniqueIndex('teams_workspace_name_idx').on(table.workspaceId, table.name),

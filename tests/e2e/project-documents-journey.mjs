@@ -1,3 +1,4 @@
+import {documentMentionsJourney} from './document-mentions-journey.mjs';
 import {inviteReader,readerResponse} from './role-reader-support.mjs';
 import {roleScreens} from './role-ui-support.mjs';
 import assert from 'node:assert/strict';
@@ -140,6 +141,7 @@ export async function projectDocumentsJourney({page,base,api,output,runtime}){
    console.log('[PROJ-013] '+width+': UI project creation, two editor revisions, ordered history, issue specification, initiative/team lists, search, overflow, serious/critical axe and hydration PASS');
   }
   await documentReferenceAccessJourney({page,base,api,output,runtime,proof});
+  await documentMentionsJourney({page,base,api,output,runtime});
  }finally{page.off('pageerror',pageError);page.off('console',consoleError);}
 }
 

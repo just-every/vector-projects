@@ -125,7 +125,7 @@ export function NewIssueForm() {
           ? current.statusId
           : "",
       cycleId:
-        current.cycleId &&
+        current.cycleId && options.data?.teams.find(team => team.id === teamId)?.cyclesEnabled &&
         options.data?.cycles.some(
           (cycle) => cycle.id === current.cycleId && cycle.teamId === teamId,
         )
@@ -154,7 +154,7 @@ export function NewIssueForm() {
           method: "POST",
           headers: { "content-type": "application/json", ...(!isIntake ? { 'x-vector-page': 'issue' } : {}) },
           body: JSON.stringify(
-            isIntake ? createIntakePayload(values, effectiveTimezone) : createIssuePayload(values),
+            isIntake ? createIntakePayload(values, effectiveTimezone) : createIssuePayload({ ...values, cycleId: options.data?.teams.find(team => team.id === values.teamId)?.cyclesEnabled ? values.cycleId : "" }),
           ),
         },
       );
@@ -460,7 +460,7 @@ export function NewIssueForm() {
                       ))}
                     </select>
                   </label>
-                  <label>
+                  {options.data.teams.find(team => team.id === values.teamId)?.cyclesEnabled && <label>
                     Cycle
                     <select
                       value={values.cycleId}
@@ -476,7 +476,7 @@ export function NewIssueForm() {
                         </option>
                       ))}
                     </select>
-                  </label>
+                  </label>}
                   <label>
                     Priority
                     <select

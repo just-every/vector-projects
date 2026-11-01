@@ -46,7 +46,7 @@ export async function mapCopyValues(
     cycleId &&
     !(await db
       .prepare(
-        "SELECT 1 FROM cycles WHERE id=? AND team_id=? AND closed_at IS NULL",
+        "SELECT 1 FROM cycles c JOIN teams t ON t.id=c.team_id WHERE c.id=? AND c.team_id=? AND t.cycles_enabled=1 AND c.closed_at IS NULL",
       )
       .bind(cycleId, teamId)
       .first())

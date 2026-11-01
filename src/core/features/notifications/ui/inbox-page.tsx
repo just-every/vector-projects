@@ -126,9 +126,9 @@ function InboxFeed({
               item={item}
               pending={pending}
               pendingLabel={inbox.pendingLabel}
-              onOpen={() => void inbox.read(item.id, item.identifier)}
+              onOpen={() => void inbox.read(item.id, item.identifier, item.documentId)}
               snoozed={snoozed}
-              onSnooze={(choice) => inbox.snooze(item.id, choice)}
+              onSnooze={item.documentId ? undefined : (choice) => inbox.snooze(item.id, choice)}
               onReturn={() => void inbox.unsnooze(item.id)}
             />
           </li>

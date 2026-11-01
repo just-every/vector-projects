@@ -1,3 +1,4 @@
+import { pausedCycleSchedule, proveTeamCyclesUpgrade } from "./team-cycles-journey";
 import { env } from "cloudflare:workers";
 import { expect, it } from "vitest";
 import { contractWith } from "../contract-tags";
@@ -8,7 +9,7 @@ const tick = (at: string) =>
   scheduled({ scheduledTime: Date.parse(at) }, bindings);
 contractWith(
   it,
-  "CYCLE-007 CYCLE-004 CYCLE-006",
+  "TEAM-005 CYCLE-007 CYCLE-004 CYCLE-006",
   "cadence creates three future cycles once, records automation, and supplies rollover before closure",
   async () => {
     const f = await setupAdministration(),
@@ -67,13 +68,15 @@ contractWith(
         .bind(cycles[0].id)
         .first("n"),
     ).toBe(0);
+    await pausedCycleSchedule(f,team.id,issue.id,cycles[0].id,new Date(Date.parse(cycles[1].endsAt)+60000).toISOString());
   },
 );
 contractWith(
   it,
-  "CYCLE-007",
+  "TEAM-005 CYCLE-007",
   "cadence edits preserve started cycles and future identities, validate ranges and keep teams independent",
   async () => {
+    await proveTeamCyclesUpgrade();
     const f = await setupAdministration();
     const team = (
       await f.mutate("/settings/teams", "POST", {

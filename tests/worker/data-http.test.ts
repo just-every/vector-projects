@@ -1,3 +1,4 @@
+import {mentionToken} from '../../src/core/features/notifications/mention-token';
 import { auditSchema } from '../../src/core/features/audit/schema';
 import { expectAuditArchiveHistory } from './audit-archive';
 import {channelEdge} from './channel-edge-fixture';
@@ -21,6 +22,13 @@ it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA
  let triageRows=await Promise.all(triageTables.map(async name=>(await env.DB.prepare('SELECT * FROM '+name+' ORDER BY rowid').all()).results));
  expect(triageRows[0]).toHaveLength(1);expect(triageRows[1]).toHaveLength(2);expect(triageRows[2]).toHaveLength(1);
  const migrationDigests=inject('migrationDigests') as Record<string,string>;
+ const documentResponse=await f.call('/documents','POST',{parentKind:'issue',parentId:f.issue.id,title:'synthetic-vector-portable-mention',body:mentionToken({id:f.peer,name:'synthetic-vector-peer'})});
+ expect(documentResponse.status).toBe(201);const portableDocument=await documentResponse.json() as {id:string;version:number;body:string};
+ const documentTables=['document_followers','document_mentions','document_notification_events','document_notifications'];
+ const documentHistory=await Promise.all(documentTables.map(async table=>(await env.DB.prepare('SELECT * FROM '+table+' ORDER BY 1,2').all()).results));
+ expect(documentHistory[0]).toContainEqual(expect.objectContaining({document_id:portableDocument.id,operator_id:f.peer}));
+ expect(documentHistory[3]).toContainEqual(expect.objectContaining({document_id:portableDocument.id,recipient_id:f.peer}));
+
  const commentSubscriptions={events:['comment.created','comment.updated','comment.deleted'],teamIds:[f.team.id]};
  expect((await f.call('/settings/integrations/destinations/'+f.webhook+'/subscriptions','PUT',commentSubscriptions)).status).toBe(200);
  const commentDoor='/issues/'+f.issue.identifier+'/comments';
@@ -105,6 +113,8 @@ it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA
  const archivedRoles=await roles(env.DB);
  expect(new Set(archivedRoles.map(row=>row.role))).toEqual(new Set(['owner','admin','member','viewer']));
  triageRows=await Promise.all(triageTables.map(async name=>(await env.DB.prepare('SELECT * FROM '+name+' ORDER BY rowid').all()).results));
+ expect((await f.call('/settings/teams/'+f.team.id,'PATCH',{cyclesEnabled:false})).status).toBe(200);
+ const cycleConfiguration=(await env.DB.prepare('SELECT * FROM team_cycle_schedules WHERE team_id=?').bind(f.team.id).all()).results;
  const created=await f.call('/portability/exports','POST',{});expect(created.status).toBe(201);const id=(await created.json() as {id:string}).id;
  expect((await request('/api/portability/exports/'+id,'GET',undefined,peer)).status).toBe(404);
  let state={phase:'building'};while(state.phase==='building'){const response=await f.call('/portability/exports/'+id+'/advance','POST',{maxParts:16});expect(response.status).toBe(200);state=await response.json() as {phase:string};}
@@ -144,8 +154,13 @@ it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA
  expect((await destination.ARCHIVE_TARGET_DB.prepare('SELECT count(*) AS n FROM oa_tokens').first())?.n).toBe(0);
  // ROLE-001: every member's role restores with them; no session or link comes along.
  expect(await roles(destination.ARCHIVE_TARGET_DB)).toEqual(archivedRoles);
+ expect(await destination.ARCHIVE_TARGET_DB.prepare('SELECT cycles_enabled FROM teams WHERE id=?').bind(f.team.id).first('cycles_enabled')).toBe(0);
+ expect((await destination.ARCHIVE_TARGET_DB.prepare('SELECT * FROM team_cycle_schedules WHERE team_id=?').bind(f.team.id).all()).results).toEqual(cycleConfiguration);
  expect((await targetCall('/auth/request','POST',{email:'peer@http-archive.test'})).status).toBe(409);
  const historical=await targetSignIn();
+ expect(await Promise.all(documentTables.map(async table=>(await destination.ARCHIVE_TARGET_DB.prepare('SELECT * FROM '+table+' ORDER BY 1,2').all()).results))).toEqual(documentHistory);
+ const restoredDocument=await targetCall('/api/documents/'+portableDocument.id,'GET',undefined,historical);expect(restoredDocument.status).toBe(200);expect(await restoredDocument.json()).toMatchObject(portableDocument);
+
  expect(await (await targetCall('/api/settings/integrations','GET',undefined,historical)).json()).toMatchObject({destinations:expect.arrayContaining([expect.objectContaining({id:f.webhook,...commentSubscriptions,requiresReentry:1})])});
  expect((await destination.ARCHIVE_TARGET_DB.prepare("SELECT * FROM vector_webhook_events WHERE destination_id=? AND event LIKE 'comment.%' AND json_extract(body,'$.issueId')=? ORDER BY id").bind(f.webhook,f.issue.id).all()).results).toEqual(commentHistory);
  expect(await destination.ARCHIVE_TARGET_DB.prepare('SELECT parent_comment_id,body,deleted_at FROM issue_comments WHERE id=?').bind(replyComment).first()).toMatchObject({parent_comment_id:rootComment,body:null,deleted_at:expect.any(String)});
@@ -265,6 +280,11 @@ it('[ISSUE-022 ISSUE-027 SLACK-003 SLACK-004 PROJ-011 SEC-001 BASE-DATA-001 DATA
  expect((await targetCall('/api/data/restore/review-effects','POST',{},historical)).status).toBe(409);
  const admittedPeer=await targetSignIn('peer@http-archive.test');
  expect((await targetCall('/api/portability/imports/'+job,'GET',undefined,admittedPeer)).status).toBe(404);
+ const unchangedDocument=await targetCall('/api/documents/'+portableDocument.id,'PATCH',{expectedVersion:portableDocument.version,body:portableDocument.body},historical);
+ expect(unchangedDocument.status,await unchangedDocument.clone().text()).toBe(200);
+ expect((await destination.ARCHIVE_TARGET_DB.prepare('SELECT * FROM document_notifications ORDER BY 1,2').all()).results).toEqual(documentHistory[3]);
+ expect((await destination.ARCHIVE_TARGET_DB.prepare('SELECT * FROM document_followers ORDER BY 1,2').all()).results).toEqual(documentHistory[0]);
+
  expect((await targetCall('/api/settings/operators/'+f.peer,'DELETE',undefined,historical)).status).toBe(200);
  expect((await targetCall('/api/data/restore/operators/'+f.peer,'POST',{},historical)).status).toBe(409);
  expect((await restoreStatus()).operators.some(row=>row.id===f.peer)).toBe(false);

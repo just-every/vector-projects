@@ -16,11 +16,12 @@ export async function createCycle(
   input: z.infer<typeof cycleCreateSchema>,
 ) {
   const ctx = await administrationContext(db, actor);
-  const team = await ownedRow<{ archived_at: string | null }>(
+  const team = await ownedRow<{ archived_at: string | null; cycles_enabled: number }>(
     ctx,
     "teams",
     input.teamId,
   );
+  if (!team.cycles_enabled) throw new SettingsError("cycles_disabled", "Enable cycles in team Settings before creating a cycle.", 409);
   if (team.archived_at)
     throw new SettingsError(
       "team_archived",
@@ -52,7 +53,7 @@ export async function createCycle(
   await commit(ctx, [
     guard(
       ctx.db,
-      "EXISTS(SELECT 1 FROM teams t JOIN workspace_settings w ON w.id=t.workspace_id WHERE t.id=? AND t.workspace_id=? AND t.archived_at IS NULL AND w.timezone=?)",
+      "EXISTS(SELECT 1 FROM teams t JOIN workspace_settings w ON w.id=t.workspace_id WHERE t.id=? AND t.workspace_id=? AND t.archived_at IS NULL AND t.cycles_enabled=1 AND w.timezone=?)",
       input.teamId,
       ctx.workspace,
       workspace!.timezone,

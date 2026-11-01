@@ -61,7 +61,7 @@ export function CyclesPanel({
             <select name="team" required>
               <option value="">Choose a team</option>
               {data.teams
-                .filter((team) => !team.archivedAt)
+                .filter((team) => !team.archivedAt && team.cyclesEnabled)
                 .map((team) => (
                   <option key={team.id} value={team.id}>
                     {team.name}
@@ -89,7 +89,7 @@ export function CyclesPanel({
         </fieldset>
       </form>}
       <AdministrationFeedback action={action} />
-      {data.cycles.map((cycle) => (
+      {data.cycles.filter(cycle => data.teams.some(team => team.id === cycle.teamId && team.cyclesEnabled)).map((cycle) => (
         <div className="admin-record" key={cycle.id}>
           <Link
             className="admin-link"
