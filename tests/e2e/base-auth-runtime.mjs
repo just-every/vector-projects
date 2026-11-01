@@ -96,8 +96,8 @@ try {
     }
   }
   await page.setViewportSize({width:1440,height:1000});
-  await page.goto(origin+'/app/settings');
-  await page.getByRole('heading',{name:'Settings',exact:true}).waitFor();
+  await page.goto(origin+'/app/settings/people');
+  await page.getByRole('heading',{name:'People',exact:true,level:1}).waitFor();
   await page.getByLabel('Name',{exact:true}).fill('Invited peer');
   await page.getByLabel('Email',{exact:true}).fill('peer@auth-runtime.test');
   await page.getByLabel('Role',{exact:true}).selectOption('admin');
