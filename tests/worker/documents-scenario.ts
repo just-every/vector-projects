@@ -1,5 +1,6 @@
 import {documentMentionsScenario,documentMentionUpgrade} from './document-mentions-scenario';
 import {freshTarget,stageArchive,finalBody,targetCall,targetSignIn,type ArchiveRecords} from './http-archive-fixture';
+import {resetArchiveTarget} from './document-thread-scenario';
 import {documentReferenceScenario} from './reference-scenario';
 import {env} from 'cloudflare:workers';
 import {expect} from 'vitest';
@@ -88,6 +89,7 @@ export async function documentJourney(){
  expect(rows('initiatives')).toContainEqual(expect.objectContaining({id:initiative.id}));
  await read(await f.call('/issues/'+issue.identifier+'/specification','DELETE'));
  expect((await read(await f.call('/issues/'+issue.identifier))).specification).toBeNull();
+ await resetArchiveTarget();
  const destinationCookie=await freshTarget(),job=await stageArchive(records,destinationCookie);
  await read(await targetCall('/api/portability/imports/'+job+'/finalize','POST',finalBody(records),destinationCookie));
  const historical=await targetSignIn();

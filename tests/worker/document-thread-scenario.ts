@@ -99,3 +99,18 @@ export async function documentThreadScenario(){
  expect((await f.any(f.bobCookie,path+'/comments','POST',{body:'Refused revoked session',anchor:current})).status).toBe(401);expect(await snapshot(changedTables)).toEqual(before);
  console.log('PROBE ISSUE-008 document quotes: native document and issue doors retain exact occurrences, Unicode, ordered replies, resolution, removal and current authority; invalid and racing sources leave thread side effects unchanged');
 }
+
+/** The mention upgrade leaves a historical workspace in the shared target; a pristine restore needs it empty. */
+export async function resetArchiveTarget(){
+ const db=env.ARCHIVE_TARGET_DB;
+ const objects=async(type:string)=>(await db.prepare("SELECT name,sql FROM sqlite_master WHERE type=? AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'").bind(type).all<{name:string;sql:string}>()).results;
+ for(const view of await objects('view'))await db.prepare('DROP VIEW "'+view.name+'"').run();
+ for(const table of (await objects('table')).filter(t=>/^CREATE VIRTUAL/i.test(t.sql)))await db.prepare('DROP TABLE "'+table.name+'"').run();
+ // Foreign keys decide the order: a table drops once nothing still references it.
+ for(let pending=await objects('table');pending.length;){
+  const remaining=[];
+  for(const table of pending)try{await db.prepare('DROP TABLE "'+table.name+'"').run();}catch{remaining.push(table);}
+  expect(remaining.length).toBeLessThan(pending.length);
+  pending=remaining;
+ }
+}
