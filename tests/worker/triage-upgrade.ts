@@ -2,6 +2,13 @@ import { env } from "cloudflare:workers";
 import { applyD1Migrations } from "cloudflare:test";
 import { expect, inject } from "vitest";
 import { insertHistoricalSample } from "./historical-sample-fixture";
+/**
+ * Columns a later migration adds to a table that already held rows, with the value an
+ * untouched pre-existing row takes: 0124 gives every existing team cycles_enabled=1.
+ */
+const addedAfterBoundary: Record<string, Record<string, unknown>> = {
+  teams: { cycles_enabled: 1 },
+};
 /** A populated prior head retains every value, including queued candidates and mutes. */
 export async function triageUpgrade() {
   const db = env.ARCHIVE_TARGET_DB,
@@ -77,7 +84,12 @@ export async function triageUpgrade() {
           .all()
       ).results,
       table.name,
-    ).toEqual(table.rows);
+    ).toEqual(
+      table.rows.map((row) => ({
+        ...row,
+        ...addedAfterBoundary[table.name],
+      })),
+    );
   expect((await db.prepare("PRAGMA foreign_key_check").all()).results).toEqual(
     [],
   );
