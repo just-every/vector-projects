@@ -10,7 +10,7 @@ Bring issues across from another tracker in a CSV or JSON file, from Linear's is
 
 ## Import a file
 
-1. Open **Settings** and go to **Data / Move in**.
+1. Open **Settings** and go to **Move in**.
 2. Choose the **File format**: Mapped CSV, Mapped JSON array, Jira All Fields CSV (supported profile), Linear workspace CSV or Linear CSV with API file.
 3. Give the import an **Import source name**, such as `migration-october`. Use the same name every time you import from the same place.
 4. Choose your file.

@@ -5,7 +5,7 @@ carries issues but not their comments, attachment links or relations other than
 the parent. Linear's GraphQL API has them. You can produce one JSON file with
 them, on your own machine with your own Linear API key, and Vector merges it
 with the CSV in the same reviewed run (`--format linear-api-json`, or "Linear CSV
-with API file" in Settings → Data / Move in).
+with API file" in Settings → Move in).
 
 Vector never calls Linear, never holds your Linear key, and never fetches a
 link from the file.

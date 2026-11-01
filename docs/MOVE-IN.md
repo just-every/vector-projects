@@ -1,6 +1,6 @@
 # Move issues into Vector
 
-Settings → Data / Move in accepts mapped CSV, a JSON array of objects, Linear's
+Settings → Move in accepts mapped CSV, a JSON array of objects, Linear's
 workspace issue CSV, or the supported Jira Cloud All Fields CSV profile. One
 reviewed run reads a whole file: up to 4,000 source rows in a file of up to 4 MiB.
 Preview reads it once and

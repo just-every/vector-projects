@@ -39,7 +39,7 @@ export async function slackDirectMessages(f:Awaited<ReturnType<typeof setupInteg
   // Unavailable with its reason while the workspace has no Slack credential.
   expect((await f.call('/settings/integrations/slack','DELETE')).status).toBe(200);edge.renew();
   expect(await mine(peerCookie)).toMatchObject({available:false,link:null,actionsEnabled:false});
-  expect((await mine(peerCookie)).reason).toContain('Settings → Integrations');
+  expect((await mine(peerCookie)).reason).toContain('Settings → Connections');
   expect((await as(peerCookie,'/settings/notifications/slack/lookup','POST')).status).toBe(409);
   expect((await f.call('/settings/integrations/slack','POST',{botToken:edge.token})).status).toBe(200);
   expect(await mine(peerCookie)).toMatchObject({available:true,link:null,actionsEnabled:false,email:peerEmail});

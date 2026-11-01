@@ -24,7 +24,7 @@ async function installation(env:WorkerBindings,workspace:string){
  return {connected,needsAttention:Boolean(row?.enabled)&&!connected,teamName:row?.team_name??'Slack workspace',actions:connected&&!await credentialProblem(env,signingIdentity(workspace))};
 }
 async function lookup(env:WorkerBindings,current:Member){
- if(!(await installation(env,current.workspace)).connected)throw new IntegrationError(409,'slack_unavailable','Slack direct messages are unavailable until an Admin connects Slack in Settings → Integrations.');
+ if(!(await installation(env,current.workspace)).connected)throw new IntegrationError(409,'slack_unavailable','Slack direct messages are unavailable until an Admin connects Slack in Settings → Connections.');
  if(!await admitRate(env.DB,'slack-lookup:'+current.id,10,60_000))throw new IntegrationError(429,'slack_lookup_rate_limited','Too many Slack lookups. Wait a minute, then choose Link Slack again.');
  let user:SlackUser|undefined;
  try{user=(await slackCall(await slackToken(env,current.workspace),'users.lookupByEmail',{email:current.email},'GET') as unknown as {user?:SlackUser}).user;}
@@ -62,7 +62,7 @@ export async function unlinkSlack(env:WorkerBindings,operatorId:string){
 }
 export async function chooseDirectKinds(env:WorkerBindings,operatorId:string,kinds:DirectKind[]){
  const current=await member(env,operatorId);
- if(!(await installation(env,current.workspace)).connected)throw new IntegrationError(409,'slack_unavailable','Slack direct messages are unavailable until an Admin connects Slack in Settings → Integrations.');
+ if(!(await installation(env,current.workspace)).connected)throw new IntegrationError(409,'slack_unavailable','Slack direct messages are unavailable until an Admin connects Slack in Settings → Connections.');
  const [result]=await env.DB.batch([env.DB.prepare('UPDATE vector_slack_member_links SET dm_kinds=? WHERE operator_id=? AND workspace_id=?').bind(JSON.stringify(kinds),operatorId,current.workspace),
   ...notificationKinds.map(kind=>env.DB.prepare(`INSERT INTO notification_channel_overrides(operator_id,kind,email_mode,slack_enabled)
     SELECT o.id,?,${effectiveEmailSql('?', 'o.id', 'o.workspace_id')},? FROM operators o WHERE o.id=?
@@ -85,7 +85,7 @@ export async function directPreferences(env:WorkerBindings,operatorId:string):Pr
   WHERE n.recipient_id=? AND t.workspace_id=? AND d.state IN('rejected','uncertain') ORDER BY d.created_at DESC,d.id DESC LIMIT 50`).bind(operatorId,current.workspace).all<{id:string;identifier:string;title:string;state:'rejected'|'uncertain';attempts:number;outcome:string|null}>()).results;
  return {
   available:slack.connected,
-  reason:slack.connected?null:slack.needsAttention?'Slack needs attention: an Admin must re-enter the Slack bot token in Settings → Integrations.':'Slack is not connected: an Admin connects it in Settings → Integrations.',
+  reason:slack.connected?null:slack.needsAttention?'Slack needs attention: an Admin must re-enter the Slack bot token in Settings → Connections.':'Slack is not connected: an Admin connects it in Settings → Connections.',
   actionsEnabled:slack.actions,email:current.email,
   link:link?{slackTeamId:link.slackTeamId,slackUserId:link.slackUserId,name:link.name,teamName:slack.teamName,linkedAt:link.linkedAt,kinds:(await channelPreferences(env.DB,operatorId)).channels.filter(row=>row.slack).map(row=>row.kind)}:null,
   deliveries:deliveries.filter(row=>!String(row.outcome).includes('"slack_dm_suppressed"')).map(({outcome,...row})=>({...row,reason:deliveryReason(row.state,outcome)})),

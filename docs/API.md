@@ -137,7 +137,7 @@ that the published schema produces this incomplete qualification, rather than
 claiming full coverage from a partial inventory.
 
 Existing tokens keep exactly their issued scope arrays. Select new scopes in
-Settings → Integrations when issuing a new token; expanding the selector does
+Settings → Developers when issuing a new token; expanding the selector does
 not expand an old token. New routes are:
 
 | Route | Scope | Native behavior |
@@ -327,7 +327,7 @@ Viewer is the fifth stored workspace role. Owners and Admins invite Viewers and 
 
 ## OAuth applications (API-004)
 
-An Owner or Admin opens **Settings → OAuth apps**, gives an application a name,
+An Owner or Admin opens **Settings → Developers → Apps**, gives an application a name,
 registers one or more exact redirect URLs, and chooses its maximum permissions
 from the existing API scope list. Redirects require HTTPS; loopback HTTP is
 allowed for development. Wildcards, URL credentials and fragments are refused.

@@ -38,7 +38,7 @@ export function outboundService(env:WorkerBindings,workspace:string,now:()=>numb
   const send = async () => {
    if(egressConfigured(env)&&env.INTEGRATION_EGRESS)return env.INTEGRATION_EGRESS.send(wire);
    const ownership=await deliveryOwnership(env,workspace);
-   if(!ownership)throw new IntegrationError(503,'outbound_unconfigured','Enable delivery in Settings → Integrations.');
+   if(!ownership)throw new IntegrationError(503,'outbound_unconfigured','Enable delivery in Settings → Connections.');
    const {nativeEgress}=await import('./native-egress.mjs');
    return nativeEgress(ownership).send(wire);
   };

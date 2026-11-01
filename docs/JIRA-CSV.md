@@ -1,6 +1,6 @@
 # Jira CSV file importer
 
-Choose **Jira All Fields CSV (supported profile)** in Settings → Data / Move in, or use `pnpm run import:issues -- preview --format jira-csv` with the same file, source namespace and mapping configuration. The existing preview, apply, status, resume, report and whole-run rollback services handle it. No new schema is needed. This is a file importer, not a Jira integration: it makes no Atlassian requests and never fetches attachment URLs.
+Choose **Jira All Fields CSV (supported profile)** in Settings → Move in, or use `pnpm run import:issues -- preview --format jira-csv` with the same file, source namespace and mapping configuration. The existing preview, apply, status, resume, report and whole-run rollback services handle it. No new schema is needed. This is a file importer, not a Jira integration: it makes no Atlassian requests and never fetches attachment URLs.
 
 The current claim is **documented format, synthetic-only; real export not supplied**. Export the selected Jira issues with **All Fields** and preserve the UTF-8 file. [Atlassian's Cloud export guide](https://support.atlassian.com/jira/kb/how-to-export-issues-from-jira-cloud-in-csv-format/) documents separate chronological Comment columns and attachment URLs. Attachment bytes are absent; supply bytes separately if wanted. Public import examples support some accepted encodings below, but do not establish that every native export has these spellings or encodings. Server and Data Center variants are unverified.
 

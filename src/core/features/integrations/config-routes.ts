@@ -46,7 +46,7 @@ export function addIntegrationConfigRoutes(app:Hono<AppEnvironment>){
  app.post('/settings/integrations/delivery',async c=>c.json(await configureDelivery(c.env,await integrationOwner(c.env,c.req.raw),parse(deliverySetupInput,await readRequestJson(c.req.raw)))));
  app.post('/settings/integrations/destinations/:id/test',async c=>c.json(await sendTestWebhook(c.env,await integrationOwner(c.env,c.req.raw),parse(id,c.req.param('id')))));
  app.post('/settings/integrations/tokens',async c=>{const owner=await integrationOwner(c.env,c.req.raw);const issued=await ownerTokens(c.env.DB,owner).issue(owner,parse(tokenInput,await readRequestJson(c.req.raw)));await recordDevMint(c.env.DB,owner.fence.sessionId,issued.credential.id);return c.json(issued,201);});
- // A member's own tokens: the personal half of Settings → Integrations (ROLE-008 row "Open Settings pages").
+ // A member's own tokens: the personal half of Settings → Developers (ROLE-008 row "Open Settings pages").
  app.get('/settings/integrations/tokens',async c=>{const owner=await integrationOwner(c.env,c.req.raw,c.get('documentProjection')?c.get('operator'):undefined);const [tokens]=await guardedSql(c.env.DB,ownerPredicate(owner)).batch([{sql:personalTokens,params:[owner.workspace,owner.id]}]);return c.json({tokens});});
  app.get('/settings/integrations/tokens/usage',async c=>{const owner=await integrationOwner(c.env,c.req.raw,c.get('documentProjection')?c.get('operator'):undefined);return c.json({usage:await ownerTokens(c.env.DB,owner).usage(owner)});});
  app.delete('/settings/integrations/tokens/:id',async c=>{

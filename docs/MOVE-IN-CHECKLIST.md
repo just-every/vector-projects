@@ -31,7 +31,7 @@ profile](JIRA-CSV.md).
    people who should be operators; map
    assignees explicitly to existing active operators. The importer does not
    create operators.
-4. **Preview.** Settings → Data / Move in → **Jira All Fields CSV (supported
+4. **Preview.** Settings → Move in → **Jira All Fields CSV (supported
    profile)**, or use the [Terminal command](MOVE-IN.md#terminal) with
    `--format jira-csv`. Choose a stable source namespace, configure the source
    offset/century where needed, and confirm
@@ -92,7 +92,7 @@ support claim; this trial does not publish, tag, deploy or touch a live Jira sit
 3. **Prepare Vector.** Create the team, labels, projects and open cycles you want
    the issues to land in, and invite the people who will work there. A person who
    is not invited is fine: their issues land unassigned and the report lists them.
-4. **Preview.** Settings → Data / Move in → "Linear CSV with API file" (or
+4. **Preview.** Settings → Move in → "Linear CSV with API file" (or
    "Linear workspace CSV"), a source name such as `linear-eng`, both files. Map
    any status that differs per team (`Engineering/In Review` → Started). Fix every
    error the preview lists; nothing is written until you apply.
