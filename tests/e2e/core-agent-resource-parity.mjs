@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 import {inviteReader} from './role-reader-support.mjs';
-import {withOperatorClient} from './operator-request.mjs';
+import {withOperatorClient,publicRequest} from './operator-request.mjs';
 import {navigate,settleReads,trackRequests} from './collaboration-navigation.mjs';
 import {roleScreens} from './role-ui-support.mjs';
 
@@ -29,14 +29,16 @@ export async function agentResourceParityJourney({page,context,base,state,sql,ev
     const response=await client.fetch(base+path,{method,headers:{Origin:base},data});
     assert.equal(response.status(),200,await response.text());return response.json();
   });
-  const mint=async(api,current)=>{
+  const mint=async(api)=>{
     const {token}=await api('/settings/integrations/tokens','POST',{name:marker,scopes:['evidence:read']},201);
-    return async uri=>withOperatorClient(current,async client=>{
-      const response=await client.post(base+'/mcp',{headers:{Origin:base,Authorization:'Bearer '+token,
+    return async uri=>{
+      // The resource caller has only its grant; native session cookies cannot admit it.
+      const response=await publicRequest(base+'/mcp',{method:'POST',headers:{Origin:base,Authorization:'Bearer '+token,
+        'Content-Type':'application/json',
         Accept:'application/json, text/event-stream','MCP-Protocol-Version':'2025-11-25','Mcp-Method':'resources/read'},
         data:{jsonrpc:'2.0',id:++id,method:'resources/read',params:{uri}}});
-      return {status:response.status(),body:await response.json()};
-    });
+      return {status:response.status,body:await response.json()};
+    };
   };
   try {
     const ownerSession=await owner('/session'),memberSession=await member.api('/session');
@@ -62,7 +64,7 @@ export async function agentResourceParityJourney({page,context,base,state,sql,ev
     await member.api(path+'/comments/'+deleted.id,'DELETE');
     await owner(path+'/comments/'+root.id+'/resolution','POST',{resolved:true});
     await raw(context,'/agents/api/policy','PUT',{document:{schema:'rer-agent-policy/1',catalogue:'rer-agent-classes/1',rules:[{id:'all',class:'*',do:'autonomous'}],spend:{none:true}}});
-    const readers=[await mint(owner,context),await mint(member.api,member.context)];
+    const readers=[await mint(owner),await mint(member.api)];
     const receipts=[];
     for(const [index,caller] of [{page,api:owner},{page:member.page,api:member.api}].entries()){
       const current=caller.page;
@@ -101,7 +103,13 @@ export async function agentResourceParityJourney({page,context,base,state,sql,ev
       await current.locator('.evidence-inspector').getByText(native.evidence[0].summary,{exact:true}).waitFor();
       await current.getByText(native.evidence[0].actor+' reported',{exact:true}).waitFor();
       await current.locator('.evidence-context > summary').click();
+      const metrics=current.locator('.evidence-metrics > div');
+      assert.equal(await metrics.filter({has:current.locator('dt',{hasText:/^Delay$/})}).locator('dd').innerText(),'0');
+      assert.equal(await metrics.filter({has:current.locator('dt',{hasText:/^Confirmed$/})}).locator('dd').innerText(),'true');
       await current.getByText(marker+'-report',{exact:true}).waitFor();
+      const resolved=current.locator('.comment-thread--resolved');
+      assert.equal(await resolved.locator('strong').innerText(),ownRoot.resolvedBy);
+      assert.equal(await resolved.locator('time').getAttribute('datetime'),ownRoot.resolvedAt);
       await current.getByRole('button',{name:'Show thread',exact:true}).click();
       for(const comment of discussion.comments){
         const entry=current.locator('.comment-entry').filter({hasText:comment.deletedAt?'Comment deleted':comment.body});
