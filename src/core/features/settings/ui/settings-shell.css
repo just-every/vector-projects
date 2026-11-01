@@ -39,7 +39,10 @@
 @media (prefers-reduced-motion: reduce) { .settings-skeleton span { animation: none; } }
 
 .settings-section { max-width: 44rem; }
-.settings-section > h1 { margin: 0 0 1.25rem; font-size: 2.1rem; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; }
+.settings-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; margin: 0 0 1.25rem; }
+.settings-head h1 { margin: 0; font-size: 2.1rem; font-weight: 650; letter-spacing: -0.02em; line-height: 1.15; }
+.settings-sub { margin: -0.75rem 0 1.25rem; font-size: var(--app-text-small); color: var(--app-body); }
+.settings-sub .key { font-family: var(--app-mono); }
 .settings-back { display: inline-flex; align-items: center; min-height: 44px; margin-bottom: 0.25rem; color: var(--app-body); font-size: 1rem; text-decoration: none; }
 .settings-crumbs { display: flex; align-items: center; gap: 0.5rem; min-height: 2rem; margin-bottom: 0.25rem; font-size: var(--app-text-small); color: var(--app-body); }
 .settings-crumbs a { color: var(--app-body); text-decoration: none; }
@@ -61,7 +64,7 @@
   .settings-frame[data-view="index"] .settings-pane { display: none; }
   .settings-frame[data-view="section"] .settings-nav { display: none; }
   .settings-crumbs { display: none; }
-  .settings-section > h1 { font-size: 1.9rem; }
+  .settings-head h1 { font-size: 1.9rem; }
 }
 /* Beside a readable pane: the rail. */
 @container settings (min-width: 54rem) {

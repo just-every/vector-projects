@@ -1,4 +1,3 @@
-import { expect } from '@playwright/test';
 import { openAccountMenu } from './ui-controls-checks.mjs';
 import { withOperatorClient } from './operator-request.mjs';
 import {rolePrivateCells} from './role-private-cells.mjs';
@@ -14,8 +13,8 @@ import { roleScreens, exerciseGuestRoles } from "./role-ui-support.mjs";
 import assert from "node:assert/strict";
 import { poll } from "./admin-runtime-support.mjs";
 import { saveWorkspaceTime } from "./admin-workspace-time-journey.mjs";
+import { invitePerson, openPerson, teamList } from "./settings-pane-support.mjs";
 import {
-  openDisclosures,
   openAdministrationForm,
   assertSettingsSections,
 } from "./ui-controls-checks.mjs";
@@ -99,12 +98,7 @@ export async function auditEmptyWorkspace({ page, runtime, capture, clause }) {
     .click();
   await page.waitForURL(base + "/app/settings");
   await page.goto(base + "/app/settings/teams");
-  const teamForm = await openAdministrationForm(
-    page,
-    "Edit " + runtime.config.DEFAULT_TEAM_NAME,
-  );
-  await expect(teamForm.locator("fieldset").first()).toBeEnabled({ timeout: 30_000 });
-  await openDisclosures(page);
+  await teamList(page).getByRole("link", { name: runtime.config.DEFAULT_TEAM_NAME }).waitFor();
   await assertSettingsSections(page, "empty workspace Settings");
   await clause(
     "OPS-003",
@@ -143,26 +137,12 @@ export async function inviteProjectLead({
 
   await beforePrivateNavigation(page, base + "/app/settings/people");
   await page.goto(base + "/app/settings/people");
-  await openDisclosures(page);
   await clause(
     "PROJ-002",
     "project lead transfers to a genuinely invited Member",
     async () => {
-      const operators = page.getByRole("region", {
-        name: "Members",
-        exact: true,
-      });
-      await operators.getByLabel("Name", { exact: true }).fill("Delivery lead");
-      await operators
-        .getByLabel("Email", { exact: true })
-        .fill("lead@admin-runtime.test");
-      const invited = page.waitForResponse(
-        (r) => new URL(r.url()).pathname === "/api/settings/operators/invite",
-      );
-      await operators
-        .getByRole("button", { name: "Send invitation", exact: true })
-        .click();
-      assert.equal((await invited).status(), 202);
+      const invited = await invitePerson(page, { name: "Delivery lead", email: "lead@admin-runtime.test" });
+      assert.equal(invited.status(), 202);
       const link = sql(
         "SELECT json_extract(message,'$.text') AS sign_in_url FROM rer_mail_development_outbox WHERE json_extract(message,'$.to[0]')='lead@admin-runtime.test' ORDER BY created_at DESC,sequence DESC LIMIT 1",
       )[0].sign_in_url.match(/https?:\/\/[^\s]+/)[0];
@@ -224,12 +204,7 @@ export async function inviteProjectLead({
 export async function assertSignOut({ page, runtime, capture }) {
   await beforePrivateNavigation(page, runtime.base + "/app/settings/teams");
   await page.goto(runtime.base + "/app/settings/teams");
-  const teamForm = await openAdministrationForm(
-    page,
-    "Edit " + runtime.config.DEFAULT_TEAM_NAME,
-  );
-  await expect(teamForm.locator("fieldset").first()).toBeEnabled({ timeout: 30_000 });
-  await openDisclosures(page);
+  await teamList(page).getByRole("link", { name: runtime.config.DEFAULT_TEAM_NAME }).waitFor();
   await assertSettingsSections(page, "final Settings");
   await capture("settings-final-signout-reachable");
   await settleReads(page);
@@ -255,19 +230,22 @@ export async function exerciseWorkspaceRoles({ page, browser, runtime, clause, e
   const inspect = roleScreens(evidence);
   const owner = sql("SELECT o.id,o.name FROM operators o JOIN workspace_installation i ON i.setup_operator_id=o.id")[0];
   await navigate(page, base + "/app/settings/people");
-  await openDisclosures(page);
-  const members = page.getByRole("region", { name: "Members", exact: true });
+  const members = page.getByRole("list", { name: "People", exact: true });
   let context, peer;
   await clause("ROLE-001", "an invitation names its role, Member by default", async () => {
-    const role = members.getByLabel("Role", { exact: true });
+    await page.getByRole("button", { name: "Invite", exact: true }).click();
+    const form = page.getByRole("form", { name: "Invite someone", exact: true });
+    const role = form.getByLabel("Role", { exact: true });
     assert.equal(await role.inputValue(), "member");
     await role.selectOption("viewer");
     await role.selectOption("member");
-    await members.getByLabel("Name", { exact: true }).fill("Role member");
-    await members.getByLabel("Email", { exact: true }).fill("role-member@admin-runtime.test");
+    await form.getByLabel("Name", { exact: true }).fill("Role member");
+    await form.getByLabel("Email", { exact: true }).fill("role-member@admin-runtime.test");
+    await form.getByRole("button", { name: "Send invitation", exact: true }).click();
     const invited = page.waitForResponse((r) => new URL(r.url()).pathname === "/api/settings/operators/invite");
-    await members.getByRole("button", { name: "Send invitation", exact: true }).click();
+    await page.getByRole("button", { name: "Confirm and send", exact: true }).click();
     assert.equal((await invited).status(), 202);
+    await page.getByText("Invitation submitted for delivery.").waitFor();
     const link = sql("SELECT json_extract(message,'$.text') AS text FROM rer_mail_development_outbox WHERE json_extract(message,'$.to[0]')='role-member@admin-runtime.test' ORDER BY created_at DESC,sequence DESC LIMIT 1")[0].text.match(/https?:\/\/[^\s]+/)[0];
     context = await browser.newContext({ viewport: page.viewportSize() });
     peer = await context.newPage();
@@ -279,7 +257,7 @@ export async function exerciseWorkspaceRoles({ page, browser, runtime, clause, e
   const memberId = sql("SELECT id FROM operators WHERE email='role-member@admin-runtime.test'")[0].id;
   // The accepted member joins the directory on the Owner's next Settings visit.
   await navigate(page, base + "/app/settings/people");
-  await openDisclosures(page);
+  await page.getByRole("link", { name: /Role member/ }).waitFor();
   // A workspace settings write that saves the current timezone: only the role decides its answer.
   const settingsRequest = async () => withOperatorClient(peer.context(), async client => {
     const response = await client.patch(base + "/api/settings", {
@@ -288,19 +266,20 @@ export async function exerciseWorkspaceRoles({ page, browser, runtime, clause, e
     await response.body();
     return response.status();
   });
+  // A role is a select on the person's own page that stores as it changes: no Change role button.
   const changeRole = async (name, id, role, status) => {
-    const form = members.getByRole("form", { name: `Role for ${name}`, exact: true });
-    await form.getByRole("combobox", { name: `Role for ${name}`, exact: true }).selectOption(role);
+    await openPerson(page, base, id);
+    assert.equal(await page.getByRole("button", { name: /^Change role/ }).count(), 0);
     const path = `/api/settings/operators/${id}/role`;
     if (status !== 200) refusals.add(base + path);
     const changed = page.waitForResponse((r) => new URL(r.url()).pathname === path);
-    await form.getByRole("button", { name: "Change role", exact: true }).click();
+    await page.getByLabel("Role", { exact: true }).selectOption(role);
     assert.equal((await changed).status(), status);
   };
   await clause("ROLE-001", "an Owner promotes a Member at 1440 and demotes them at 390; the Admin's promotions are refused 403; the demoted member's next settings request returns 403", async () => {
     await page.setViewportSize({ width: 1440, height: 1000 });
     await changeRole("Role member", memberId, "admin", 200);
-    await page.getByText("Role member is now an Admin.", { exact: true }).waitFor();
+    await page.getByText("Saved", { exact: true }).first().waitFor();
     assert.equal(await settingsRequest(), 200);
     // The new Admin promotes no one to Admin or Owner; the project lead stays a Member.
     const lead = sql("SELECT id FROM operators WHERE email='lead@admin-runtime.test'")[0].id;
@@ -309,33 +288,43 @@ export async function exerciseWorkspaceRoles({ page, browser, runtime, clause, e
     assert.equal(sql(`SELECT role FROM operators WHERE id='${lead}'`)[0].role, "member");
     await page.setViewportSize({ width: 390, height: 844 });
     await changeRole("Role member", memberId, "member", 200);
-    await page.getByText("Role member is now a Member.", { exact: true }).waitFor();
+    await page.getByText("Saved", { exact: true }).first().waitFor();
     assert.equal(await settingsRequest(), 403);
     assert.equal((await peer.request.get(base + "/api/session")).status(), 200, "the session itself survives the role change");
     const audit = sql(`SELECT d.previous_value_json AS previous,d.next_value_json AS next FROM audit_records a JOIN administration_audit_details d ON d.audit_id=a.id WHERE a.action='operator.role_changed' AND a.subject_id='${memberId}' ORDER BY a.id`);
     assert.deepEqual(audit.map((row) => [JSON.parse(row.previous).role, JSON.parse(row.next).role]), [["member", "admin"], ["admin", "member"]]);
   });
-  await inspect(page, members, "members-owner");
+  await inspect(page, page.locator(".settings-pane"), "members-owner");
   await clause("ROLE-001", "the last Owner's demotion is refused and changes nothing", async () => {
     const before = sql("SELECT id,role FROM operators ORDER BY id");
-    await changeRole(owner.name, owner.id, "admin", 409);
+    // The page says why in a plain line and sends nothing; the server refuses the same request with 409.
+    await openPerson(page, base, owner.id);
     await page.getByText("The last Owner cannot be demoted or removed. Make another member an Owner first.", { exact: true }).waitFor();
-    assert.equal(await members.getByRole("combobox", { name: `Role for ${owner.name}`, exact: true }).inputValue(), "owner", "the refused choice gives way to the actual role");
+    await page.getByLabel("Role", { exact: true }).selectOption("admin");
+    assert.equal(await page.getByLabel("Role", { exact: true }).inputValue(), "owner", "the refused choice gives way to the actual role");
+    const path = `/api/settings/operators/${owner.id}/role`;
+    refusals.add(base + path);
+    assert.equal((await page.request.patch(base + path, { headers: { Origin: base }, data: { role: "admin" } })).status(), 409);
     assert.deepEqual(sql("SELECT id,role FROM operators ORDER BY id"), before);
   });
-  await inspect(page, members, "members-last-owner-refused");
+  await inspect(page, page.locator(".settings-pane"), "members-last-owner-refused");
   const labelCreated = await page.request.post(base + "/api/settings/labels", {
     headers: { Origin: base }, data: { name: "synthetic-vector-15", color: "#224466" },
   });
   assert.equal(labelCreated.status(), 200);
   await clause("ROLE-001", "a Member reads the member directory without managing anyone and opens only their own Settings pages", async () => {
     await navigate(peer, base + "/app/settings/people");
-    await openDisclosures(peer);
-    const directory = peer.getByRole("region", { name: "Members", exact: true });
+    const directory = peer.getByRole("list", { name: "People", exact: true });
     await directory.getByText("Role member (you)", { exact: true }).waitFor();
-    assert.equal(await directory.getByRole("button", { name: "Change role", exact: true }).count(), 0);
-    assert.deepEqual(await directory.getByRole("button", { name: /^Remove / }).allTextContents(), ["Remove Role member"]);
-    assert.equal(await directory.getByRole("form", { name: "Invite member", exact: true }).count(), 0);
+    assert.equal(await peer.getByRole("button", { name: "Change role", exact: true }).count(), 0);
+    assert.equal(await peer.getByRole("button", { name: "Invite", exact: true }).count(), 0);
+    // A Member's only control is leaving: on their own record, never on anyone else's.
+    await peer.getByRole("link", { name: /Role member \(you\)/ }).click();
+    await peer.getByRole("button", { name: "Leave workspace", exact: true }).waitFor();
+    assert.equal(await peer.getByLabel("Role", { exact: true }).count(), 0, "a Member does not change roles");
+    await navigate(peer, base + "/app/settings/people");
+    await peer.getByRole("link", { name: new RegExp(owner.name) }).first().click();
+    assert.equal(await peer.getByRole("button", { name: /^(Remove|Leave)/ }).count(), 0);
     // A Member's list holds only their own sections; a denied path is one plain line, not a page.
     await navigate(peer, base + "/app/settings");
     const entries = peer.getByRole("navigation", { name: "Settings sections" }).locator(".settings-nav-name");
@@ -346,8 +335,7 @@ export async function exerciseWorkspaceRoles({ page, browser, runtime, clause, e
       await peer.getByText("You can’t open this page.").waitFor();
     }
     await navigate(peer, base + "/app/settings/labels");
-    const labels = peer.getByRole("region", { name: "Labels", exact: true });
-    await labels.getByText("Workspace labels are read-only here. Owners and Admins manage labels.", { exact: true }).waitFor();
+    const labels = peer.getByRole("list", { name: "Labels", exact: true });
     await labels.getByText("synthetic-vector-15", { exact: true }).waitFor();
     for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
       await peer.setViewportSize(viewport);
@@ -363,7 +351,7 @@ export async function exerciseWorkspaceRoles({ page, browser, runtime, clause, e
     await peer.getByRole("region", { name: "Integrations", exact: true }).getByRole("heading", { name: "API tokens", exact: true }).waitFor();
   });
   await navigate(peer, base + "/app/settings/people");
-  await inspect(peer, peer.getByRole("region", { name: "Members", exact: true }), "members-member-view");
+  await inspect(peer, peer.getByRole("list", { name: "People", exact: true }), "members-member-view");
   await exerciseGuestRoles({page,browser,runtime,clause,evidence});
   await privateTeamJourney({page,peer,memberId,runtime,clause,evidence});
   await rolePrivateCells({page,peer,memberId,runtime,clause});

@@ -2,7 +2,10 @@ import { useEffect, useState, type FormEvent } from "react";
 import { fetchJson, useApiResource } from "../../app/api-client";
 import { useHydrated } from "../../app/initial-resources";
 import type { Administration } from "../administration/schema";
+import { Disclosure } from "../settings/ui/fields/disclosure";
 import { rotationView } from "./schema";
+
+/** The team's weekly triage rotation, in its People tab: the first handover, then members in order by their selects. */
 export function TeamTriageRotation({
   data,
   team,
@@ -58,19 +61,15 @@ export function TeamTriageRotation({
     }
   }
   return (
-    <section aria-label={`Triage rotation for ${team.name}`}>
-      <h3>Triage responsibility</h3>
-      <p>
-        A weekly rotation follows {data.workspace.timezone}. Each new native or
-        signed-source intake item notifies its current responsible member once
-        in Inbox, except its actor. Unavailable members receive nothing.
-      </p>
+    <section className="triage-rotation" aria-label={`Triage rotation for ${team.name}`}>
+      <h2 className="group-heading">Triage responsibility</h2>
+      <p className="field-hint">Each week one member hears about new intake items in Inbox.</p>
       {resource.loading && <p role="status">Loading rotation…</p>}
       {resource.error && (
         <p role="alert">
           {resource.error.message}{" "}
-          <button type="button" onClick={resource.reload}>
-            Retry rotation
+          <button type="button" className="field-retry" onClick={resource.reload}>
+            Retry
           </button>
         </p>
       )}
@@ -80,28 +79,24 @@ export function TeamTriageRotation({
           onSubmit={save}
         >
           <fieldset disabled={pending || !hydrated}>
-            <label>
-              First handover in {data.workspace.timezone}
+            <div className="field">
+              <div className="field-head"><label htmlFor={`rotation-start-${team.id}`}>First handover in {data.workspace.timezone}</label></div>
               <input
+                id={`rotation-start-${team.id}`}
                 name="startsLocal"
                 type="datetime-local"
                 required
                 key={resource.data.startsLocal ?? "new"}
                 defaultValue={resource.data.startsLocal ?? ""}
               />
-            </label>
-            <p>
-              The first member starts at this boundary. Subsequent members take
-              one calendar week each. A repeated or skipped clock minute hands
-              over at the next unambiguous minute.
-            </p>
-            <ol>
+            </div>
+            <ol className="rotation-list">
               {order.map((id, index) => (
                 <li key={index}>
-                  <label>
-                    Rotation member {index + 1}
+                  <span className="rotation-number" aria-hidden="true">{index + 1}</span>
+                  <div className="field">
                     <select
-                    aria-label={`Rotation member ${index + 1}`}
+                      aria-label={`Rotation member ${index + 1}`}
                       required
                       value={id}
                       onChange={(event) =>
@@ -119,43 +114,11 @@ export function TeamTriageRotation({
                         </option>
                       ))}
                     </select>
-                  </label>
-                  <div className="admin-actions">
+                  </div>
+                  {order.length > 2 && (
                     <button
                       type="button"
-                      disabled={index === 0}
-                      onClick={() =>
-                        setOrder((values) => {
-                          const next = [...values];
-                          [next[index - 1], next[index]] = [
-                            next[index],
-                            next[index - 1],
-                          ];
-                          return next;
-                        })
-                      }
-                    >
-                      Move member {index + 1} up
-                    </button>
-                    <button
-                      type="button"
-                      disabled={index === order.length - 1}
-                      onClick={() =>
-                        setOrder((values) => {
-                          const next = [...values];
-                          [next[index + 1], next[index]] = [
-                            next[index],
-                            next[index + 1],
-                          ];
-                          return next;
-                        })
-                      }
-                    >
-                      Move member {index + 1} down
-                    </button>
-                    <button
-                      type="button"
-                      disabled={order.length <= 2}
+                      className="button-text"
                       onClick={() =>
                         setOrder((values) =>
                           values.filter((_, i) => i !== index),
@@ -164,30 +127,37 @@ export function TeamTriageRotation({
                     >
                       Remove member {index + 1}
                     </button>
-                  </div>
+                  )}
                 </li>
               ))}
             </ol>
-            <button
-              type="button"
-              disabled={order.length >= 50}
-              onClick={() => setOrder((values) => [...values, ""])}
-            >
-              Add rotation member
-            </button>
-            <button type="submit">Save triage rotation</button>
+            <div className="confirm-actions">
+              <button
+                type="button"
+                className="button-quiet"
+                disabled={order.length >= 50}
+                onClick={() => setOrder((values) => [...values, ""])}
+              >
+                Add rotation member
+              </button>
+              <button type="submit" className="button-quiet">Save triage rotation</button>
+            </div>
           </fieldset>
         </form>
       )}
       {resource.data?.startsLocal && (
-        <p>
+        <p className="field-hint">
           Current responsible member:{" "}
           {resource.data.responsible?.name ?? "No available member"}.{" "}
           <a href="/app/triage">Open triage handover</a>
         </p>
       )}
-      {saved && <p role="status">Triage rotation saved.</p>}
-      {error && <p role="alert">{error}</p>}
+      {saved && <p className="field-hint" role="status">Triage rotation saved.</p>}
+      {error && <p className="confirm-error" role="alert">{error}</p>}
+      <Disclosure title="How this works">
+        <p>The rotation follows {data.workspace.timezone}. Each new native or signed-source intake item notifies its current responsible member once in Inbox, except its actor. Unavailable members receive nothing.</p>
+        <p>The first member starts at the first handover. Each member after takes one calendar week. A repeated or skipped clock minute hands over at the next unambiguous minute.</p>
+      </Disclosure>
     </section>
   );
 }

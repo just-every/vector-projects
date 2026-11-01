@@ -1,0 +1,17 @@
+/* Labels: a dot, the name and a usage line; a label opens in place on the sunk tone. */
+.label-row { list-style: none; }
+.label-head { display: flex; align-items: center; gap: 0.5rem; min-height: 4.25rem; padding: 0.4rem 0.25rem; }
+.label-toggle { display: flex; flex: 1; align-items: center; gap: 1rem; min-width: 0; min-height: 44px; padding: 0; border: 0; background: none; color: var(--app-ink); font: inherit; text-align: left; cursor: pointer; }
+.label-toggle:focus-visible { outline: 2px solid var(--app-focus); outline-offset: 2px; border-radius: 0.35rem; }
+.label-head > .row-main, .label-toggle .row-main { flex: 1; }
+.label-dot { flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%; }
+.label-row[data-open] { background: var(--app-paper); border-radius: 0.6rem; }
+.settings-rows > li.label-row[data-open] { border-bottom-color: transparent; }
+.label-body { display: grid; gap: 1.1rem; padding: 0.25rem 1rem 1.25rem 3.25rem; }
+.label-editor { display: grid; gap: 1.1rem; max-width: 26rem; }
+.label-editor .field input[type="text"] { background-color: var(--app-column); }
+.label-body .confirm-line { background: var(--app-column); box-shadow: 0 0 0 1px var(--app-line); }
+.label-body .confirm-line select { max-width: 22rem; background-color: var(--app-column); }
+.new-label { display: grid; gap: 1rem; margin: 0 0 1.5rem; padding: 1.25rem 1.4rem; border-radius: 0.75rem; background: var(--app-paper); }
+.new-label .field input[type="text"] { background-color: var(--app-column); }
+.new-label-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1rem; }

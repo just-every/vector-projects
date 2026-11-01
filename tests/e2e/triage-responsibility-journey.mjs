@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { expect } from "@playwright/test";
-import { openDisclosures } from "./ui-controls-checks.mjs";
 import { navigate } from "./collaboration-navigation.mjs";
 import { writeRuntimeD1 } from "./runtime-d1.mjs";
 import { roleScreens } from "./role-ui-support.mjs";
@@ -73,8 +72,8 @@ export async function triageResponsibilityJourney({
       "TRIAGE-001",
       "weekly rotation, native and signed intake, handover and once-only Inbox through mounted doors",
       async () => {
-        await navigate(page, base + "/app/settings/teams");
-        await openDisclosures(page);
+        // The rotation is part of the team's People tab.
+        await navigate(page, base + `/app/settings/teams/${team.id}/people`);
         const form = page.getByRole("form", {
           name: `Weekly triage rotation for ${team.name}`,
           exact: true,
@@ -84,23 +83,22 @@ export async function triageResponsibilityJourney({
             exact: true,
           })
           .fill(startsLocal);
+        // The order is the selects themselves: each position holds exactly the member chosen for it.
+        await form
+          .getByLabel("Rotation member 1", { exact: true })
+          .selectOption(owner.id);
+        await form
+          .getByLabel("Rotation member 2", { exact: true })
+          .selectOption(colleague);
+        await expect(
+          form.getByLabel("Rotation member 1", { exact: true }),
+        ).toHaveValue(owner.id);
         await form
           .getByLabel("Rotation member 1", { exact: true })
           .selectOption(colleague);
         await form
           .getByLabel("Rotation member 2", { exact: true })
           .selectOption(owner.id);
-        // Keyboard order controls retain exact stored member identity.
-        await form
-          .getByRole("button", { name: "Move member 2 up", exact: true })
-          .focus();
-        await page.keyboard.press("Enter");
-        await expect(
-          form.getByLabel("Rotation member 1", { exact: true }),
-        ).toHaveValue(owner.id);
-        await form
-          .getByRole("button", { name: "Move member 1 down", exact: true })
-          .click();
         const saved = page.waitForResponse(
           (r) =>
             new URL(r.url()).pathname === "/api" + path &&
@@ -116,7 +114,6 @@ export async function triageResponsibilityJourney({
             .filter({ hasText: "Triage rotation saved." }),
         ).toBeVisible();
         await page.reload();
-        await openDisclosures(page);
         await expect(
           form.getByLabel("Rotation member 1", { exact: true }),
         ).toHaveValue(colleague);

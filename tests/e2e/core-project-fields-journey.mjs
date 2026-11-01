@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { beforePrivateNavigation, settleReads } from './collaboration-navigation.mjs';
 import { openAdministrationForm,openDisclosures } from './ui-controls-checks.mjs';
+import { switchRow } from './settings-pane-support.mjs';
 import { poll } from './admin-runtime-support.mjs';
 
 /** Called by the runtime's authenticated page at each required viewport. */
@@ -13,11 +14,11 @@ export async function projectFieldsJourney({page,runtime,capture,clause,expected
   const labels=[`Delivery ${suffix}`,`Customer ${suffix}`];
   await beforePrivateNavigation(page,base+'/app/settings/labels');
   await page.goto(base+'/app/settings/labels');
-  await openDisclosures(page);
   for(const name of labels) {
+    await page.getByRole('button',{name:'New label',exact:true}).first().click();
     const form=page.getByRole('form',{name:'Create label',exact:true});
-    await form.getByLabel('Label name',{exact:true}).fill(name);
-    await form.getByLabel('Use for projects',{exact:true}).check();
+    await form.getByLabel('Name',{exact:true}).fill(name);
+    await switchRow(form,'Use for projects').click();
     if(name===labels[0])await capture(`project-label-settings-${suffix}`);
     await form.getByRole('button',{name:'Create label',exact:true}).click();
     await poll(()=>sql(`SELECT id FROM labels WHERE name='${name}' AND projects_enabled=1`),rows=>rows.length===1,'enabled project label');

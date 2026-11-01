@@ -202,8 +202,6 @@ const developmentAssets = new Set([
   '/src/core/features/cycles/ui/cycles.css',
   '/src/core/features/cycles/ui/cycles-workspace.tsx',
   '/src/core/features/cycles/ui/cycles-panel.tsx',
-  '/src/core/features/settings/ui/labels-panel.tsx',
-  '/src/core/features/settings/ui/teams-panel.tsx',
   '/src/routes/app.new.tsx',
   '/src/core/app/site/brand/tokens.css',
   '/src/core/app/site/brand/chrome.css',
@@ -299,7 +297,6 @@ const developmentAssets = new Set([
   '/src/core/features/issues/ui/issue-list-controls.ts',
   '/src/core/features/issues/ui/issues-browser.css',
   '/src/core/features/issues/list-schema.ts',
-  '/src/core/features/settings/ui/invite-operator.tsx',
   '/src/core/features/settings/ui/settings.css',
   '/src/core/features/settings/schema.ts',
 

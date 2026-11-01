@@ -1,5 +1,4 @@
 import { useDateFormat } from "../../../shared/date-format";
-import { CycleSchedulePanel } from "../../cycle-schedule/panel";
 import { Link } from "@tanstack/react-router";
 import type { FormEvent } from "react";
 import type { Administration } from "../../administration/schema";
@@ -49,8 +48,7 @@ export function CyclesPanel({
         cycles for the same team cannot overlap. When clocks change, choose a
         time that occurs once. Times that happen twice or are skipped cannot be
         saved.
-      </p>
-      <CycleSchedulePanel data={data} onChanged={onChanged} /></>}
+      </p></>}
       {data.cycles.length === 0 && (
         <p>{mayManage ? "No cycles yet. Create your first cycle below." : "No cycles in your invited teams."}</p>
       )}

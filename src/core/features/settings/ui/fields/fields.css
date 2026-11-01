@@ -14,7 +14,9 @@ legend.field-head { float: none; margin: 0 0 0.4rem; }
 
 .field select,
 .field input[type="text"],
-.field input[type="time"] {
+.field input[type="time"],
+.field input[type="datetime-local"],
+.field input[type="email"] {
   box-sizing: border-box;
   width: 100%;
   min-height: 44px;
@@ -50,3 +52,5 @@ legend.field-head { float: none; margin: 0 0 0.4rem; }
 .day-chips input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
 .day-chips label:has(input:checked) { background: var(--app-cobalt-ink); color: var(--app-on-accent); }
 .day-chips label:has(input:focus-visible) { outline: 2px solid var(--app-focus); outline-offset: 2px; }
+.field textarea { box-sizing: border-box; width: 100%; padding: 0.55rem 0.8rem; border: 1px solid var(--app-field-border); border-radius: 0.5rem; background-color: var(--app-field); color: var(--app-ink); font: inherit; resize: vertical; }
+.field textarea:focus-visible { outline: 0; border-color: var(--app-focus); box-shadow: 0 0 0 1px var(--app-focus); }

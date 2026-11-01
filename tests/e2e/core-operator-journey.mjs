@@ -2,7 +2,7 @@ import { withOperatorClient } from './operator-request.mjs';
 import assert from 'node:assert/strict';
 import {readDevelopmentLink} from './outbox-session.mjs';
 import {beforePrivateNavigation,navigate,settleReads} from './collaboration-navigation.mjs';
-import {openDisclosures} from './ui-controls-checks.mjs';
+import {invitePerson} from './settings-pane-support.mjs';
 
 // A long journey can outlive the inviter's app-local email proof. Renew it
 // through the same public confirmation door before the next privileged action.
@@ -25,14 +25,9 @@ export async function confirmInviter(page,context,base,state) {
 export async function withInvitedOperator(page,context,base,state,journey,displayName='Stream planning teammate'){
  await confirmInviter(page,context,base,state);
  const original=await context.cookies(),email=`stream-planning-${Date.now()}@vector.test`;
- await navigate(page,base+'/app/settings/people');await openDisclosures(page);
- const operators=page.getByRole('region',{name:'Members',exact:true});
- await operators.getByLabel('Name',{exact:true}).fill(displayName);
- await operators.getByLabel('Email',{exact:true}).fill(email);
- await operators.getByLabel('Role',{exact:true}).selectOption('owner');
- const invited=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/settings/operators/invite'&&response.request().method()==='POST');
- await operators.getByRole('button',{name:'Send invitation',exact:true}).click();
- const response=await invited;assert.equal(response.status(),202);assert.equal(await response.finished(),null);
+ await navigate(page,base+'/app/settings/people');
+ const response=await invitePerson(page,{name:displayName,email,role:'owner'});
+ assert.equal(response.status(),202);assert.equal(await response.finished(),null);
  const link=await readDevelopmentLink(base,context.request,email,state);
  await beforePrivateNavigation(page,link);await page.goto(link);await page.waitForLoadState('networkidle');
  const confirmed=page.waitForResponse(response=>new URL(response.url()).pathname==='/auth/confirm'&&response.request().method()==='POST');

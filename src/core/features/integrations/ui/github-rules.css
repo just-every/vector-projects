@@ -1,4 +1,2 @@
-.github-rules .github-rule-reopen { display:flex; align-items:flex-start; gap:.6rem; }
-.github-rules .github-rule-reopen input[type="checkbox"] { width:1rem; height:1rem; min-height:0; flex:none; margin-top:.25rem; }
 /* A 44px tap target that keeps one line of layout, so nothing around the link moves. */
 .github-rules-teams-link { display:inline-block; padding-block:max(0px, (44px - 1lh) / 2); margin-block:min(0px, (1lh - 44px) / 2); }

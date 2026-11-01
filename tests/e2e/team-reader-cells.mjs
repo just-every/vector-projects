@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {readerApi} from './role-reader-support.mjs';
 import {navigate} from './collaboration-navigation.mjs';
-import {openDisclosures} from './ui-controls-checks.mjs';
+import {openTeam,switchRow} from './settings-pane-support.mjs';
 
 export async function teamCreationReaderCell(viewer,runtime,width){
  await viewer.page.setViewportSize({width,height:width===390?844:1000});await navigate(viewer.page,runtime.base+'/app/settings/teams');await viewer.page.getByText('You can’t open this page.').waitFor();
@@ -22,7 +22,7 @@ export async function teamJoinReaderCells({page,peer,requester,viewer,runtime,te
  await requester.getByRole('button',{name:'Request to join '+team.name,exact:true}).click();assert.equal((await response).status(),200);
  await api('/issues/'+issue.identifier,'GET',undefined,404);assert.ok(!JSON.stringify(await api('/search?q='+encodeURIComponent(issue.title))).includes(issue.identifier));
  assert.equal(runtime.sql(`SELECT count(*) n FROM team_members WHERE team_id='${team.id}' AND operator_id='${member}'`)[0].n,0);
- await navigate(peer,base+'/app/settings/teams');await openDisclosures(peer);
+ await openTeam(peer,base,team,'people');
  const request=peer.getByRole('group',{name:'Request from Delivery lead',exact:true});response=peer.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/requests/${member}/decision`&&r.request().method()==='POST');
  await request.getByRole('button',{name:'Approve Delivery lead',exact:true}).click();assert.equal((await response).status(),200);await api('/issues/'+issue.identifier);
  await lead(`/settings/teams/${team.id}/membership`,'PUT',{mode:'invite_only',requestsEnabled:false});await lead(`/settings/teams/${team.id}/members/${member}`,'DELETE');
@@ -37,9 +37,9 @@ export async function privateTeamCreationCells({page,peer,runtime,width,evidence
  await owner(`/settings/operators/${id}/role`,'PATCH',{role:'admin'});
  try{
   for(const [actor,index] of [[page,1950],[peer,1951]]){
-   await actor.setViewportSize({width,height:width===390?844:1000});await navigate(actor,runtime.base+'/app/settings/teams');await openDisclosures(actor);
+   await actor.setViewportSize({width,height:width===390?844:1000});await navigate(actor,runtime.base+'/app/settings/teams');await actor.getByRole('button',{name:'New team',exact:true}).click();
    const form=actor.getByRole('form',{name:'Create team',exact:true}),name='synthetic-vector-'+index+'-'+width;
-   await form.getByLabel('Team name',{exact:true}).fill(name);await form.getByLabel('Identifier prefix',{exact:true}).fill('SYN'+(width===1440?'D':'M')+(index===1950?'O':'A'));await form.getByLabel('Private team',{exact:true}).check();
+   await form.getByLabel('Team name',{exact:true}).fill(name);await form.getByLabel('Identifier prefix',{exact:true}).fill('SYN'+(width===1440?'D':'M')+(index===1950?'O':'A'));await switchRow(form,'Private team').click();
    const response=actor.waitForResponse(r=>new URL(r.url()).pathname==='/api/settings/teams'&&r.request().method()==='POST');await form.getByRole('button',{name:'Create team',exact:true}).click();const result=await response;assert.equal(result.status(),200);const team=(await result.json()).teams.find(t=>t.name===name);assert.equal(team.isPrivate,true);assert.equal(runtime.sql(`SELECT count(*) n FROM audit_records WHERE action='team.created' AND subject_id='${team.id}'`)[0].n,1);
   }
  }finally{await owner(`/settings/operators/${id}/role`,'PATCH',{role:'member'});}

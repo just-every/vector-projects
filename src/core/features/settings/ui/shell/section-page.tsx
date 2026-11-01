@@ -4,13 +4,17 @@ import { wantIndexScroll } from './index-scroll';
 import type { SectionPath } from './sections';
 
 /**
- * One Settings page: "‹ Settings" (phone), a breadcrumb (desktop, record pages), the title, then the body.
- * Pages not yet rebuilt render their existing panel inside `legacy`, which keeps its own look.
+ * One Settings page: "‹ Settings" (phone), a breadcrumb (desktop, record pages), the title with its one quiet
+ * action, an optional meta line, then the body. Pages not yet rebuilt render their existing panel inside `legacy`.
  */
-export function SectionPage({ title, parent, record, legacy = false, children }: {
+export function SectionPage({ title, parent, record, action, sub, legacy = false, children }: {
   title: string;
   parent?: { label: string; to: SectionPath };
   record?: string;
+  /** The page's one opener (Invite, New team, New label), beside the title. */
+  action?: ReactNode;
+  /** A quiet line under the title: a person's email, a team's key and size. */
+  sub?: ReactNode;
   legacy?: boolean;
   children: ReactNode;
 }) {
@@ -21,13 +25,17 @@ export function SectionPage({ title, parent, record, legacy = false, children }:
     {parent && record && <nav className="settings-crumbs" aria-label="Breadcrumb">
       <Link to={parent.to}>{parent.label}</Link><span aria-hidden="true">›</span><span aria-current="page">{record}</span>
     </nav>}
-    <h1 id="settings-title">{title}</h1>
+    <div className="settings-head">
+      <h1 id="settings-title">{title}</h1>
+      {action}
+    </div>
+    {sub && <p className="settings-sub">{sub}</p>}
     {legacy ? <div className="settings-page settings-legacy">{children}</div> : children}
   </article>;
 }
 
 export function Skeleton() {
-  return <div className="settings-skeleton" aria-busy="true" aria-label="Loading"><span /><span /><span /></div>;
+  return <div className="settings-skeleton" role="status" aria-busy="true" aria-label="Loading"><span /><span /><span /></div>;
 }
 
 /** The quiet line for a record that does not exist: never a blank page. */

@@ -1,0 +1,16 @@
+/* People: the directory, Invite in place and a person's record. */
+.people-notice { margin: 0 0 1rem; color: var(--app-body); }
+.invite-form { display: grid; gap: 1rem; margin: 0 0 1.5rem; padding: 1.25rem 1.4rem; border-radius: 0.75rem; background: var(--app-paper); }
+.invite-form h2 { margin: 0; font-size: 1.15rem; font-weight: 650; }
+.invite-form .field input, .invite-form .field select { background-color: var(--app-column); }
+.invite-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+
+
+.team-picker { display: grid; gap: 0.15rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.team-picker legend { padding: 0; margin: 0 0 0.25rem; font-size: 1rem; }
+.team-picker label { display: flex; align-items: center; gap: 0.6rem; min-height: 44px; cursor: pointer; }
+
+.person-record { display: grid; gap: 1.25rem; max-width: 30rem; }
+.person-record .field select { max-width: 22rem; }
+.person-role { display: grid; gap: 1rem; }
+.person-remove { display: grid; gap: 0.75rem; }

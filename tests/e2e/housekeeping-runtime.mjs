@@ -48,18 +48,23 @@ try {
   ]);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
-    await go('/app/settings/teams');
-    const form = page.getByRole('form', { name: `Auto-close and auto-archive ${team.name}` });
-    await form.getByLabel('Auto-close after (days without activity)').fill('30');
-    await form.getByLabel('Auto-archive after (days since closed)').fill('90');
-    await form.getByRole('button', { name: 'Preview', exact: true }).click();
+    await go(`/app/settings/teams/${team.id}/automation`);
+    // Each period stores as it changes (no Save button); Preview reads what the next run would use.
+    const rule = page.getByRole('region', { name: 'Auto-close and auto-archive', exact: true });
+    const stored = () => page.waitForResponse(r => r.url().endsWith('/housekeeping') && r.request().method() === 'PUT');
+    for (const [label, value] of [['Close after', '30'], ['Archive after', '90']]) {
+      const field = rule.getByLabel(label, { exact: true });
+      if (await field.inputValue() === value) continue;
+      const saved = stored();
+      await field.fill(value); await field.blur(); assert.equal((await saved).status(), 200);
+    }
+    assert.equal(await rule.getByRole('button', { name: /^Save(?!d)/ }).count(), 0);
+    await rule.getByRole('button', { name: 'Preview', exact: true }).click();
     const preview = page.getByRole('status', { name: `Preview for ${team.name}` });
     await preview.getByRole('heading', { name: 'Would close 1' }).waitFor();
     await preview.getByRole('heading', { name: 'Would archive 1' }).waitFor();
     assert.ok((await preview.innerText()).includes(stale.identifier) && (await preview.innerText()).includes(done.identifier));
-    const saved = page.waitForResponse(r => r.url().endsWith('/housekeeping') && r.request().method() === 'PUT');
-    await form.getByRole('button', { name: 'Save automation' }).click(); assert.equal((await saved).status(), 200);
-    await page.locator('#housekeeping').getByText('Saved.', { exact: true }).waitFor(); await settleReads(page); await preview.scrollIntoViewIfNeeded(); await page.screenshot({ path: `${output}/settings-preview-${width}.png` }); await overflow();
+    await settleReads(page); await preview.scrollIntoViewIfNeeded(); await page.screenshot({ path: `${output}/settings-preview-${width}.png` }); await overflow();
   }
   // Two scheduled runs: the second finds nothing left to change, so each change notifies once.
   for (let run = 0; run < 2; run++) {

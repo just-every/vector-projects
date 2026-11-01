@@ -2,7 +2,7 @@ import {readerResponse} from './role-reader-support.mjs';
 import {privateTeamRequest,privateAdminMetadata} from './admin-team-journey.mjs';
 import assert from 'node:assert/strict';
 import {navigate} from './collaboration-navigation.mjs';
-import {openDisclosures} from './ui-controls-checks.mjs';
+import {openTeam} from './settings-pane-support.mjs';
 import {roleScreens} from './role-ui-support.mjs';
 
 /** ROLE-002 through existing Settings and work pages with the retained Member session. */
@@ -17,7 +17,8 @@ export async function privateTeamJourney({page,peer,memberId,runtime,clause,evid
  for(const width of [1440,390]) {
   const name='synthetic-vector-'+(width===1440?980:981);
   await page.setViewportSize({width,height:width===390?844:1000});await peer.setViewportSize({width,height:width===390?844:1000});
-  await navigate(page,base+'/app/settings/teams');await openDisclosures(page);
+  await navigate(page,base+'/app/settings/teams');
+  await page.getByRole('button',{name:'New team',exact:true}).click();
   const create=page.getByRole('form',{name:'Create team',exact:true});
   await create.getByLabel('Team name',{exact:true}).fill(name);await create.getByLabel('Identifier prefix',{exact:true}).fill(width===1440?'SYNUIA':'SYNUIB');
   if(width===1440)await inspect(page,create,'private-team-create-controls');
@@ -31,12 +32,16 @@ export async function privateTeamJourney({page,peer,memberId,runtime,clause,evid
   await api(page,'/issues','POST',{title:name+' public work',teamId:publicTeam.id,projectId:project.id},201);
   const issue=await api(peer,'/issues','POST',{title:name+' private work',teamId:team.id,projectId:project.id,statusId:team.statuses.find(s=>s.category==='started').id,assigneeOperatorId:memberId,dueDate:'2026-11-04'},201);
   await api(peer,`/issues/${issue.identifier}/comments`,'POST',{body:name+' comment'},201);
+  const visibility=actor=>actor.getByRole('group',{name:'Visibility',exact:true});
+  const choose=async(actor,value)=>{
+   const changed=actor.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/privacy`&&r.request().method()==='PUT');
+   const radio=visibility(actor).getByRole('radio',{name:value==='private'?'Private':'Public',exact:true});
+   await radio.check();assert.equal((await changed).status(),200);
+   await actor.waitForFunction(({value})=>[...document.querySelectorAll('fieldset input[type=radio]')].find(input=>input.checked)?.parentElement?.textContent===(value==='private'?'Private':'Public'),{value});
+  };
   const set=async value=>{
-   await navigate(page,base+'/app/settings/teams');await openDisclosures(page);
-   const select=page.getByRole('combobox',{name:'Visibility of '+name,exact:true});
-   const changed=page.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/privacy`&&r.request().method()==='PUT');
-   await select.selectOption(value);assert.equal((await changed).status(),200);
-   await page.waitForFunction(({name,value})=>document.querySelector(`[aria-label="Visibility of ${name}"]`)?.value===value,{name,value});assert.equal(await select.inputValue(),value);
+   await openTeam(page,base,team,'details');
+   await choose(page,value);
   };
   await clause('ROLE-002',`Owner makes a team private at ${width}; non-member identifier, search, Current, exports and private join are refused`,async()=>{
    await set('private');
@@ -47,29 +52,23 @@ export async function privateTeamJourney({page,peer,memberId,runtime,clause,evid
    await navigate(peer,base+'/app');assert.ok(!(await peer.locator('main:visible').first().innerText()).includes(issue.identifier));
    await navigate(peer,base+'/app/settings/teams');assert.equal(await peer.getByRole('button',{name:'Join '+name,exact:true}).count(),0);
   });
-  if(width===1440){await inspect(page,page.getByRole('combobox',{name:'Visibility of '+name,exact:true}).locator('..'),'private-team-owner-controls');}
+  if(width===1440){await openTeam(page,base,team,'details');await inspect(page,visibility(page),'private-team-owner-controls');}
   await clause('ROLE-002',`non-member Admin sees its name and privacy control, changes visibility, and cannot read its work at ${width}`,async()=>{
    await api(page,`/settings/operators/${memberId}/role`,'PATCH',{role:'admin'});
-   await navigate(peer,base+'/app/settings/teams');await openDisclosures(peer);
-   assert.equal(await peer.getByRole('form',{name:'Edit '+name,exact:true}).count(),0);
-   const control=peer.getByRole('combobox',{name:'Visibility of '+name,exact:true});
-   assert.equal(await control.inputValue(),'private');
+   await openTeam(peer,base,team,'details');
+   assert.equal(await peer.getByLabel('Name',{exact:true}).count(),0);
+   assert.equal(await visibility(peer).getByRole('radio',{name:'Private',exact:true}).isChecked(),true);
    await privateAdminMetadata({peer,name,team,api,inspect,width});
-   if(width===1440)await inspect(peer,control.locator('..'),'private-team-admin-metadata');
-   for(const value of ['public','private']){
-    const receipt=peer.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/privacy`&&r.request().method()==='PUT');
-    await control.selectOption(value);assert.equal((await receipt).status(),200);
-    await peer.waitForFunction(({name,value})=>document.querySelector(`[aria-label="Visibility of ${name}"]`)?.value===value,{name,value});
-   }
+   if(width===1440)await inspect(peer,visibility(peer),'private-team-admin-metadata');
+   for(const value of ['public','private'])await choose(peer,value);
    assert.equal((await readerResponse(peer,base,`/issues/${issue.identifier}`)).status,404);
    await api(page,`/settings/operators/${memberId}/role`,'PATCH',{role:'member'});
   });
 
   await clause('ROLE-002 ROLE-007',`team owner adds the Member at ${width}; issue, Current, search and counted export become visible`,async()=>{
-   const add=page.getByRole('form',{name:'Add member to '+name,exact:true});
-   await add.getByRole('combobox',{name:'Member to add',exact:true}).selectOption(memberId);
+   await openTeam(page,base,team,'people');
    const changed=page.waitForResponse(r=>new URL(r.url()).pathname===`/api/settings/teams/${team.id}/members/${memberId}`&&r.request().method()==='PUT');
-   await add.getByRole('button',{name:'Add member',exact:true}).click();assert.equal((await changed).status(),200);
+   await page.getByLabel('Add member',{exact:true}).selectOption(memberId);assert.equal((await changed).status(),200);
    await navigate(peer,base+'/app/issues/'+issue.identifier);await peer.getByRole('heading',{name:issue.title,exact:true}).waitFor();
    assert.ok(JSON.stringify(await api(peer,'/current')).includes(issue.identifier));assert.ok(JSON.stringify(await api(peer,'/search?q='+encodeURIComponent(issue.title))).includes(issue.identifier));
    const query='?q='+encodeURIComponent(issue.title),report=await api(peer,'/insights'+query);assert.equal(report.total,1);

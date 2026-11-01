@@ -2,7 +2,7 @@
 import { beforePrivateNavigation } from "./collaboration-navigation.mjs";
 import assert from "node:assert/strict";
 import { poll } from "./admin-runtime-support.mjs";
-import { openAdministrationForm } from "./ui-administration-form.mjs";
+import { openTeam } from "./settings-pane-support.mjs";
 export async function archiveRestoreTeam({
   page,
   runtime,
@@ -13,18 +13,16 @@ export async function archiveRestoreTeam({
 }) {
   const { base, sql } = runtime;
 
-  await beforePrivateNavigation(page, base + "/app/settings/teams");
-  await page.goto(base + "/app/settings/teams");
-  await openAdministrationForm(page, "Edit " + team.name);
   await clause(
     "TEAM-003",
     "archive excludes authoring rejects intake with 409 and preserves issue then restore",
     async () => {
       const before = sql(`SELECT * FROM issues WHERE id='${issue.id}'`)[0];
-      const edit = await openAdministrationForm(page, "Edit " + team.name);
-      await edit
-        .getByRole("button", { name: "Archive team", exact: true })
-        .click();
+      await openTeam(page, base, team, "details");
+      // Archive asks once, under its own control.
+      await page.getByRole("button", { name: "Archive " + team.name, exact: true }).click();
+      await page.getByText("You can unarchive it later.", { exact: true }).waitFor();
+      await page.getByRole("button", { name: "Archive team", exact: true }).click();
       await poll(
         () => sql(`SELECT archived_at FROM teams WHERE id='${team.id}'`),
         (rows) => Boolean(rows[0]?.archived_at),
@@ -35,8 +33,7 @@ export async function archiveRestoreTeam({
         before,
         "archive retains full issue",
       );
-      const archived = await openAdministrationForm(page, "Edit " + team.name);
-      await archived
+      await page
         .getByRole("button", { name: "Unarchive team", exact: true })
         .waitFor({ state: "visible" });
       await capture("team-archived-preserved-workflow");
@@ -85,10 +82,8 @@ export async function archiveRestoreTeam({
         .waitFor();
       await capture("archived-team-existing-issue");
 
-      await beforePrivateNavigation(page, base + "/app/settings/teams");
-      await page.goto(base + "/app/settings/teams");
-      const restore = await openAdministrationForm(page, "Edit " + team.name);
-      await restore
+      await openTeam(page, base, team, "details");
+      await page
         .getByRole("button", { name: "Unarchive team", exact: true })
         .click();
       await poll(

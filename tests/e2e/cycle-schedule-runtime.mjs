@@ -30,25 +30,19 @@ try {
     await context.request.get(runtime.base + "/api/settings/administration")
   ).json();
   const team = state.teams[0];
-  // The schedule form is keyed on the saved schedule, so the read that follows
-  // a save remounts it with the saved values as its defaults. Wait for that
-  // render: the filled values, and at 390 the "Scheduled" heading left by the
-  // 1440 save, are already on the form it replaces.
-  const savedSchedule = (values) =>
-    page.waitForFunction(
-      ({ name, values }) => {
-        const form = document.querySelector(`form[aria-label="${name}"]`);
-        return (
-          !!form &&
-          !form.querySelector("fieldset").disabled &&
-          Object.entries(values).every(
-            ([field, value]) =>
-              form.elements.namedItem(field).defaultValue === value,
-          )
-        );
-      },
-      { name: "Cycle schedule " + team.name, values },
+  // The schedule is four choices in the team's Planning tab; each stores as it changes (no Save button) and sends the whole record.
+  const planning = `${runtime.base}/app/settings/teams/${team.id}/planning`;
+  const choose = async (label, value) => {
+    const field = page.getByLabel(label, { exact: true });
+    if ((await field.inputValue()) === value) return;
+    const stored = page.waitForResponse(
+      (r) => r.url().endsWith("/cycle-schedule") && r.request().method() === "PUT",
     );
+    await field.selectOption(value);
+    assert.equal((await stored).status(), 200);
+    await page.getByText("Saved", { exact: true }).first().waitFor();
+    assert.equal(await field.inputValue(), value);
+  };
   const create = await context.request.post(runtime.base + "/api/issues", {
     headers: { Origin: runtime.base },
     data: {
@@ -62,34 +56,13 @@ try {
   assert.equal(create.status(), 201);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
-    await page.goto(runtime.base + "/app/cycles");
-    const form = page.getByRole("form", {
-      name: "Cycle schedule " + team.name,
-      exact: true,
-    });
-    await form.getByLabel("Cycle length (weeks)").fill("2");
-    await form.getByLabel("Start weekday").selectOption("1");
-    await form.getByLabel("Cooldown (weeks)").fill("1");
-    await form.getByLabel("Upcoming cycles to keep").fill("3");
-    const savedResponse = page.waitForResponse(
-      (r) =>
-        r.url().endsWith("/cycle-schedule") && r.request().method() === "PUT",
-    );
-    await form
-      .getByRole("button", { name: "Save cycle schedule", exact: true })
-      .click();
-    assert.equal((await savedResponse).status(), 200);
-    await savedSchedule({ weeks: "2", cooldown: "1", upcoming: "3" });
-    await form
-      .getByRole("button", { name: "Save cycle schedule", exact: true })
-      .waitFor({ state: "visible" });
-    await page.waitForFunction(
-      () => !document.querySelector('input[name="weeks"]')?.disabled,
-    );
-    await page
-      .getByRole("heading", { name: team.name + " · Scheduled", exact: true })
-      .waitFor();
-    await form.getByLabel("Cycle length (weeks)").scrollIntoViewIfNeeded();
+    await page.goto(planning);
+    assert.equal(await page.getByRole("button", { name: /^Save(?!d)/ }).count(), 0);
+    await choose("Cycle length", "2");
+    await choose("Starts on", "1");
+    await choose("Cooldown", "1");
+    await choose("Keep upcoming", "3");
+    await page.getByLabel("Cycle length", { exact: true }).scrollIntoViewIfNeeded();
     await page.screenshot({
       path: `${evidence}/CYCLE-007-scheduled-${width}.png`,
     });
@@ -102,22 +75,8 @@ try {
       Date.parse(cycles[1].startsAt) - Date.parse(cycles[0].endsAt),
       7 * 86400000,
     );
-    await form.getByLabel("Cycle length (weeks)").fill("1");
-    await form.getByLabel("Cooldown (weeks)").fill("0");
-    const response = page.waitForResponse(
-      (r) =>
-        r.url().endsWith("/cycle-schedule") && r.request().method() === "PUT",
-    );
-    await form
-      .getByRole("button", { name: "Save cycle schedule", exact: true })
-      .click();
-    assert.equal((await response).status(), 200);
-    await savedSchedule({ weeks: "1", cooldown: "0" });
-    await page.waitForFunction(
-      () =>
-        document.querySelector('input[name="weeks"]')?.value === "1" &&
-        !document.querySelector('input[name="weeks"]')?.disabled,
-    );
+    await choose("Cycle length", "1");
+    await choose("Cooldown", "0");
     saved = await (
       await context.request.get(runtime.base + "/api/settings/administration")
     ).json();
@@ -140,7 +99,7 @@ try {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     );
-    await page.goto(runtime.base + "/app/cycles");
+    await page.goto(planning);
     await page
       .getByRole("heading", { name: "Automatic cycle schedule", exact: true })
       .scrollIntoViewIfNeeded();
@@ -153,7 +112,7 @@ try {
       ),
     );
     console.log(
-      `[CYCLE-007] ${width}: save three cycles with cooldown, change cadence, preserve identities, read in Settings`,
+      `[CYCLE-007] ${width}: save three cycles with cooldown, change cadence, preserve identities, read in the team's Planning tab`,
     );
   }
   await page.setViewportSize({ width: 1440, height: 1000 });

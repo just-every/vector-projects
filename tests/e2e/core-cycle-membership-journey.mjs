@@ -20,15 +20,18 @@ export async function cycleMembershipJourney(page, context, base, record = async
   const create=title=>api('/issues','POST',{teamId:team.id,title,description:'Keep checkout available while payment providers are slow.',estimate:3});
   for(const width of [1440,390]) {
     await page.setViewportSize({width,height:900});
-    await beforePrivateNavigation(page,base+'/app/settings/teams'); await page.goto(base+'/app/settings/teams');
-    const details=page.locator('#teams details').filter({has:page.locator('summary').filter({hasText:team.name})}).first();
-    const form=details.getByRole('form',{name:'Edit '+team.name});
-    await page.waitForFunction(name=>[...document.querySelectorAll('form')].find(f=>f.getAttribute('aria-label')===name)?.querySelector('button')?.matches(':enabled'),'Edit '+team.name);
-    await details.locator('summary').first().click();
-    await form.getByRole('checkbox',{name:'Add uncommitted work to the active cycle when it starts'}).check();
-    await form.getByRole('checkbox',{name:'Add uncommitted work to the active cycle when it completes'}).check();
-    const saved=page.waitForResponse(r=>r.url()===base+'/api/settings/teams/'+team.id&&r.request().method()==='PATCH');
-    await form.getByRole('button',{name:'Save team',exact:true}).click(); assert.equal((await saved).status(),200);
+    await beforePrivateNavigation(page,base+'/app/settings/teams/'+team.id+'/planning'); await page.goto(base+'/app/settings/teams/'+team.id+'/planning');
+    // The two auto-add rules store as they flip: no Save button.
+    const rules=page.getByRole('region',{name:'Add work automatically',exact:true});
+    for(const when of ['starts','completes']){
+      const row=rules.locator('label.switch-row').filter({hasText:'when it '+when});
+      await row.waitFor();
+      if(await rules.getByRole('switch',{name:'Add uncommitted work to the active cycle when it '+when}).isChecked())continue;
+      const saved=page.waitForResponse(r=>r.url()===base+'/api/settings/teams/'+team.id&&r.request().method()==='PATCH');
+      await row.click(); assert.equal((await saved).status(),200);
+    }
+    assert.equal(await rules.getByRole('button',{name:/^Save(?!d)/}).count(),0);
+    const form=rules;
     await form.scrollIntoViewIfNeeded();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
     await record('CYCLE-008',`rules-${width}`,page);

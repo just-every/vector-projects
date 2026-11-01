@@ -1,0 +1,80 @@
+/* Teams: the list, New team in place and the team record with its tabs. */
+.team-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; column-gap: 0.75rem; min-height: 4.25rem; padding: 0.6rem 0.25rem; }
+.team-row:hover { background: var(--app-paper); }
+.team-link { color: var(--app-ink); text-decoration: none; }
+/* The whole row opens the team; the Join and Leave button sits above that area. */
+.team-link::after { content: ""; position: absolute; inset: 0; }
+.team-link:focus-visible { outline: 0; }
+.team-link:focus-visible::after { outline: 2px solid var(--app-focus); outline-offset: -2px; border-radius: 0.35rem; }
+.team-row .row-action { position: relative; z-index: 1; }
+.team-row-error { grid-column: 1 / -1; }
+.new-team { display: grid; gap: 1rem; margin: 0 0 1.5rem; padding: 1.25rem 1.4rem; border-radius: 0.75rem; background: var(--app-paper); }
+.new-team .field input[type="text"] { background-color: var(--app-column); }
+.new-team-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1rem; }
+
+/* The tab strip: the current tab is an inside tint; at a phone width the strip scrolls inside itself. */
+.team-tabs { display: flex; gap: 0.25rem; margin: 0 0 1.5rem; overflow-x: auto; border-bottom: 1px solid var(--app-line); scrollbar-width: none; }
+.team-tabs::-webkit-scrollbar { display: none; }
+.team-tab { display: inline-flex; flex: none; align-items: center; min-height: 44px; margin-bottom: 0.4rem; padding: 0 1rem; border-radius: 0.5rem; color: var(--app-ink); text-decoration: none; white-space: nowrap; }
+.team-tab:hover { background: var(--app-paper); }
+.team-tab[aria-current="page"] { background: var(--app-cobalt-soft); color: var(--app-cobalt-ink); font-weight: 560; }
+.team-tab:focus-visible { outline: 2px solid var(--app-focus); outline-offset: 2px; }
+
+.team-tab-body, .team-details, .team-people, .team-planning, .team-automation, .team-metadata { display: grid; gap: 1.5rem; }
+.team-block { display: grid; gap: 0.9rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--app-line); }
+.team-tab-body > div > .team-block:last-child { border-bottom: 0; }
+.group-heading { margin: 0; font-size: 1.15rem; font-weight: 650; }
+.workflow-group .group-heading { font-size: var(--app-text-small); font-weight: 560; letter-spacing: 0.1em; text-transform: uppercase; color: var(--app-muted); }
+.plain-values { display: grid; gap: 0.5rem; margin: 0; }
+.plain-values > div { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; }
+.plain-values dt { min-width: 11rem; color: var(--app-body); }
+.plain-values dd { margin: 0; font-weight: 560; }
+.schedule-grid, .manage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 1rem; }
+.manage-grid { grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.git-rules { display: grid; gap: 1rem; max-width: 26rem; }
+
+.team-workflow { display: grid; gap: 0.5rem; }
+.workflow-order { display: flex; justify-content: flex-end; min-height: 1.25rem; }
+.workflow-group { margin-bottom: 1rem; }
+.status-rows { margin: 0.25rem 0 0; padding: 0; list-style: none; }
+.status-row { border-bottom: 1px solid var(--app-line); }
+.status-row[data-dragging] { opacity: 0.5; }
+.status-row[data-mode] { background: var(--app-paper); border-radius: 0.5rem; }
+.status-line { display: flex; align-items: center; gap: 0.5rem; min-height: 3.25rem; }
+.status-name { flex: 1; font-weight: 600; overflow-wrap: anywhere; }
+.status-default { flex: none; }
+.status-handle { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border: 0; background: none; color: var(--app-muted); font-size: 1rem; letter-spacing: -0.1em; cursor: grab; border-radius: 0.5rem; }
+.status-handle:focus-visible { outline: 2px solid var(--app-focus); }
+.status-row .confirm-line { margin: 0 0 0.75rem 2.75rem; background: var(--app-column); box-shadow: 0 0 0 1px var(--app-line); }
+.status-rename { display: flex; flex: 1; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.status-rename input { flex: 1; min-width: 8rem; min-height: 44px; padding: 0.4rem 0.7rem; border: 1px solid var(--app-field-border); border-radius: 0.5rem; background: var(--app-column); color: var(--app-ink); font: inherit; font-weight: 600; }
+.add-status { display: grid; gap: 1rem; padding: 1.1rem 1.25rem; border-radius: 0.6rem; background: var(--app-paper); }
+.add-status .field input, .add-status .field select { background-color: var(--app-column); }
+.add-status-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+
+.member-rows { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--app-line); }
+.member-row { border-bottom: 1px solid var(--app-line); padding: 0.25rem 0; }
+.member-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; min-height: 3.5rem; }
+.member-line .row-name { flex: 1; min-width: 8rem; font-size: 1rem; }
+.inline-field { width: 11rem; }
+.inline-field .field-head label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.inline-field .field-head { min-height: 0; }
+.request-row { display: grid; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: 0.5rem; background: var(--app-paper); }
+.request-row p { margin: 0; }
+.metadata-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; padding: 0.7rem 0.25rem; }
+.rotation-list { display: grid; gap: 0.5rem; margin: 0.5rem 0 1rem; padding: 0; list-style: none; }
+.rotation-list li { display: flex; align-items: center; gap: 0.75rem; }
+.rotation-list .field { flex: 1; max-width: 22rem; }
+.rotation-number { width: 1.25rem; color: var(--app-body); }
+.triage-rotation { display: grid; gap: 0.9rem; }
+.triage-rotation form, .triage-rotation fieldset { display: grid; gap: 1rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.triage-rotation .field input[type="datetime-local"] { max-width: 18rem; }
+.intake-form { display: grid; gap: 1rem; }
+.sendgrid-event-key { display: grid; gap: 0.75rem; }
+
+/* On a phone the row's action sits under its meta line, so the name keeps the width. */
+@container settings (max-width: 53.99rem) {
+  .team-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .team-row .row-chevron { grid-column: 2; grid-row: 1; }
+  .team-row .row-action { grid-column: 1; grid-row: 2; justify-self: start; padding-left: 0; }
+}

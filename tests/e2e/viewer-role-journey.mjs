@@ -64,7 +64,7 @@ export async function viewerRoleJourney({page,peer,memberId,browser,runtime,clau
     await navigate(reader,base+'/app/settings/people');await reader.getByText('synthetic-vector-1809 (you)',{exact:true}).waitFor();assert.equal(await reader.getByRole('button',{name:'Change role',exact:true}).count(),0);
     for(const denied of ['teams','developers']){await navigate(reader,base+'/app/settings/'+denied);await reader.getByText('You can’t open this page.').waitFor();assert.equal(await reader.getByRole('region',{name:'Teams',exact:true}).count(),0);assert.equal(await reader.getByRole('heading',{name:'API tokens',exact:true}).count(),0);}
     await navigate(reader,base+'/app/settings/labels');
-    const labels=reader.getByRole('region',{name:'Labels',exact:true});await labels.getByText(label.name,{exact:true}).waitFor();
+    const labels=reader.getByRole('list',{name:'Labels',exact:true});await labels.getByText(label.name,{exact:true}).waitFor();
     assert.equal(await labels.getByRole('form',{name:'Create label',exact:true}).count(),0);
     await inspect(reader,labels,'viewer-labels-'+width);
    }
@@ -101,7 +101,7 @@ export async function viewerRoleJourney({page,peer,memberId,browser,runtime,clau
    const name='synthetic-vector-'+(width===1440?1964:1965),leaving=await inviteReader({owner:page,browser,runtime,email:name+'@vector.test',name});
    try{
     await leaving.page.setViewportSize({width,height:width===390?844:1000});await navigate(leaving.page,base+'/app/settings/people');
-    await leaving.page.getByRole('button',{name:'Remove '+name,exact:true}).click();await leaving.page.getByRole('button',{name:'Confirm removal',exact:true}).click();await leaving.page.waitForURL(base+'/signin');await leaving.api('/session','GET',undefined,401);
+    await leaving.page.getByRole('link',{name:name+' (you)'}).click();await leaving.page.getByRole('button',{name:'Leave workspace',exact:true}).click();await leaving.page.getByRole('button',{name:'Confirm removal',exact:true}).click();await leaving.page.waitForURL(base+'/signin');await leaving.api('/session','GET',undefined,401);
    }finally{await leaving.context.close();}
   });
 

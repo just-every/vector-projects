@@ -1,7 +1,7 @@
 /** Settings forms register their submitted HTTP door, including its dynamic row
  * resolver. Source coverage enumerates the actual reachable JSX independently.
  * Keys are source modules and their enclosing component; values follow form order.
- * Controls that save as they change (Profile, Workspace) are not forms: they call their PATCH/PUT door directly. */
+ * Controls that save as they change (Profile, Workspace, a person's role, a team's details, workflow, people, planning and Git rules, a label's name, colour and projects switch) are not forms: they call their PATCH/PUT door directly. */
 export const settingsFormDoors: Record<string, readonly string[]> = {
   'triage-responsibility/panel.tsx#TeamTriageRotation': ['PUT /settings/teams/:id/triage-rotation'],
   'integrations/ui/channel-settings.tsx#ChannelSettings': [
@@ -18,23 +18,14 @@ export const settingsFormDoors: Record<string, readonly string[]> = {
   'integrations/ui/webhook-settings.tsx#WebhookSettings': ['POST /settings/integrations/destinations'],
   'integrations/ui/delivery-setup.tsx#DeliverySetup': ['POST /settings/integrations/delivery'],
   'integrations/ui/github-settings.tsx#GithubSettings': ['POST /settings/integrations/github'],
-  'integrations/ui/github-rules.tsx#Rule': ['PATCH /settings/teams/:id'],
-  'settings/ui/teams-panel.tsx#TeamsPanel': ['POST /settings/teams'],
-  'settings/ui/teams-panel.tsx#TeamEditor': ['PATCH /settings/teams/:id', 'POST /settings/teams/:id/statuses'],
-  'settings/ui/teams-panel.tsx#StatusEditor': ['PATCH /settings/teams/:id/statuses/:statusId'],
-  'settings/ui/team-join-rules.tsx#TeamJoinRules': ['PUT /settings/teams/:id/membership'],
-  'settings/ui/team-members.tsx#TeamMembers': ['PUT /settings/teams/:id/members/:operatorId'],
-  'settings/ui/team-permissions.tsx#TeamPermissions': ['PUT /settings/teams/:id/permissions'],
   'email-intake/ui/team-email-intake.tsx#ActiveTeamEmailIntake': ['PUT /settings/teams/:teamId/email-intake'],
   'email-intake/ui/event-key.tsx#EventWebhookKey': ['PUT /settings/teams/:teamId/email-intake/event-key'],
-  'housekeeping/panel.tsx#HousekeepingPanel': ['PUT /settings/teams/:id/housekeeping'],
-  'settings/ui/labels-panel.tsx#LabelsPanel': ['POST /settings/labels'],
-  'settings/ui/labels-panel.tsx#LabelEditor': ['PATCH /settings/labels/:id', 'POST /settings/labels/:id/merge'],
   'cycles/ui/cycles-panel.tsx#CyclesPanel': ['POST /settings/cycles'],
-  'cycle-schedule/panel.tsx#CycleSchedulePanel': ['PUT /settings/teams/:id/cycle-schedule'],
+  'settings/ui/people/invite-form.tsx#InviteForm': ['POST /settings/operators/invite'],
+  'settings/ui/teams/new-team-form.tsx#NewTeamForm': ['POST /settings/teams'],
+  'settings/ui/teams/add-status.tsx#AddStatus': ['POST /settings/teams/:id/statuses'],
+  'settings/ui/labels/new-label-form.tsx#NewLabelForm': ['POST /settings/labels'],
   'data/ui/data-panel.tsx#DataPanel': ['POST /data/import/preview'],
-  'settings/ui/member-role-form.tsx#MemberRoleForm': ['PATCH /settings/operators/:operatorId/role'],
-  'settings/ui/invite-operator.tsx#InviteOperator': ['POST /settings/operators/invite'],
 }
 
 /** Private server functions with writes must name their HTTP authority door.

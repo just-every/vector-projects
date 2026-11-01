@@ -1,7 +1,6 @@
 import {confirmInviter} from './core-operator-journey.mjs';
 import assert from 'node:assert/strict';
 import {navigate} from './collaboration-navigation.mjs';
-import {openDisclosures} from './ui-controls-checks.mjs';
 
 // Use the browser's own connection pool and same-origin credentials, as the UI does.
 export function readerResponse(page,base,path,method='GET',data){
@@ -16,13 +15,14 @@ export async function inviteReader({owner,browser,runtime,email,name,role='viewe
  const {base,sql}=runtime;
  await confirmInviter(owner,owner.context(),base,runtime.state);
  if(form){
-  await navigate(owner,base+'/app/settings/people');await openDisclosures(owner);
-  const invite=owner.getByRole('form',{name:'Invite member',exact:true});
+  await navigate(owner,base+'/app/settings/people');await owner.getByRole('button',{name:'Invite',exact:true}).click();
+  const invite=owner.getByRole('form',{name:'Invite someone',exact:true});
   await invite.getByLabel('Name',{exact:true}).fill(name);await invite.getByLabel('Email',{exact:true}).fill(email);await invite.getByLabel('Role',{exact:true}).selectOption(role);
   if(teams.length){const group=invite.getByRole('group',{name:`Teams this ${role==='viewer'?'Viewer':'Guest'} can access`,exact:true});for(const id of teams)await group.locator(`input[value="${id}"]`).check();}
   await beforeSend?.(invite);
   const sent=owner.waitForResponse(r=>new URL(r.url()).pathname==='/api/settings/operators/invite'&&r.request().method()==='POST');
-  await invite.getByRole('button',{name:'Send invitation',exact:true}).click();assert.equal((await sent).status(),202);
+  await invite.getByRole('button',{name:'Send invitation',exact:true}).click();
+  await owner.getByRole('button',{name:'Confirm and send',exact:true}).click();assert.equal((await sent).status(),202);
  }else await readerApi(owner,base)('/settings/operators/invite','POST',{email,displayName:name,role,teamIds:teams},202);
  const link=sql("SELECT json_extract(message,'$.text') text FROM rer_mail_development_outbox WHERE json_extract(message,'$.to[0]')='"+email+"' ORDER BY created_at DESC,sequence DESC LIMIT 1")[0].text.match(/https?:\/\/[^\s]+/)[0];
  const context=await browser.newContext({viewport:{width,height:width===390?844:1000}}),page=await context.newPage(),errors=[];

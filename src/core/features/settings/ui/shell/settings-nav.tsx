@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { rememberIndexScroll } from './index-scroll';
+import { Skeleton } from './section-page';
 import { RowLine } from './row-lines';
 import { sectionOfPath, sections, type SectionGroup, type SectionKey } from './sections';
 
@@ -16,7 +17,7 @@ export function SettingsNav({ open, pathname, lines, loading, rail }: {
   const current = !rail && pathname === '/app/settings' ? null : sectionOfPath(pathname);
   return <nav className="settings-nav" aria-label="Settings sections">
     <h2 className="settings-nav-title">Settings</h2>
-    {loading && <div className="settings-skeleton" aria-busy="true" aria-label="Loading"><span /><span /><span /></div>}
+    {loading && <Skeleton />}
     {groups.map(group => {
       const items = sections.filter(section => section.group === group && open.includes(section.key));
       if (!items.length) return null;

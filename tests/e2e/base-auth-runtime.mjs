@@ -98,11 +98,13 @@ try {
   await page.setViewportSize({width:1440,height:1000});
   await page.goto(origin+'/app/settings/people');
   await page.getByRole('heading',{name:'People',exact:true,level:1}).waitFor();
+  await page.getByRole('button',{name:'Invite',exact:true}).click();
   await page.getByLabel('Name',{exact:true}).fill('Invited peer');
   await page.getByLabel('Email',{exact:true}).fill('peer@auth-runtime.test');
   await page.getByLabel('Role',{exact:true}).selectOption('admin');
-  const invited=page.waitForResponse(response=>response.url()===origin+'/api/settings/operators/invite');
   await page.getByRole('button',{name:'Send invitation',exact:true}).click();
+  const invited=page.waitForResponse(response=>response.url()===origin+'/api/settings/operators/invite');
+  await page.getByRole('button',{name:'Confirm and send',exact:true}).click();
   const invitation = await invited;
   assert.equal(invitation.status(),202);
   assert.equal((await invitation.json()).delivery,'local');
@@ -112,17 +114,25 @@ try {
   await peer.getByRole('button',{name:'Confirm',exact:true}).click();
   await peer.waitForURL(origin+'/app');
   await peer.goto(origin+'/app/settings/people');
-  await peer.getByRole('button',{name:'Remove Invited peer',exact:true}).waitFor();
   // An Admin removes Members and itself, never an Owner, and invites Members, named-team Guests or Viewers.
-  assert.equal(await peer.getByRole('button',{name:'Remove Workspace owner',exact:true}).count(),0);
+  await peer.getByRole('link',{name:/Invited peer \(you\)/}).click();
+  await peer.getByRole('button',{name:'Leave workspace',exact:true}).waitFor();
+  await peer.goto(origin+'/app/settings/people');
+  await peer.getByRole('link',{name:/Workspace owner/}).click();
+  await peer.getByText('Installation owner',{exact:false}).first().waitFor();
+  assert.equal(await peer.getByRole('button',{name:/^(Remove|Leave)/}).count(),0);
+  await peer.goto(origin+'/app/settings/people');
+  await peer.getByRole('button',{name:'Invite',exact:true}).click();
   assert.deepEqual(await peer.getByLabel('Role',{exact:true}).locator('option').allTextContents(),['Member','Guest','Viewer']);
   await peer.getByLabel('Name',{exact:true}).fill('Invited member');
   await peer.getByLabel('Email',{exact:true}).fill('member@auth-runtime.test');
-  const memberInvite=peer.waitForResponse(response=>response.url()===origin+'/api/settings/operators/invite');
   await peer.getByRole('button',{name:'Send invitation',exact:true}).click();
+  const memberInvite=peer.waitForResponse(response=>response.url()===origin+'/api/settings/operators/invite');
+  await peer.getByRole('button',{name:'Confirm and send',exact:true}).click();
   assert.equal((await memberInvite).status(),202);
   const memberLink=link('member@auth-runtime.test');
   await page.reload();
+  await page.getByRole('link',{name:/Invited peer/}).click();
   await page.getByRole('button',{name:'Remove Invited peer',exact:true}).waitFor();
   await page.screenshot({path:resolve(evidence,'base-invite-settings-1440.jpg'),type:'jpeg',quality:85,fullPage:true});
   await page.setViewportSize({width:390,height:844});
@@ -132,9 +142,11 @@ try {
   const removed=page.waitForResponse(response=>response.url().startsWith(origin+'/api/settings/operators/')&&response.request().method()==='DELETE');
   await page.getByRole('button',{name:'Confirm removal',exact:true}).click();
   assert.equal((await removed).status(),200);
-  await page.getByRole('button',{name:'Remove Invited peer',exact:true}).waitFor({state:'detached'});
-  await page.getByRole('group',{name:'Confirm member removal',exact:true}).waitFor({state:'detached'});
-  assert.ok((await page.getByRole('region',{name:'Members',exact:true}).getByRole('status').innerText()).trim());
+  await page.getByRole('link',{name:/Invited peer/}).waitFor({state:'detached'});
+  // The removal answers by returning to the People list without them.
+  await page.getByRole('group',{name:'Remove this member?',exact:true}).waitFor({state:'detached'});
+  await page.getByRole('list',{name:'People',exact:true}).waitFor();
+  assert.equal(new URL(page.url()).pathname,'/app/settings/people');
   assert.equal((await peer.request.get(origin+'/api/session')).status(),401);
   assert.equal((await fetch(memberLink)).status,400);
   // Unload app documents while preserving both native cookie jars across restart.

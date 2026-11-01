@@ -1,25 +1,30 @@
-import { HousekeepingPanel } from '../../../housekeeping/panel';
+import { useState } from 'react';
+import { decide } from '../../../roles/policy';
+import { AdministrationScope, useAdministration } from '../admin/administration';
 import { SectionGate } from '../shell/section-gate';
-import { NotFoundLine, SectionPage } from '../shell/section-page';
-import { teamAccess } from '../team-access';
-import { TeamsPanel } from '../teams-panel';
-import { WithAdministration } from './with-administration';
+import { useRestoreListScroll } from '../shell/list-scroll';
+import { SectionPage } from '../shell/section-page';
+import { NewTeamForm } from '../teams/new-team-form';
+import { TeamRecord } from '../teams/team-record';
+import { TeamsList } from '../teams/teams-list';
+import '../teams/teams.css';
 
-export const teamTabs = ['details', 'workflow', 'people', 'planning', 'automation'] as const;
-
-/** Teams. A record or tab path opens that team's editor in the list under its breadcrumb until the team record replaces it. */
+/** Teams: the list with New team in place; a record or tab path opens that team under "Teams › name". */
 export function TeamsSection({ teamId, tab }: { teamId?: string; tab?: string }) {
   return <SectionGate section="teams" title="Teams">
-    <WithAdministration>{(data, reload) => {
-      const parent = { label: 'Teams', to: '/app/settings/teams' } as const;
-      const team = teamId ? data.teams.find(item => item.id === teamId && teamAccess(data, item).opens) : undefined;
-      if ((teamId && !team) || (tab && !(teamTabs as readonly string[]).includes(tab)))
-        return <SectionPage title="Teams"><NotFoundLine what={team ? 'That tab' : 'That team'} back={parent} /></SectionPage>;
-      const leads = data.viewer.role === 'owner' || data.viewer.role === 'admin';
-      return <SectionPage title="Teams" legacy parent={team ? parent : undefined} record={team?.name}>
-        <TeamsPanel data={data} onChanged={reload} openTeamId={team?.id} />
-        {leads && <HousekeepingPanel data={data} onChanged={reload} />}
-      </SectionPage>;
-    }}</WithAdministration>
+    <AdministrationScope title="Teams">{teamId ? <TeamRecord teamId={teamId} tab={tab} /> : <Directory />}</AdministrationScope>
   </SectionGate>;
+}
+
+function Directory() {
+  const { data } = useAdministration();
+  const [creating, setCreating] = useState(false);
+  const leads = data.viewer.role === 'owner' || data.viewer.role === 'admin';
+  const creates = decide({ role: data.viewer.role, memberInvites: false, memberTeamCreation: data.workspace.memberTeamCreation, teams: new Map() }, { row: 'teams.create' }) === 'allow';
+  useRestoreListScroll('teams');
+  const opener = creates && !creating ? <button type="button" className="button-quiet" onClick={() => setCreating(true)}>New team</button> : undefined;
+  return <SectionPage title="Teams" action={opener}>
+    {creating && <NewTeamForm mayPrivate={leads} onClose={() => setCreating(false)} />}
+    <TeamsList data={data} />
+  </SectionPage>;
 }

@@ -9,6 +9,8 @@ import { SettingsNav } from './settings-nav';
 import { SettingsShellProvider, type SettingsShell } from './settings-context';
 import '../settings.css';
 import '../fields/fields.css';
+import '../fields/controls.css';
+import './rows.css';
 import '../settings-shell.css';
 
 /** An Owner's layout asks whether a restore is waiting; only then does Restore join the list. Others never ask. */

@@ -1,0 +1,62 @@
+/* Controls S2 adds to the shared field model: colour, number, quiet buttons, the one ask, the row menu and the fold. */
+.field-color .color-row { display: flex; align-items: center; gap: 0.75rem; min-height: 44px; }
+.field-color input[type="color"] { box-sizing: border-box; width: 3.25rem; height: 44px; padding: 0.2rem; border: 1px solid var(--app-field-border); border-radius: 0.5rem; background: var(--app-field); cursor: pointer; }
+.field-color input[type="color"]:focus-visible { outline: 2px solid var(--app-focus); outline-offset: 2px; }
+.color-code { font-size: var(--app-text-small); color: var(--app-body); }
+.number-row { display: flex; align-items: center; gap: 0.75rem; }
+.number-row input { width: 7rem; }
+.number-suffix { font-size: var(--app-text-small); color: var(--app-body); }
+.field input[type="text"][inputmode="numeric"] { width: 7rem; }
+
+/* Buttons: the quiet secondary opens a create; the ink and danger buttons answer an ask. */
+.button-quiet, .button-ink, .button-danger, .button-text { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 1rem; border-radius: 999px; font: inherit; font-size: 0.95rem; cursor: pointer; }
+.button-quiet { border: 1px solid var(--app-field-border); background: var(--app-column); color: var(--app-ink); }
+.button-quiet:hover:not(:disabled) { border-color: var(--app-outline); background: var(--app-paper); }
+.button-ink { border: 0; background: var(--app-ink); color: var(--app-on-ink); }
+.button-danger { border: 0; background: var(--app-danger); color: var(--app-on-accent); }
+.button-text { border: 0; background: none; color: var(--app-body); }
+.button-text:hover:not(:disabled) { color: var(--app-ink); }
+.button-quiet:disabled, .button-ink:disabled, .button-danger:disabled, .button-text:disabled { opacity: 0.55; cursor: default; }
+.button-quiet:focus-visible, .button-ink:focus-visible, .button-danger:focus-visible, .button-text:focus-visible, .link-button:focus-visible { outline: 2px solid var(--app-focus); outline-offset: 2px; }
+.link-button { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0; border: 0; background: none; color: var(--app-cobalt-ink); font: inherit; cursor: pointer; }
+.link-button.danger { color: var(--app-danger); }
+
+/* The one ask, in the sunk tone, under the control that asks. */
+.confirm-line { display: grid; gap: 0.5rem; padding: 1rem 1.1rem; border-radius: 0.6rem; background: var(--app-paper); }
+.confirm-question { margin: 0; font-weight: 600; }
+.confirm-detail { margin: 0; max-width: 40rem; font-size: var(--app-text-small); line-height: 1.55; color: var(--app-body); }
+.confirm-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.25rem; }
+.confirm-error { margin: 0; font-size: var(--app-text-small); color: var(--app-danger); }
+
+/* A row's "…": quiet until the row is hovered or holds focus; always there where there is no hover. */
+.row-menu { position: relative; display: inline-flex; }
+.row-menu-trigger { display: inline-grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 0.5rem; background: none; color: var(--app-body); font-size: 1.3rem; line-height: 1; cursor: pointer; }
+.row-menu-trigger:hover, .row-menu-trigger[aria-expanded="true"] { background: var(--app-paper-deep); color: var(--app-ink); }
+.row-menu-trigger:focus-visible { outline: 2px solid var(--app-focus); outline-offset: 0; }
+.row-menu-list { position: absolute; right: 0; top: 100%; z-index: 5; display: grid; min-width: 11rem; padding: 0.35rem; border-radius: 0.6rem; background: var(--app-column); box-shadow: 0 6px 24px rgb(var(--app-shadow-rgb) / 16%), 0 0 0 1px var(--app-line); }
+.row-menu-list button { display: flex; align-items: center; min-height: 44px; padding: 0 0.75rem; border: 0; border-radius: 0.4rem; background: none; color: var(--app-ink); font: inherit; text-align: left; cursor: pointer; }
+.row-menu-list button:hover, .row-menu-list button:focus-visible { background: var(--app-paper); outline: 0; }
+.row-menu-note { max-width: 14rem; margin: 0; padding: 0.4rem 0.75rem 0.6rem; font-size: var(--app-text-small); line-height: 1.45; color: var(--app-body); }
+.row-action { transition: opacity 0.12s; }
+@media (hover: hover) {
+  .row-hover .row-action:not([aria-expanded="true"]) { opacity: 0; }
+  .row-hover:hover .row-action, .row-hover:focus-within .row-action { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .row-action { transition: none; } }
+
+/* The one disclosure. */
+.fold > summary { display: flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0; color: var(--app-body); list-style: none; cursor: pointer; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::before { content: "›"; display: inline-block; width: 1rem; font-size: 1.3rem; line-height: 1; transition: transform 0.12s; }
+.fold[open] > summary::before { transform: rotate(90deg); }
+.fold > summary:focus-visible { outline: 2px solid var(--app-focus); outline-offset: 2px; border-radius: 0.35rem; }
+.fold-body { display: grid; gap: 0.75rem; padding: 0.25rem 0 0.75rem 1.5rem; font-size: var(--app-text-small); line-height: 1.55; color: var(--app-body); }
+.fold-body p { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .fold > summary::before { transition: none; } }
+
+/* Small layout helpers the sections share. */
+.record-line { display: flex; gap: 1rem; align-items: baseline; margin: 0; }
+.record-line span { min-width: 5rem; color: var(--app-body); }
+.record-rule { width: 100%; margin: 0.25rem 0; border: 0; border-top: 1px solid var(--app-line); }
+.empty-line { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin: 1.5rem 0; font-size: 1.1rem; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

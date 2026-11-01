@@ -3,6 +3,7 @@ import {eventSigner} from '../sendgrid-event-fixture.ts';
 import {exerciseChannels} from './integrations/channel-settings.mjs';
 import {exerciseSlackDirectMessages} from './integrations/slack-dm-settings.mjs';
 import {navigate,settleReads,trackRequests} from './collaboration-navigation.mjs';
+import {openTeam,switchRow} from './settings-pane-support.mjs';
 import assert from 'node:assert/strict';
 import {createWebhookProtocol} from '../../vendor/base/integrations/core/webhook.ts';
 import {sendSignedPullRequest,pullRequestRepository} from './integration-signed-pr.mjs';
@@ -64,11 +65,10 @@ export async function exerciseEmailIntake({page:shared,runtime,cookie,team,evide
  await page.setViewportSize(shared.viewportSize());
  const {roleScreens}=await import('./role-ui-support.mjs'),inspect=roleScreens(evidence);
  const sender='synthetic-vector-721@example.test',address='synthetic-vector-'+Date.now()+'@example.test';
- await page.goto(runtime.base+'/app/settings/teams');
- await page.locator('#teams summary').filter({hasText:team.name+' · '+team.identifierPrefix}).first().click();
+ await openTeam(page,runtime.base,team,'automation');
  const section=page.getByRole('region',{name:'Email intake for '+team.name,exact:true});
- await section.getByLabel('Private intake address',{exact:true}).waitFor();
- await section.getByLabel('Enable email intake',{exact:true}).check();
+ // Intake is off until switched on; its address, senders and acknowledgement follow.
+ await switchRow(section,'Enable email intake').click();
  await section.getByLabel('Private intake address',{exact:true}).fill(address);
  await section.getByLabel('Allowed sender addresses',{exact:true}).fill(sender);
  await inspect(page,section,'email-intake-configure');
@@ -76,6 +76,7 @@ export async function exerciseEmailIntake({page:shared,runtime,cookie,team,evide
  await section.getByRole('button',{name:'Save email intake',exact:true}).click();assert.equal((await saved).status(),200);
  await section.getByText('Email intake settings saved.',{exact:true}).waitFor();
  await inspect(page,section,'email-intake-saved');
+ await section.getByText('How this works',{exact:true}).click();
  const signer=await eventSigner(),eventKey=section.getByRole('form',{name:'Configure SendGrid Event Webhook',exact:true});
  await eventKey.getByLabel('SendGrid Event Webhook verification key',{exact:true}).fill(signer.publicKey);
  const keySaved=page.waitForResponse(r=>r.request().method()==='PUT'&&r.url().endsWith('/email-intake/event-key'));

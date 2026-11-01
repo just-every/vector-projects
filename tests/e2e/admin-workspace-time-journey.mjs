@@ -42,10 +42,11 @@ export async function saveWorkspaceTime({ page, runtime, clause, capture }) {
     assert.equal(await timezone.inputValue(), initial.timezone);
     assert.equal(await reminder.inputValue(), initial.reminderTime);
     await page.goto(runtime.base + "/app/settings/people");
+    await page.getByRole("link", { name: new RegExp(runtime.config.FIRST_OWNER_NAME) }).first().click();
+    await page.getByText("The last Owner cannot be removed.", { exact: true }).waitFor();
     assert.equal(await page.getByRole("button", {
-      name: "Remove " + runtime.config.FIRST_OWNER_NAME,
-      exact: true,
-    }).isDisabled(), true, "the sole operator cannot be removed from Settings");
+      name: /^(Remove|Leave)/,
+    }).count(), 0, "the sole operator cannot be removed from Settings");
     await open();
     await submit(changedTimezone);
     await capture("workspace-time-saved");

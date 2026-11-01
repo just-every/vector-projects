@@ -43,7 +43,7 @@ export function roleScreens(evidence) {
  * desktop and mobile widths. The caller keeps its existing Member session. */
 export async function exerciseGuestRoles({page,browser,runtime,clause,evidence}) {
   const {navigate,settleReads}=await import('./collaboration-navigation.mjs');
-  const {openDisclosures}=await import('./ui-controls-checks.mjs');
+  const {openPerson}=await import('./settings-pane-support.mjs');
   const {base,sql}=runtime, inspect=roleScreens(evidence);
   const teams=sql('SELECT id,name FROM teams ORDER BY created_at,id');
   const invitedTeam=teams.find(team=>team.name===runtime.config.DEFAULT_TEAM_NAME);
@@ -61,8 +61,8 @@ export async function exerciseGuestRoles({page,browser,runtime,clause,evidence})
   const hidden=await post('/api/issues',{title:'Guest excluded delivery issue',teamId:outside.id,projectId:project.id},201);
   const cycle=(await post('/api/settings/cycles',{name:'Guest invited delivery cycle',teamId:invitedTeam.id,startsLocal:'2038-01-04T09:00',endsLocal:'2038-01-08T09:00',capacity:null})).cycles.find(cycle=>cycle.name==='Guest invited delivery cycle');
   await navigate(page,base+'/app/settings/people');
-  await openDisclosures(page);
-  const members=page.getByRole('region',{name:'Members',exact:true});
+  await page.getByRole('button',{name:'Invite',exact:true}).click();
+  const members=page.getByRole('form',{name:'Invite someone',exact:true});
   let context;
   try {
     await clause('ROLE-003','an Owner invites a Guest to named teams from desktop and mobile Settings',async()=>{
@@ -72,8 +72,9 @@ export async function exerciseGuestRoles({page,browser,runtime,clause,evidence})
       const group=members.getByRole('group',{name:'Teams this Guest can access',exact:true});
       await group.getByRole('checkbox',{name:invitedTeam.name,exact:true}).check();
       await inspect(page,members,'guest-named-team-invitation');
-      const sent=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/settings/operators/invite');
       await members.getByRole('button',{name:'Send invitation',exact:true}).click();
+      const sent=page.waitForResponse(response=>new URL(response.url()).pathname==='/api/settings/operators/invite');
+      await page.getByRole('button',{name:'Confirm and send',exact:true}).click();
       assert.equal((await sent).status(),202);
     });
     const link=sql("SELECT json_extract(message,'$.text') AS text FROM rer_mail_development_outbox WHERE json_extract(message,'$.to[0]')='synthetic-vector-803@vector.test' ORDER BY created_at DESC,sequence DESC LIMIT 1")[0].text.match(/https?:\/\/[^\s]+/)[0];
@@ -116,28 +117,30 @@ export async function exerciseGuestRoles({page,browser,runtime,clause,evidence})
       assert.deepEqual(await guest.getByRole('navigation',{name:'Settings sections'}).locator('.settings-nav-name').allTextContents(),['Profile','Notifications']);
       await navigate(guest,base+'/app/settings/profile');
       await guest.getByRole('heading',{name:'Profile',exact:true}).waitFor();
-      assert.equal(await guest.getByRole('region',{name:'Members',exact:true}).count(),0);
+      assert.equal(await guest.getByRole('list',{name:'People',exact:true}).count(),0);
       assert.equal(await guest.getByRole('heading',{name:'API tokens',exact:true}).count(),0);
       await navigate(guest,base+'/app/settings/people');await guest.getByText('You can’t open this page.').waitFor();
       await navigate(guest,base+'/app/settings/profile');
+      await guest.getByRole('heading',{name:'Profile',exact:true}).waitFor();
+      await guest.getByRole('navigation',{name:'Settings sections'}).locator('.settings-nav-name',{hasText:'Notifications'}).waitFor();
       await inspect(guest,guest.locator('main:visible').first(),'guest-account-only');
     });
     const id=sql("SELECT id FROM operators WHERE email='synthetic-vector-803@vector.test'")[0].id;
     await clause('ROLE-003','an Owner changes an accepted Guest to Member and back through the named-team role form; its open session follows immediately',async()=>{
-      await navigate(page,base+'/app/settings/people');
-      await openDisclosures(page);
-      let form=members.getByRole('form',{name:'Role for Agency collaborator (Guest)',exact:true});
-      await form.getByRole('combobox').selectOption('member');
+      // The role is a select on the person's own page that stores as it changes; a Guest also keeps a named-team picker.
+      await openPerson(page,base,id);
+      const role=page.getByLabel('Role',{exact:true});
+      assert.equal(await role.inputValue(),'guest');
       let saved=page.waitForResponse(response=>new URL(response.url()).pathname===`/api/settings/operators/${id}/role`);
-      await form.getByRole('button',{name:'Change role',exact:true}).click();
+      await role.selectOption('member');
       assert.equal((await saved).status(),200);
       assert.equal((await get('/api/metadata')).viewer.role,'member');
-      form=members.getByRole('form',{name:'Role for Agency collaborator',exact:true});
-      await form.getByRole('combobox').selectOption('guest');
-      await form.getByRole('checkbox',{name:invitedTeam.name,exact:true}).check();
-      await inspect(page,members,'guest-named-team-assignment');
+      // A Guest needs a team: the choice waits, nothing is sent, until one is ticked.
+      await role.selectOption('guest');
+      await page.getByText('Choose at least one team.').waitFor();
+      await inspect(page,page.locator('.settings-pane'),'guest-named-team-assignment');
       saved=page.waitForResponse(response=>new URL(response.url()).pathname===`/api/settings/operators/${id}/role`);
-      await form.getByRole('button',{name:'Change role',exact:true}).click();
+      await page.getByRole('group',{name:'Teams this Guest can access',exact:true}).getByRole('checkbox',{name:invitedTeam.name,exact:true}).check();
       assert.equal((await saved).status(),200);
       assert.equal((await get('/api/metadata')).viewer.role,'guest');
       assert.equal((await guest.request.get(base+'/api/issues/'+hidden.identifier)).status(),404);

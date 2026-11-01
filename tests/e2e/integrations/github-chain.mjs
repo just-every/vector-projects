@@ -1,4 +1,4 @@
-import {openAdministrationForm} from '../ui-administration-form.mjs';
+import {openTeam} from '../settings-pane-support.mjs';
 import {exerciseGithubTeamPermissions} from './github-team-permissions.mjs';
 import assert from 'node:assert/strict';
 import {createHmac,randomUUID} from 'node:crypto';
@@ -25,26 +25,25 @@ export async function exerciseGithubChain({page:shared,runtime,cookie,team,width
   await inspect(page,integrations,'github-owner-integrations-'+width);
   await page.setViewportSize({width,height:900});
   await integrations.getByRole('link',{name:'Manage Git automation rules in Teams',exact:true}).click();
-  const teams=page.getByRole('region',{name:'Teams',exact:true});
-  await openAdministrationForm(page,'Edit '+team.name);
-  const rules=teams.getByRole('region',{name:'Git automation rules',exact:true});await rules.getByText(team.name+' Git automation',{exact:true}).click();
+  // The link lands on Teams; the rules live in the team's Automation tab, each trigger a status choice that stores as it changes.
+  await page.waitForURL(url=>url.pathname==='/app/settings/teams');
+  await openTeam(page,runtime.base,team,'automation');
+  const rules=page.getByRole('region',{name:'Git automation',exact:true});
   const saveMessages=[];
   for(const [trigger,label,status] of [['draft','Draft PR opened',review.id],['review','Review requested',review.id],['merged','PR merged',done.id],['deploy','Production deployed',shipped.id]]){
-   await rules.getByLabel(team.name+' '+label+' status',{exact:true}).selectOption(status);
    const saved=page.waitForResponse(r=>r.request().method()==='PATCH'&&new URL(r.url()).pathname==='/api/settings/teams/'+team.id);
-   await rules.getByRole('button',{name:'Save '+label+' rule',exact:true}).click();assert.equal((await saved).status(),200);
+   await rules.getByLabel(label,{exact:true}).selectOption(status);assert.equal((await saved).status(),200);
    await settleReads(page);
-   const message=rules.getByRole('group',{name:label,exact:true}).getByRole('status');
+   const message=rules.getByText('Saved',{exact:true}).first();
    await message.waitFor();saveMessages.push(await message.textContent());
   }
-  await rules.getByLabel(team.name+' Draft PR opened status',{exact:true}).selectOption(started.id);
   const savedAgain=page.waitForResponse(r=>r.request().method()==='PATCH'&&new URL(r.url()).pathname==='/api/settings/teams/'+team.id);
-  await rules.getByRole('button',{name:'Save Draft PR opened rule',exact:true}).click();
+  await rules.getByLabel('Draft PR opened',{exact:true}).selectOption(started.id);
   const second=await savedAgain;
   console.log('Git rule saves '+width+': first message='+saveMessages[0]+' second PATCH='+second.status());
   assert.equal(second.status(),200,'Owner can save the Draft PR rule twice without reloading');
-  await rules.getByRole('group',{name:'Draft PR opened',exact:true}).getByRole('status').getByText('Rule saved.',{exact:true}).waitFor();
-  assert.ok(saveMessages.every(message=>message==='Rule saved.'),'Every first save confirms success');
+  await rules.getByText('Saved',{exact:true}).first().waitFor();
+  assert.ok(saveMessages.every(message=>message==='Saved'),'Every first save confirms success');
   assert.ok(!(await rules.textContent()).includes('invalid_value'),'Rule saves never expose validation JSON');
   await inspect(page,rules,'github-rules-'+width);
   const versioned=(await call('/github/automation')).teams.find(t=>t.id===team.id).rules.find(r=>r.trigger==='review');
