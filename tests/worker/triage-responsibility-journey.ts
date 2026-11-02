@@ -84,6 +84,12 @@ export async function triageResponsibilityJourney(
     vi.setSystemTime(new Date("2026-10-31T12:00:00Z"));
     await read(await first.call(path, "PUT", config));
     await read(await admin.call(path, "PUT", config));
+    // Team-wide settings never grant Guest or Viewer write authority.
+    for (const who of [guest, viewer]) {
+      const unchanged = await stored();
+      expect((await who.call(path, "PUT", config)).status).toBe(403);
+      expect(await stored()).toEqual(unchanged);
+    }
     expect((await read(await f.call(path))).responsible.id).toBe(first.id);
     expect((await read(await f.call(path))).nextHandoverAt).toBe(
       "2026-11-02T09:00:00.000Z",
